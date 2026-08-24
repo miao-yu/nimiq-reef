@@ -7,6 +7,7 @@ import { getProvider } from '@/lib/nimiq/provider';
 import { SPECIES, type GroveState, type Plant, type SpeciesKey } from '@/lib/grove';
 import { formatNim, MINIMUM_STAKE_NIM } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
+import { installErrorReporting, report } from '@/lib/client-log';
 import styles from './page.module.css';
 
 /** Shown before sign-in, so the page is alive before anyone commits anything. */
@@ -24,13 +25,18 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/grove');
-    if (res.ok) setGrove((await res.json()) as GroveState);
-    else setGrove(null);
+    const res = await fetch('/api/grove', { credentials: 'same-origin', cache: 'no-store' });
+    if (res.ok) {
+      setGrove((await res.json()) as GroveState);
+    } else {
+      report('load:not-ok', `HTTP ${res.status}`);
+      setGrove(null);
+    }
   }, []);
 
   useEffect(() => {
-    void getProvider().then((p) => setKind(p.kind));
+    installErrorReporting();
+    void getProvider().then((p) => setKind(p.kind)).catch((e) => report('getProvider', e));
     void currentSession().then((address) => {
       if (address) void load();
     });
@@ -40,9 +46,13 @@ export default function Home() {
     setBusy(true);
     setError(null);
     try {
+      report('connect:start', 'begin');
       await signIn();
+      report('connect:signed-in', 'verify ok');
       await load();
+      report('connect:loaded', 'grove fetched');
     } catch (cause) {
+      report('connect:failed', cause);
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
     } finally {
       setBusy(false);
