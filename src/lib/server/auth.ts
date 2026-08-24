@@ -1,6 +1,6 @@
 import 'server-only';
 import { PublicKey, Signature } from '@nimiq/core';
-import { candidateDigests } from './signed-message';
+import { signedMessageDigest } from './signed-message';
 
 export interface VerifyInput {
   /** The exact string handed to nimiq.sign(). */
@@ -12,7 +12,7 @@ export interface VerifyInput {
 }
 
 export type VerifyResult =
-  | { ok: true; address: string; encoding: string }
+  | { ok: true; address: string }
   | { ok: false; reason: 'malformed' | 'bad-signature' | 'address-mismatch' };
 
 /** Nimiq addresses are compared in their canonical spaced uppercase form. */
@@ -40,15 +40,14 @@ export function verifyWalletSignature(input: VerifyInput): VerifyResult {
     return { ok: false, reason: 'malformed' };
   }
 
-  const match = candidateDigests(input.message).find((candidate) =>
-    publicKey.verify(signature, candidate.bytes),
-  );
-  if (!match) return { ok: false, reason: 'bad-signature' };
+  if (!publicKey.verify(signature, signedMessageDigest(input.message))) {
+    return { ok: false, reason: 'bad-signature' };
+  }
 
   const derived = publicKey.toAddress().toUserFriendlyAddress();
   if (normalize(derived) !== normalize(input.claimedAddress)) {
     return { ok: false, reason: 'address-mismatch' };
   }
 
-  return { ok: true, address: derived, encoding: match.label };
+  return { ok: true, address: derived };
 }

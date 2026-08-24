@@ -19,12 +19,20 @@ import type { GroveProvider, SignatureResult } from './types';
 
 const APP_NAME = 'Nimiq Grove';
 
+/**
+ * Pin the endpoint. HubApi picks a default from the page's hostname and falls
+ * back to http://localhost:8080 for anything it does not recognise as a Nimiq
+ * domain — which grove.nimiq.cafe is not, so sign-in silently pointed at a dev
+ * server that is not there.
+ */
+const HUB_ENDPOINT = 'https://hub.nimiq.com';
+
 function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 export function createHubProvider(): GroveProvider {
-  const hub = new HubApi();
+  const hub = new HubApi(HUB_ENDPOINT);
   let chosen: string | undefined;
 
   async function address(): Promise<string> {

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrivateKey, PublicKey, Signature } from '@nimiq/core';
+import { signedMessageDigest } from '@/lib/server/signed-message';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +45,9 @@ export async function POST(request: Request) {
   }
 
   const { priv, pub } = wallet();
-  const data = new TextEncoder().encode(message);
+  // Frame exactly as Nimiq Pay and the Hub do, or the dev path stops
+  // exercising the same verification as production.
+  const data = signedMessageDigest(message);
   const signature = Signature.create(priv, pub, data);
 
   return NextResponse.json({

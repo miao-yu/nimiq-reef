@@ -76,17 +76,32 @@ expensive" — it walks every staker in the staking contract. Same warning on
 request cannot. Grove is validator-neutral anyway, so always look up a single
 staker by address.
 
-## Open: what bytes does Nimiq Pay sign?
+## SETTLED: what bytes does Nimiq Pay sign?
 
 `@nimiq/mini-app-sdk` forwards `sign()` to the host untouched — it adds no
 prefix. Whether Nimiq Pay wraps the message (the Hub convention is
 `\x16Nimiq Signed Message:\n` + length, hashed) is decided in native code we
 cannot read.
 
-`src/lib/server/signed-message.ts` therefore tries both and logs which matched.
-**On the first successful sign-in from a real phone, read the `encoding` in the
-log and delete the other candidate.** A dev-wallet log saying `raw-utf8` proves
-nothing — the mock chose that itself.
+**Answered on a real device, 24 Aug 2026.** A sign-in from Nimiq Pay logged
+`encoding=hub-prefixed-sha256`, so the app frames messages exactly as the Hub
+does:
+
+```
+SHA-256( "\x16Nimiq Signed Message:\n" + byteLength + message )
+```
+
+`signed-message.ts` is now pinned to that one framing and the raw-UTF-8
+alternative is deleted — accepting more encodings than wallets produce only
+widens what an attacker can feed the verifier. The dev wallet was updated to
+frame the same way, so local runs still exercise the production path.
+
+### HubApi picks the wrong endpoint on our domain
+
+`new HubApi()` derives its endpoint from the page hostname and falls back to
+`http://localhost:8080` for anything it does not recognise as a Nimiq domain.
+`grove.nimiq.cafe` is not on that list, so Hub sign-in silently pointed at a dev
+server. The endpoint is now pinned to `https://hub.nimiq.com`.
 
 ## Opening an unlisted Mini App on a device
 

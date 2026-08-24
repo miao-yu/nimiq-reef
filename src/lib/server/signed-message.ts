@@ -2,39 +2,26 @@ import 'server-only';
 import { createHash } from 'node:crypto';
 
 /**
- * What bytes did Nimiq Pay actually sign?
+ * The bytes a Nimiq wallet actually signs.
  *
- * `@nimiq/mini-app-sdk` forwards `sign()` to the host untouched — it applies no
- * prefix of its own — so the wrapping is decided inside the native app, which we
- * cannot inspect from here. Rather than guess, verification tries each known
- * convention and reports which one matched.
+ * Confirmed on a real device 24 Aug 2026: Nimiq Pay signs
  *
- * ACTION REQUIRED: on the first successful sign-in from a real device, read the
- * `encoding` in the log line and pin it here by deleting the others. Accepting
- * multiple encodings forever widens the attack surface for no benefit.
+ *   SHA-256( "\x16Nimiq Signed Message:\n" + byteLength + message )
+ *
+ * which is the same framing the Nimiq Hub uses (`HubApi.MSG_PREFIX`). The
+ * verifier previously accepted a raw-UTF-8 variant as well while this was
+ * unknown; that alternative is gone, because accepting more encodings than the
+ * wallets produce only widens what an attacker can feed us.
  */
 
-const HUB_PREFIX = '\x16Nimiq Signed Message:\n';
+const MSG_PREFIX = '\x16Nimiq Signed Message:\n';
 
-export interface Candidate {
-  label: string;
-  bytes: Uint8Array;
-}
-
-export function candidateDigests(message: string): Candidate[] {
-  const utf8 = new TextEncoder().encode(message);
-
-  // Nimiq Hub / Keyguard convention: prefix, then byte length, then the
-  // message; sign the SHA-256 of that.
+export function signedMessageDigest(message: string): Uint8Array {
+  const utf8 = Buffer.from(message, 'utf8');
   const framed = Buffer.concat([
-    Buffer.from(HUB_PREFIX, 'utf8'),
+    Buffer.from(MSG_PREFIX, 'utf8'),
     Buffer.from(String(utf8.length), 'utf8'),
-    Buffer.from(utf8),
+    utf8,
   ]);
-  const hubDigest = new Uint8Array(createHash('sha256').update(framed).digest());
-
-  return [
-    { label: 'hub-prefixed-sha256', bytes: hubDigest },
-    { label: 'raw-utf8', bytes: utf8 },
-  ];
+  return new Uint8Array(createHash('sha256').update(framed).digest());
 }

@@ -52,8 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Signature did not verify.' }, { status: 401 });
   }
 
-  // Pin the encoding once a real device confirms it — see signed-message.ts.
-  console.info(`[grove] sign-in ok address=${result.address} encoding=${result.encoding}`);
+  console.info(`[grove] sign-in ok address=${result.address}`);
 
   await createSession(result.address);
   return NextResponse.json({ address: result.address });
