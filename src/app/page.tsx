@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Grove } from '@/components/Grove';
+import { StakePanel } from '@/components/StakePanel';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { SPECIES, type GroveState, type Plant, type SpeciesKey } from '@/lib/grove';
@@ -157,6 +158,8 @@ export default function Home() {
               {grove.stakedLuna === 0 ? ` Staking starts at ${MINIMUM_STAKE_NIM} NIM.` : ''}
             </p>
           ) : null}
+
+          <StakePanel grove={grove} onDone={load} />
 
           <div className={styles.account}>
             <span className={styles.addr}>{grove.address}</span>
