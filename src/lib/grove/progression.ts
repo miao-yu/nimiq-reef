@@ -11,7 +11,7 @@ import type { SpeciesKey } from './types';
  */
 
 /** Plots unlock alongside species, so each milestone is felt twice. */
-export const PLOT_THRESHOLDS = [0, 7, 21, 60] as const;
+export const PLOT_THRESHOLDS = [0, 1, 3, 7] as const;
 export const MAX_PLOTS = PLOT_THRESHOLDS.length;
 
 export function plotsUnlocked(daysStaked: number): number {
