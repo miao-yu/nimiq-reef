@@ -2,19 +2,30 @@
 
 import type { GroveProvider } from './types';
 import { createMockProvider } from './mock';
+import { createHubProvider } from './hub';
 
 let cached: Promise<GroveProvider> | undefined;
 
 /**
- * The Nimiq Pay provider when running inside the app, a mock when not.
+ * Pick a signing provider, best first.
  *
- * `init()` from @nimiq/mini-app-sdk waits for the host to inject
- * `window.nimiq`, so outside Nimiq Pay it can only time out. We keep that wait
- * short and fall back, rather than making desktop development sit through it.
+ *   1. Nimiq Pay, when the Mini App host injected `window.nimiq`.
+ *   2. The Nimiq Wallet Hub, in an ordinary browser — real wallet, real
+ *      signatures, no staking.
+ *   3. The dev mock, and only in development.
+ *
+ * `init()` waits for the host to inject the provider, so outside Nimiq Pay it
+ * can only ever time out. Keep that wait short rather than making browser users
+ * sit through it.
  */
 export function getProvider(): Promise<GroveProvider> {
   cached ??= resolve();
   return cached;
+}
+
+/** Forget the cached choice — used when a sign-in attempt fails and we retry. */
+export function resetProvider(): void {
+  cached = undefined;
 }
 
 async function resolve(): Promise<GroveProvider> {
@@ -23,7 +34,7 @@ async function resolve(): Promise<GroveProvider> {
     const nimiq = await init({ timeout: 1500 });
 
     return {
-      isMock: false,
+      kind: 'nimiq-pay',
       listAccounts: async () => unwrap(await nimiq.listAccounts()),
       sign: async (message) => unwrap(await nimiq.sign(message)),
       getBlockNumber: () => nimiq.getBlockNumber(),
@@ -32,6 +43,9 @@ async function resolve(): Promise<GroveProvider> {
       sendStakeTransaction: async (tx) => unwrap(await nimiq.sendStakeTransaction(tx)),
     };
   } catch {
+    // Not inside Nimiq Pay. In production the Hub is the only real option; the
+    // mock exists so local development does not need a wallet at all.
+    if (process.env.NODE_ENV === 'production') return createHubProvider();
     return createMockProvider();
   }
 }

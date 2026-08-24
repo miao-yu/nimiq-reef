@@ -25,7 +25,7 @@ export function createMockProvider(): GroveProvider {
   }
 
   return {
-    isMock: true,
+    kind: 'mock',
     async listAccounts() {
       return [await address()];
     },

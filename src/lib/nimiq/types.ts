@@ -1,3 +1,11 @@
+/**
+ * Where a signature can come from:
+ *  - 'nimiq-pay' — running inside the Mini App host. The only one that can stake.
+ *  - 'hub'       — the regular Nimiq Wallet in a browser. Real signatures, no staking.
+ *  - 'mock'      — local dev only; /api/dev/wallet is 404 in production.
+ */
+export type ProviderKind = 'nimiq-pay' | 'hub' | 'mock';
+
 /** The slice of the Nimiq Pay provider Grove actually uses. */
 export interface SignatureResult {
   publicKey: string;
@@ -13,5 +21,5 @@ export interface GroveProvider {
   sendNewStakerTransaction(tx: { delegation: string; value: number }): Promise<string>;
   /** Add to an existing position. */
   sendStakeTransaction(tx: { value: number }): Promise<string>;
-  readonly isMock: boolean;
+  readonly kind: ProviderKind;
 }

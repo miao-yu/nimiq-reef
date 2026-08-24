@@ -5,6 +5,7 @@ import { Grove } from '@/components/Grove';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import type { Plant } from '@/lib/grove';
+import type { ProviderKind } from '@/lib/nimiq/types';
 import styles from './page.module.css';
 
 /**
@@ -23,16 +24,33 @@ const DEMO_PLOT: Plant[] = [
   { x: 0.935, species: 'sprout', plantedDay: 12, seed: 90 },
 ];
 
+function signInLabel(kind: ProviderKind | null): string {
+  return kind === 'hub' ? 'Sign in with Nimiq Wallet' : 'Claim your plot';
+}
+
+function providerNote(kind: ProviderKind | null): string {
+  switch (kind) {
+    case 'nimiq-pay':
+      return 'Running inside Nimiq Pay.';
+    case 'hub':
+      return 'Signing via the Nimiq Wallet — staking needs Nimiq Pay.';
+    case 'mock':
+      return 'Dev wallet — not a real signature.';
+    default:
+      return 'Looking for a wallet…';
+  }
+}
+
 export default function Home() {
   const [day, setDay] = useState(30);
   const [address, setAddress] = useState<string | null>(null);
-  const [mock, setMock] = useState(false);
+  const [kind, setKind] = useState<ProviderKind | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     void currentSession().then(setAddress);
-    void getProvider().then((p) => setMock(p.isMock));
+    void getProvider().then((p) => setKind(p.kind));
   }, []);
 
   async function connect() {
@@ -89,7 +107,7 @@ export default function Home() {
             disabled={busy}
             type="button"
           >
-            {busy ? 'Waiting for the wallet…' : 'Claim your plot'}
+            {busy ? 'Waiting for the wallet…' : signInLabel(kind)}
           </button>
         )}
       </div>
@@ -97,8 +115,7 @@ export default function Home() {
       {error ? <p className={styles.error}>{error}</p> : null}
 
       <p className={styles.hint}>
-        {mock ? 'Dev wallet — not running inside Nimiq Pay.' : 'Connected to Nimiq Pay.'} Plot is a
-        placeholder until the engine lands.
+        {providerNote(kind)} Plot is a placeholder until the engine lands.
       </p>
     </main>
   );
