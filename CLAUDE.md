@@ -9,6 +9,9 @@ proposing anything — especially the two guardrails, which are load-bearing:
 1. Growth is paced by **time staked**, never by stake size.
 2. Nothing in the grove ever converts back to NIM.
 
+Plan and schedule: `docs/PLAN.md`. The date that matters is **Mon 7 Sep**,
+when submissions go public for early-access testing — not the 18th.
+
 ## Shape
 
 Fullstack Next.js on a single VPS. Server code talks to MySQL and the Nimiq
