@@ -3,6 +3,7 @@ export * from './species';
 export * from './progression';
 export * from './day';
 export * from './state';
+export * from './community';
 export * from './palette';
 export { renderGrove } from './render';
 export { clamp, ease, rng } from './rng';

@@ -152,3 +152,58 @@ export async function recordTick(
     [blockNumber, seen, staked, error ?? null],
   );
 }
+
+export interface CommunityPlant {
+  species: SpeciesKey;
+  /** How many days ago it was planted, across every grove. */
+  ageDays: number;
+  seed: number;
+}
+
+export interface CommunitySnapshot {
+  plants: CommunityPlant[];
+  groves: number;
+  totalPlants: number;
+  stakedToday: number;
+}
+
+/**
+ * Everyone's plants, for the view a first-time visitor lands on.
+ *
+ * Ages are normalised to "days ago" because each grove counts its own days
+ * from its own first day — mixing raw planted_day values across groves would
+ * render a two-day-old sprout as ancient.
+ *
+ * Deliberately no addresses: this is a garden, not a leaderboard, and nobody
+ * consented to having their wallet shown to strangers.
+ */
+export async function communitySnapshot(limit = 14): Promise<CommunitySnapshot> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    `SELECT p.species,
+            p.seed,
+            DATEDIFF(UTC_DATE(), g.first_day) + 1 - p.planted_day AS age_days
+     FROM plants p
+     JOIN groves g ON g.address = p.address
+     ORDER BY p.planted_at DESC
+     LIMIT ?`,
+    [limit],
+  );
+
+  const [[counts]] = await db().query<RowDataPacket[]>(
+    `SELECT
+       (SELECT COUNT(*) FROM groves) AS groves,
+       (SELECT COUNT(*) FROM plants) AS total_plants,
+       (SELECT COUNT(*) FROM grove_days WHERE day = UTC_DATE() AND staked_luna > 0) AS staked_today`,
+  );
+
+  return {
+    plants: rows.map((r) => ({
+      species: r.species as SpeciesKey,
+      ageDays: Math.max(0, Number(r.age_days)),
+      seed: Number(r.seed),
+    })),
+    groves: Number(counts?.groves ?? 0),
+    totalPlants: Number(counts?.total_plants ?? 0),
+    stakedToday: Number(counts?.staked_today ?? 0),
+  };
+}

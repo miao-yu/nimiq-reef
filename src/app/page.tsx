@@ -5,25 +5,32 @@ import { Grove } from '@/components/Grove';
 import { StakePanel } from '@/components/StakePanel';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
-import { SPECIES, type GroveState, type Plant, type SpeciesKey } from '@/lib/grove';
+import {
+  SPECIES,
+  COMMUNITY_DAY,
+  SEEDED_COMMUNITY,
+  layoutCommunity,
+  type CommunityPlant,
+  type GroveState,
+  type Plant,
+  type SpeciesKey,
+} from '@/lib/grove';
 import { formatNim, MINIMUM_STAKE_NIM } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
 import { installErrorReporting, report } from '@/lib/client-log';
 import styles from './page.module.css';
-
-/** Shown before sign-in, so the page is alive before anyone commits anything. */
-const SAMPLE: Plant[] = [
-  { x: 0.125, species: 'sprout', plantedDay: 1, seed: 26 },
-  { x: 0.375, species: 'fern', plantedDay: 7, seed: 52 },
-  { x: 0.625, species: 'bloom', plantedDay: 21, seed: 8 },
-  { x: 0.875, species: 'elder', plantedDay: 60, seed: 77 },
-];
 
 export default function Home() {
   const [kind, setKind] = useState<ProviderKind | null>(null);
   const [grove, setGrove] = useState<GroveState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [community, setCommunity] = useState<{
+    plants: CommunityPlant[];
+    groves: number;
+    totalPlants: number;
+    stakedToday: number;
+  } | null>(null);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/grove', { credentials: 'same-origin', cache: 'no-store' });
@@ -37,6 +44,12 @@ export default function Home() {
 
   useEffect(() => {
     installErrorReporting();
+    // Load the community grove first and unconditionally: the page has to be
+    // alive before anyone is asked for a wallet.
+    void fetch('/api/community')
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setCommunity)
+      .catch((e) => report('community', e));
     void getProvider().then((p) => setKind(p.kind)).catch((e) => report('getProvider', e));
     void currentSession().then((address) => {
       if (address) void load();
@@ -86,14 +99,23 @@ export default function Home() {
     }
   }
 
-  const plants = grove?.plants.length ? grove.plants : grove ? [] : SAMPLE;
-  const day = grove?.day ?? 60;
+  // Signed in: your own grove. Signed out: everyone's, falling back to a
+  // seeded one so the very first visitor never meets bare soil.
+  const communityPlants = community?.plants.length ? community.plants : SEEDED_COMMUNITY;
+  const plants: Plant[] = grove ? grove.plants : layoutCommunity(communityPlants);
+  const day = grove ? grove.day : COMMUNITY_DAY;
 
   return (
     <main className={styles.wrap}>
       <div className={styles.head}>
         <h1 className={styles.title}>Nimiq Grove</h1>
-        <span className={styles.day}>{grove ? `Day ${grove.day}` : 'A sample grove'}</span>
+        <span className={styles.day}>
+          {grove
+            ? `Day ${grove.day}`
+            : community && community.groves > 0
+              ? `${community.groves} ${community.groves === 1 ? 'grove' : 'groves'} growing`
+              : 'The community grove'}
+        </span>
       </div>
 
       <div className={styles.canvasFrame}>
@@ -171,8 +193,11 @@ export default function Home() {
       ) : (
         <>
           <p className={styles.hint}>
-            This is somebody else&apos;s grove. Claim a plot and yours starts growing today —
-            staking is optional, and the first plant is free.
+            {community && community.totalPlants > 0
+              ? `${community.totalPlants} ${community.totalPlants === 1 ? 'plant' : 'plants'} growing here right now${community.stakedToday > 0 ? `, ${community.stakedToday} watered by a live stake today` : ''}. `
+              : 'This is where everyone plants. '}
+            Claim a plot and yours starts growing today — staking is optional, and the first plant
+            is free.
           </p>
           <div className={styles.account}>
             <button className={styles.button} onClick={() => void connect()} disabled={busy} type="button">
