@@ -5,6 +5,7 @@ import { getProvider } from '@/lib/nimiq/provider';
 import { formatNim, MINIMUM_STAKE_NIM, nimToLuna } from '@/lib/nimiq/policy';
 import { report } from '@/lib/client-log';
 import type { GroveState } from '@/lib/grove';
+import { useLocale } from '@/lib/i18n';
 import styles from './StakePanel.module.css';
 
 interface Validator {
@@ -27,6 +28,7 @@ interface Props {
  * gatekeeper.
  */
 export function StakePanel({ grove, onDone }: Props) {
+  const { t } = useLocale();
   const [validators, setValidators] = useState<Validator[]>([]);
   const [delegation, setDelegation] = useState(grove.delegation ?? '');
   const [amount, setAmount] = useState(String(MINIMUM_STAKE_NIM));
@@ -78,10 +80,9 @@ export function StakePanel({ grove, onDone }: Props) {
   if (sent) {
     return (
       <div className={styles.panel}>
-        <h2 className={styles.title}>Stake sent</h2>
+        <h2 className={styles.title}>{t('stakeSent')}</h2>
         <p className={styles.note}>
-          It counts from the next watering, within fifteen minutes. Your NIM stays in the staking
-          contract under your own address — Grove only reads it.
+{t('stakeSentNote')}
         </p>
       </div>
     );
@@ -90,8 +91,8 @@ export function StakePanel({ grove, onDone }: Props) {
   return (
     <div className={styles.panel}>
       <h2 className={styles.title}>
-        {alreadyStaking ? 'Add to your stake' : 'Start staking'}
-        <span> — this is what makes the grove grow</span>
+        {alreadyStaking ? t('addStake') : t('startStaking')}
+        <span> {t('whatGrows')}</span>
       </h2>
 
       {alreadyStaking ? (
@@ -100,14 +101,14 @@ export function StakePanel({ grove, onDone }: Props) {
         </p>
       ) : (
         <label className={styles.field}>
-          <span>Validator</span>
+          <span>{t('validator')}</span>
           <select
             value={delegation}
             onChange={(e) => setDelegation(e.target.value)}
             disabled={busy || validators.length === 0}
           >
             <option value="">
-              {validators.length === 0 ? 'Loading the elected set…' : 'Choose one'}
+              {validators.length === 0 ? t('loadingValidators') : t('chooseValidator')}
             </option>
             {validators.map((v) => (
               <option key={v.address} value={v.address}>
@@ -115,12 +116,12 @@ export function StakePanel({ grove, onDone }: Props) {
               </option>
             ))}
           </select>
-          <small>Every elected validator, sorted by address. Grove has no preference.</small>
+          <small>{t('noPreference')}</small>
         </label>
       )}
 
       <label className={styles.field}>
-        <span>Amount in NIM</span>
+        <span>{t('amountNim')}</span>
         <input
           type="number"
           inputMode="decimal"
@@ -130,11 +131,11 @@ export function StakePanel({ grove, onDone }: Props) {
           onChange={(e) => setAmount(e.target.value)}
           disabled={busy}
         />
-        <small>Minimum {MINIMUM_STAKE_NIM} NIM. You can unstake whenever you like.</small>
+        <small>{t('minimumNim', { n: MINIMUM_STAKE_NIM })}</small>
       </label>
 
       <button className={styles.cta} onClick={() => void stake()} disabled={busy} type="button">
-        {busy ? 'Waiting for the wallet…' : alreadyStaking ? 'Add stake' : 'Delegate'}
+        {busy ? t('waitingWallet') : alreadyStaking ? t('addStakeCta') : t('delegate')}
       </button>
 
       {error ? <p className={styles.error}>{error}</p> : null}

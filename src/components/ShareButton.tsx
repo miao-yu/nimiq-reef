@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { report } from '@/lib/client-log';
+import { useLocale } from '@/lib/i18n';
 import styles from './ShareButton.module.css';
 
 /**
@@ -11,7 +12,8 @@ import styles from './ShareButton.module.css';
  * via OpenGraph and stays live, so the picture keeps growing after it is
  * posted. A downloaded PNG would freeze on the day it was taken.
  */
-export function ShareButton({ label = 'Share your grove' }: { label?: string }) {
+export function ShareButton({ label }: { label?: string }) {
+  const { t } = useLocale();
   const [copied, setCopied] = useState(false);
 
   async function share() {
@@ -33,7 +35,7 @@ export function ShareButton({ label = 'Share your grove' }: { label?: string }) 
 
   return (
     <button className={styles.button} onClick={() => void share()} type="button">
-      {copied ? 'Link copied' : label}
+      {copied ? t('linkCopied') : (label ?? t('shareYours'))}
     </button>
   );
 }

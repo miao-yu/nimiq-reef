@@ -16,12 +16,14 @@ import {
   type Plant,
   type SpeciesKey,
 } from '@/lib/grove';
-import { formatNim, MINIMUM_STAKE_NIM } from '@/lib/nimiq/policy';
+import { formatNim } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
 import { installErrorReporting, report } from '@/lib/client-log';
+import { useLocale } from '@/lib/i18n';
 import styles from './page.module.css';
 
 export default function Home() {
+  const { t } = useLocale();
   const [kind, setKind] = useState<ProviderKind | null>(null);
   const [grove, setGrove] = useState<GroveState | null>(null);
   const [busy, setBusy] = useState(false);
@@ -112,10 +114,10 @@ export default function Home() {
         <h1 className={styles.title}>Nimiq Grove</h1>
         <span className={styles.day}>
           {grove
-            ? `Day ${grove.day}`
+            ? t('day', { n: grove.day })
             : community && community.groves > 0
-              ? `${community.groves} ${community.groves === 1 ? 'grove' : 'groves'} growing`
-              : 'The community grove'}
+              ? t('grovesGrowing', { n: community.groves })
+              : t('communityGrove')}
         </span>
       </div>
 
@@ -127,15 +129,15 @@ export default function Home() {
         <>
           <dl className={styles.stats}>
             <div>
-              <dt>Days staked</dt>
+              <dt>{t('daysStaked')}</dt>
               <dd>{grove.daysStaked}</dd>
             </div>
             <div>
-              <dt>Staked</dt>
+              <dt>{t('staked')}</dt>
               <dd>{grove.stakedLuna > 0 ? `${formatNim(grove.stakedLuna)} NIM` : '—'}</dd>
             </div>
             <div>
-              <dt>Plots</dt>
+              <dt>{t('plots')}</dt>
               <dd>
                 {grove.plotsUnlocked - grove.freePlots.length}/{grove.plotsUnlocked}
               </dd>
@@ -144,15 +146,15 @@ export default function Home() {
 
           {grove.chainOffline ? (
             <p className={styles.warn}>
-              Can&apos;t reach the chain right now, so this is from what we last saw. Nothing is lost.
+              {t('chainOffline')}
             </p>
           ) : null}
 
           {grove.freePlots.length > 0 ? (
             <div className={styles.planter}>
               <h2 className={styles.planterTitle}>
-                Plant in plot {grove.freePlots[0]! + 1}
-                <span> — you can&apos;t change it later</span>
+                {t('plantInPlot', { n: grove.freePlots[0]! + 1 })}
+                <span> {t('permanent')}</span>
               </h2>
               <div className={styles.speciesRow}>
                 {grove.speciesUnlocked.map((key) => (
@@ -170,15 +172,17 @@ export default function Home() {
             </div>
           ) : (
             <p className={styles.hint}>
-              Every cleared plot is planted. {grove.next ? null : 'The grove is complete.'}
+              {t('allPlanted')}
             </p>
           )}
 
           {grove.next ? (
             <p className={styles.hint}>
-              {SPECIES[grove.next.species].label} unlocks after {grove.next.atDay} unbroken days
-              staked — {grove.next.daysAway} to go.
-              {grove.stakedLuna === 0 ? ` Staking starts at ${MINIMUM_STAKE_NIM} NIM.` : ''}
+              {t('unlocksAfter', {
+                species: SPECIES[grove.next.species].label,
+                n: grove.next.atDay,
+                away: grove.next.daysAway,
+              })}
             </p>
           ) : null}
 
@@ -186,9 +190,9 @@ export default function Home() {
 
           <div className={styles.account}>
             <span className={styles.addr}>{grove.address}</span>
-            <ShareButton />
+            <ShareButton label={t('shareYours')} />
             <button className={styles.ghost} onClick={() => void disconnect()} type="button">
-              Sign out
+              {t('signOut')}
             </button>
           </div>
         </>
@@ -198,14 +202,13 @@ export default function Home() {
             {community && community.totalPlants > 0
               ? `${community.totalPlants} ${community.totalPlants === 1 ? 'plant' : 'plants'} growing here right now${community.stakedToday > 0 ? `, ${community.stakedToday} watered by a live stake today` : ''}. `
               : 'This is where everyone plants. '}
-            Claim a plot and yours starts growing today — staking is optional, and the first plant
-            is free.
+            {t('claimPrompt')}
           </p>
           <div className={styles.account}>
             <button className={styles.button} onClick={() => void connect()} disabled={busy} type="button">
-              {busy ? 'Waiting for the wallet…' : kind === 'hub' ? 'Sign in with Nimiq Wallet' : 'Claim your plot'}
+              {busy ? t('waitingWallet') : kind === 'hub' ? t('signInWallet') : t('claimPlot')}
             </button>
-            <ShareButton label="Share this grove" />
+            <ShareButton label={t('shareThis')} />
           </div>
         </>
       )}
