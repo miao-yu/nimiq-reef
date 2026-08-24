@@ -16,7 +16,8 @@ npm run build
 npm run typecheck
 ```
 
-Copy `.env.example` to `.env.local` and fill it in before wiring the engine.
+Copy `.env.example` to `.env.local` and fill it in. The app expects a Nimiq
+node and MySQL on localhost; see `docs/ARCHITECTURE.md`.
 
 ## Layout
 
@@ -25,6 +26,7 @@ src/
   app/              Next.js App Router
   components/       React components (Grove canvas)
   lib/grove/        Renderer — pure, no React, no DOM beyond canvas
+  lib/server/       Node RPC, MySQL pool, env (server-only)
 docs/
   DECISIONS.md      What was decided and why, plus what is still open
   ARCHITECTURE.md   How Vercel, the engine, and the node fit together

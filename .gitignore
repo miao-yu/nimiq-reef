@@ -11,3 +11,6 @@ next-env.d.ts
 
 .DS_Store
 *.log
+
+# Local-only notes (prod hostnames, keys) — this repo goes public
+*.local.md

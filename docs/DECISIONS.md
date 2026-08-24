@@ -21,7 +21,7 @@ Read from miniappscompetition.com on 23 Aug 2026.
 | Decision | Choice | Why |
 | --- | --- | --- |
 | Stack | Next.js 16 + React 19, hand-rolled | No starter template; small surface, few screens |
-| Hosting | Next on Vercel, engine on the pool server | See ARCHITECTURE.md |
+| Hosting | Fullstack Next.js on one VPS, alongside the node and MySQL | v1 simplicity: one deploy, no internal API. See ARCHITECTURE.md |
 | Validators | **Any validator** — ecosystem-neutral | Bigger audience, other operators promote it, and it does not read as a funnel to our own pool |
 | Team | Solo | Scope stays tight |
 | Renderer | Canvas, deterministic, framework-free | Same code draws the server-side share image |
@@ -67,7 +67,8 @@ Idle games die of too many systems long before too few.
   change is not workable — but the real thing has to be verified before submission.
 - **Testnet or mainnet for development?** `core-rs-albatross` is already cloned;
   a testnet node avoids risking real NIM during the build.
-- **Domain** for the Mini App URL.
+- **Domain and TLS certificate.** Mini Apps must be served over HTTPS, so
+  this blocks on-device testing, not just launch.
 - **Does unstaking kill the grove?** Brutal drives retention; forgiving avoids
   punishing someone who simply needs their money back. Leaning forgiving —
   growth pauses, nothing dies.

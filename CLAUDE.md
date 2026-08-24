@@ -9,6 +9,13 @@ proposing anything — especially the two guardrails, which are load-bearing:
 1. Growth is paced by **time staked**, never by stake size.
 2. Nothing in the grove ever converts back to NIM.
 
+## Shape
+
+Fullstack Next.js on a single VPS. Server code talks to MySQL and the Nimiq
+node directly over localhost (`src/lib/server/`). No separate API service.
+Prod hostnames live in `docs/DEPLOY.local.md`, which is gitignored — **this
+repo goes public**, so never commit an IP, hostname or key.
+
 ## Commands
 
 ```bash
