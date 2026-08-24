@@ -87,3 +87,49 @@ cannot read.
 **On the first successful sign-in from a real phone, read the `encoding` in the
 log and delete the other candidate.** A dev-wallet log saying `raw-utf8` proves
 nothing — the mock chose that itself.
+
+## Opening an unlisted Mini App on a device
+
+Researched 24 Aug 2026, after `nimpay.app/miniapps/open/grove.nimiq.cafe`
+returned "not in the directory".
+
+**Use the Custom URL field.** In Nimiq Pay → Mini Apps there is a Custom URL
+input; paste `https://grove.nimiq.cafe` and it loads. This is the documented
+path for testing and needs no listing.
+Source: https://nimiq.dev/mini-apps/development/load-local-mini-app
+
+Why the deeplink failed: `nimpay.app/miniapps/open/<host>` is a **server-side
+allowlist**, not a generic opener. It resolves only for hosts in the directory
+feed at https://nimpay.app/api/miniapps. Confirmed by probe — listed apps
+return 200, `grove.nimiq.cafe` returns 404 `Unknown mini app host`, and so does
+a real Cycle 1 entry that was never listed. The overview page's claim that the
+HTTPS link "works with any domain" is wrong.
+
+The custom scheme `nimiqpay://miniapp?url=<encoded>` is handled by the app
+rather than the server and warns-then-proceeds for unknown URLs. Not verified
+on a device; the Custom URL field is the supported route.
+
+### Directory listing is not required for the competition
+
+Two separate pipelines, and the submit page says so outright:
+
+- **Catalog listing** — https://nimpay.app/miniapps/submit, opens a PR against
+  `nimiq/awesome`. Turnaround 1–3 days typically. Optional.
+- **Competition entry** — https://miniappscompetition.com/submit, PR to
+  `nimiq/miniappscompetition-submissions`, carrying a plain URL. No listing
+  involved. Most Cycle 1 entries are still unlisted.
+
+### Hidden dev menu, and free testnet NIM
+
+Long-press the settings button in Nimiq Pay for ~10 seconds to reveal a network
+switch: Default / Mainnet / Testnet. Switching clears transaction history and
+reloads. On testnet the home screen offers **Get free NIM** — 110,000 testnet
+NIM per tap.
+
+This makes the Phase 0 staking test free: it can run on testnet rather than
+costing 100 real NIM on mainnet. The switch affects Nimiq provider operations
+only; EVM stays on mainnet.
+
+Caveat: our server reads a **mainnet** node, so a testnet delegation will not
+appear in a grove. That is fine for Phase 0, whose goal is only to prove the
+SDK call works end to end from the app.

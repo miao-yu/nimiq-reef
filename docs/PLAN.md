@@ -28,10 +28,12 @@ Goal: a real phone, running the real app, over real HTTPS.
 - [ ] Deploy the current scaffold (`node .next/standalone/server.js`)
 - [ ] Harden per `docs/DEPLOY.local.md` — RPC on localhost, own system user,
       `grove` MySQL user with no grants on the pool
-- [ ] Open it in Nimiq Pay via `https://nimpay.app/miniapps/open/<domain>`
+- [ ] Open it in Nimiq Pay via the **Custom URL** field (the nimpay.app deeplink
+      is an allowlist and 404s for unlisted apps — see `docs/RESEARCH.md`)
 - [ ] Sign in from the device; **read the `encoding` in the log and pin
       `signed-message.ts` to the winner**
-- [ ] Fire one `sendNewStakerTransaction` on testnet, confirm it lands
+- [ ] Fire one `sendNewStakerTransaction` on **testnet** — long-press settings
+      for 10s to switch networks, then Get free NIM. Costs nothing.
 - [ ] Sip & Ship call #1 (Wed 26 Aug) — showing up is scored
 
 **Exit:** signing in from a phone works, and the verifier accepts exactly one
