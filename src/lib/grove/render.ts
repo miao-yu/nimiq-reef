@@ -131,7 +131,7 @@ function growthOf(plant: Plant, day: number): number {
 export function renderGrove(ctx: Ctx, options: RenderOptions): void {
   const { width: w, height: h, day, plants, palette: p } = options;
   const scale = options.scale ?? clamp(w / 820, 0.62, 1.15);
-  const groundY = h * 0.82;
+  const groundY = h * (options.groundRatio ?? 0.82);
 
   const sky = ctx.createLinearGradient(0, 0, 0, groundY);
   sky.addColorStop(0, p.skyTop);

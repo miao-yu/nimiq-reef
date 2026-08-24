@@ -1,0 +1,12 @@
+.button {
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: none;
+  border: 1px solid var(--line-strong, var(--line));
+  color: var(--ink-soft);
+  border-radius: 9px;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+.button:hover { border-color: var(--leaf); color: var(--ink); }
+.button:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }

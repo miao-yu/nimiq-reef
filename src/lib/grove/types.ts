@@ -43,4 +43,9 @@ export interface RenderOptions {
   palette: GrovePalette;
   /** Global size multiplier, so small canvases stay legible. */
   scale?: number;
+  /**
+   * Where the horizon sits, 0..1 from the top. The default suits a phone;
+   * a wide share card needs more ground or the plants drown in sky.
+   */
+  groundRatio?: number;
 }

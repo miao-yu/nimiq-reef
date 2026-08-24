@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Grove } from '@/components/Grove';
 import { StakePanel } from '@/components/StakePanel';
+import { ShareButton } from '@/components/ShareButton';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import {
@@ -185,6 +186,7 @@ export default function Home() {
 
           <div className={styles.account}>
             <span className={styles.addr}>{grove.address}</span>
+            <ShareButton />
             <button className={styles.ghost} onClick={() => void disconnect()} type="button">
               Sign out
             </button>
@@ -203,6 +205,7 @@ export default function Home() {
             <button className={styles.button} onClick={() => void connect()} disabled={busy} type="button">
               {busy ? 'Waiting for the wallet…' : kind === 'hub' ? 'Sign in with Nimiq Wallet' : 'Claim your plot'}
             </button>
+            <ShareButton label="Share this grove" />
           </div>
         </>
       )}
