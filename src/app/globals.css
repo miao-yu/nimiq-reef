@@ -1,0 +1,97 @@
+/* Grove tokens. The canvas renderer reads --sky-*, --soil*, --leaf-*, --trunk
+   and --bloom-* straight off :root, so themes need no JS palette table. */
+:root {
+  --ground: #f2f5ee;
+  --surface: #ffffff;
+  --ink: #15231b;
+  --ink-soft: #35473c;
+  --muted: #66766b;
+  --line: #dbe2d5;
+  --leaf: #2c6e48;
+
+  --sky-top: #e8f0e5;
+  --sky-bottom: #fafcf7;
+  --soil: #d6dcc8;
+  --soil-dark: #bfc8ae;
+  --leaf-1: #3e8a5c;
+  --leaf-2: #2c6845;
+  --leaf-3: #6bae81;
+  --trunk: #6b5b45;
+  --bloom-a: #d2941f;
+  --bloom-b: #e9c468;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ground: #0b120d;
+    --surface: #131e17;
+    --ink: #e4ede6;
+    --ink-soft: #bccdc0;
+    --muted: #8a9c8f;
+    --line: #23342a;
+    --leaf: #5bc38a;
+
+    --sky-top: #0f1c14;
+    --sky-bottom: #080f0b;
+    --soil: #1a2820;
+    --soil-dark: #121d16;
+    --leaf-1: #4fb27c;
+    --leaf-2: #37855a;
+    --leaf-3: #7bd4a2;
+    --trunk: #7a6244;
+    --bloom-a: #e8b04a;
+    --bloom-b: #f3d07e;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #0b120d;
+  --surface: #131e17;
+  --ink: #e4ede6;
+  --ink-soft: #bccdc0;
+  --muted: #8a9c8f;
+  --line: #23342a;
+  --leaf: #5bc38a;
+
+  --sky-top: #0f1c14;
+  --sky-bottom: #080f0b;
+  --soil: #1a2820;
+  --soil-dark: #121d16;
+  --leaf-1: #4fb27c;
+  --leaf-2: #37855a;
+  --leaf-3: #7bd4a2;
+  --trunk: #7a6244;
+  --bloom-a: #e8b04a;
+  --bloom-b: #f3d07e;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--ground);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  /* Webview: no rubber-band, no accidental text selection while tapping plots. */
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
