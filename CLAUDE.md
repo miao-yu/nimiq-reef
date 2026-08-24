@@ -22,6 +22,7 @@ repo goes public**, so never commit an IP, hostname or key.
 npm run dev        # localhost:3000
 npm run build
 npm run typecheck
+node scripts/auth-smoke.mjs   # sign-in, replay and impersonation checks
 ```
 
 ## Conventions
@@ -35,15 +36,36 @@ npm run typecheck
 - Secrets live in `.env.local`, never in source. The competition disqualifies
   hardcoded credentials.
 
-## Do not copy from `../nimiq-pos-pool`
+## Verify before you trust
 
-That repo has a database password in the git history of every tracked file, and
-history travels with a fork or a copy. Reference its logic, retype what you
-need. `../nimiq-cafe` is the better reference for wallet-signature auth — it
-already uses `@nimiq/core` correctly.
+`docs/RESEARCH.md` records what was checked against real packages and the
+Albatross source, with dates. Two rules that came out of it:
+
+- **Never call `getStakersByValidatorAddress` from a request** — the node marks
+  it extremely expensive. Look up one staker by address.
+- **The sign-in check has two halves**: verify the signature *and* that the
+  public key derives to the claimed address. Dropping the second lets any
+  wallet claim any grove. `scripts/auth-smoke.mjs` case 7 guards this.
+
+## Do not copy from `../nimiq-pos-pool` or `../nimiq-cafe`
+
+Both are out of date — `nimiq-cafe` pins `@nimiq/core` ^2.0.5 against a current
+2.20.0 — and `nimiq-pos-pool` has a database password in the git history of
+every tracked file, which travels with a copy. Read them for intent, write
+fresh code against `docs/RESEARCH.md`.
 
 ## Related work in ~/Projects
 
 - `nimiq-pos-pool` — the validator pool: reward accounting, 15-min batched payouts
 - `nimiq-cafe` — Vite/React + Express + `@nimiq/core`, JWT wallet auth
 - `core-rs-albatross` — Nimiq node source, for running a testnet node
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

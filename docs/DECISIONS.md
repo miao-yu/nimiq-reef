@@ -60,13 +60,21 @@ real and withdrawable at the staking contract.
 
 Idle games die of too many systems long before too few.
 
+## Verified, not assumed
+
+See `docs/RESEARCH.md`. Everything below was checked against published packages
+and the Albatross v1.7.2 source on 23 Aug 2026, because the older Nimiq projects
+in `~/Projects` are out of date.
+
 ## Open
 
 - **Can we test inside Nimiq Pay?** Needs the app installed with a wallet. A
   mock provider is being built regardless — developing against a phone for every
   change is not workable — but the real thing has to be verified before submission.
-- **Testnet or mainnet for development?** `core-rs-albatross` is already cloned;
-  a testnet node avoids risking real NIM during the build.
+- **Testnet or mainnet for development?** `core-rs-albatross` is already cloned
+  at v1.7.2; a testnet node avoids risking real NIM during the build.
+- **Which message encoding Nimiq Pay signs.** Blocks pinning the verifier down
+  to one candidate — see `docs/RESEARCH.md`.
 - **Domain and TLS certificate.** Mini Apps must be served over HTTPS, so
   this blocks on-device testing, not just launch.
 - **Does unstaking kill the grove?** Brutal drives retention; forgiving avoids

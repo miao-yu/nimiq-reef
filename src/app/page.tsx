@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Grove } from '@/components/Grove';
+import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
+import { getProvider } from '@/lib/nimiq/provider';
 import type { Plant } from '@/lib/grove';
 import styles from './page.module.css';
 
 /**
- * Placeholder plot so `npm run dev` shows something real. In the app this
- * comes from the grove engine, derived from the wallet's staking history.
+ * Placeholder plot so the app shows something real while the engine is built.
+ * In production this comes from the wallet's staking history.
  */
 const DEMO_PLOT: Plant[] = [
   { x: 0.075, species: 'sprout', plantedDay: 1, seed: 26 },
@@ -23,6 +25,33 @@ const DEMO_PLOT: Plant[] = [
 
 export default function Home() {
   const [day, setDay] = useState(30);
+  const [address, setAddress] = useState<string | null>(null);
+  const [mock, setMock] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void currentSession().then(setAddress);
+    void getProvider().then((p) => setMock(p.isMock));
+  }, []);
+
+  async function connect() {
+    setBusy(true);
+    setError(null);
+    try {
+      const { address: signedIn } = await signIn();
+      setAddress(signedIn);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disconnect() {
+    await signOut();
+    setAddress(null);
+  }
 
   return (
     <main className={styles.wrap}>
@@ -45,8 +74,31 @@ export default function Home() {
         aria-label="Day of staking"
       />
 
+      <div className={styles.account}>
+        {address ? (
+          <>
+            <span className={styles.addr}>{address}</span>
+            <button className={styles.button} onClick={() => void disconnect()} type="button">
+              Sign out
+            </button>
+          </>
+        ) : (
+          <button
+            className={styles.button}
+            onClick={() => void connect()}
+            disabled={busy}
+            type="button"
+          >
+            {busy ? 'Waiting for the wallet…' : 'Claim your plot'}
+          </button>
+        )}
+      </div>
+
+      {error ? <p className={styles.error}>{error}</p> : null}
+
       <p className={styles.hint}>
-        Placeholder plot. Real groves come from the engine on the pool server.
+        {mock ? 'Dev wallet — not running inside Nimiq Pay.' : 'Connected to Nimiq Pay.'} Plot is a
+        placeholder until the engine lands.
       </p>
     </main>
   );

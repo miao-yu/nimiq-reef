@@ -11,6 +11,10 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@nimiq/core": "^2.20.0",
+    "@nimiq/mini-app-sdk": "^0.1.0",
+    "@nimiq/utils": "^0.12.4",
+    "jose": "^6.2.10",
     "mysql2": "^3.24.0",
     "next": "^16.3.2",
     "react": "^19.2.8",
