@@ -26,4 +26,8 @@ export const env = {
   get sessionSecret(): string {
     return required('SESSION_SECRET');
   },
+  /** Shared secret for the tick endpoint; only the systemd timer knows it. */
+  get tickSecret(): string {
+    return required('TICK_SECRET');
+  },
 };

@@ -1,0 +1,14 @@
+# /etc/systemd/system/grove-tick.service
+[Unit]
+Description=Nimiq Grove watering tick
+After=grove.service
+
+[Service]
+Type=oneshot
+# The secret lives in the app env, readable only by the grove user.
+EnvironmentFile=/opt/grove/app.env
+ExecStart=/usr/bin/curl -sS --fail --max-time 120 \
+  -X POST http://127.0.0.1:3200/api/tick \
+  -H "Authorization: Bearer ${TICK_SECRET}"
+User=grove
+Group=grove

@@ -26,6 +26,12 @@ ssh "$GROVE_SSH" "cd ${APP_DIR} && sudo -u grove npm ci --no-audit --no-fund && 
 echo "==> copying static assets into the standalone bundle"
 ssh "$GROVE_SSH" "cd ${APP_DIR} && sudo -u grove cp -r public .next/standalone/ 2>/dev/null || true; sudo -u grove cp -r .next/static .next/standalone/.next/"
 
+echo "==> migrations"
+ssh "$GROVE_SSH" "cd ${APP_DIR} && sudo -u grove env \$(grep -v '^#' /opt/grove/db.env | xargs) npm run migrate"
+
+echo "==> tick timer"
+ssh "$GROVE_SSH" "install -m 644 ${APP_DIR}/deploy/grove-tick.service /etc/systemd/system/grove-tick.service && install -m 644 ${APP_DIR}/deploy/grove-tick.timer /etc/systemd/system/grove-tick.timer && systemctl daemon-reload && systemctl enable --now grove-tick.timer >/dev/null"
+
 echo "==> restarting"
 ssh "$GROVE_SSH" "systemctl restart grove && sleep 2 && systemctl is-active grove"
 
