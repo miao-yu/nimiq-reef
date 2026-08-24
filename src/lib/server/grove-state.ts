@@ -3,25 +3,8 @@ import { rpc, RpcUnavailableError } from './rpc';
 import { daysStaked, ensureGrove, listPlants } from './grove-repo';
 import { groveDay } from '@/lib/grove/day';
 import { plotsUnlocked, speciesUnlocked, nextMilestone, MAX_PLOTS } from '@/lib/grove/progression';
-import type { Plant, SpeciesKey } from '@/lib/grove';
-
-export interface GroveState {
-  address: string;
-  /** Day 1 is the day the grove was created. Growth is measured from here. */
-  day: number;
-  plants: Plant[];
-  /** Unbroken days staked. Everything unlocks off this, never off amount. */
-  daysStaked: number;
-  stakedLuna: number;
-  delegation: string | null;
-  plotsUnlocked: number;
-  plotsTotal: number;
-  freePlots: number[];
-  speciesUnlocked: SpeciesKey[];
-  next: ReturnType<typeof nextMilestone>;
-  /** True when the chain could not be read; the grove is shown from history. */
-  chainOffline: boolean;
-}
+export type { GroveState };
+import type { GroveState } from '@/lib/grove/state';
 
 export async function getGroveState(address: string): Promise<GroveState> {
   const grove = await ensureGrove(address);

@@ -98,3 +98,72 @@
   font-size: 0.85rem;
   color: #b0453a;
 }
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 0;
+}
+.stats div {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.stats dt {
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stats dd {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.planter {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 15px 16px;
+  background: var(--surface);
+}
+.planterTitle { margin: 0; font-size: 0.95rem; font-weight: 600; }
+.planterTitle span { font-weight: 400; color: var(--muted); }
+.speciesRow { display: flex; flex-wrap: wrap; gap: 8px; }
+.species {
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--ground);
+  color: var(--ink);
+  border: 1.5px solid var(--line-strong, var(--line));
+  border-radius: 9px;
+  padding: 9px 15px;
+  cursor: pointer;
+}
+.species:hover:not(:disabled) { border-color: var(--leaf); }
+.species:disabled { opacity: 0.5; cursor: default; }
+
+.ghost {
+  font-size: 0.8rem;
+  background: none;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  border-radius: 8px;
+  padding: 7px 13px;
+  cursor: pointer;
+}
+.warn {
+  margin: 0;
+  font-size: 0.87rem;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px dashed var(--line-strong, var(--line));
+  border-radius: 9px;
+  padding: 10px 13px;
+}

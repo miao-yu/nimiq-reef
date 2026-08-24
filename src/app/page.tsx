@@ -1,64 +1,47 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Grove } from '@/components/Grove';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
-import type { Plant } from '@/lib/grove';
+import { SPECIES, type GroveState, type Plant, type SpeciesKey } from '@/lib/grove';
+import { formatNim, MINIMUM_STAKE_NIM } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
 import styles from './page.module.css';
 
-/**
- * Placeholder plot so the app shows something real while the engine is built.
- * In production this comes from the wallet's staking history.
- */
-const DEMO_PLOT: Plant[] = [
-  { x: 0.075, species: 'sprout', plantedDay: 1, seed: 26 },
-  { x: 0.165, species: 'sprout', plantedDay: 1, seed: 14 },
-  { x: 0.255, species: 'sprout', plantedDay: 4, seed: 31 },
+/** Shown before sign-in, so the page is alive before anyone commits anything. */
+const SAMPLE: Plant[] = [
+  { x: 0.125, species: 'sprout', plantedDay: 1, seed: 26 },
   { x: 0.375, species: 'fern', plantedDay: 7, seed: 52 },
-  { x: 0.525, species: 'elder', plantedDay: 60, seed: 77 },
-  { x: 0.645, species: 'bloom', plantedDay: 21, seed: 8 },
-  { x: 0.745, species: 'fern', plantedDay: 30, seed: 63 },
-  { x: 0.845, species: 'bloom', plantedDay: 45, seed: 45 },
-  { x: 0.935, species: 'sprout', plantedDay: 12, seed: 90 },
+  { x: 0.625, species: 'bloom', plantedDay: 21, seed: 8 },
+  { x: 0.875, species: 'elder', plantedDay: 60, seed: 77 },
 ];
 
-function signInLabel(kind: ProviderKind | null): string {
-  return kind === 'hub' ? 'Sign in with Nimiq Wallet' : 'Claim your plot';
-}
-
-function providerNote(kind: ProviderKind | null): string {
-  switch (kind) {
-    case 'nimiq-pay':
-      return 'Running inside Nimiq Pay.';
-    case 'hub':
-      return 'Signing via the Nimiq Wallet — staking needs Nimiq Pay.';
-    case 'mock':
-      return 'Dev wallet — not a real signature.';
-    default:
-      return 'Looking for a wallet…';
-  }
-}
-
 export default function Home() {
-  const [day, setDay] = useState(30);
-  const [address, setAddress] = useState<string | null>(null);
   const [kind, setKind] = useState<ProviderKind | null>(null);
+  const [grove, setGrove] = useState<GroveState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    void currentSession().then(setAddress);
-    void getProvider().then((p) => setKind(p.kind));
+  const load = useCallback(async () => {
+    const res = await fetch('/api/grove');
+    if (res.ok) setGrove((await res.json()) as GroveState);
+    else setGrove(null);
   }, []);
+
+  useEffect(() => {
+    void getProvider().then((p) => setKind(p.kind));
+    void currentSession().then((address) => {
+      if (address) void load();
+    });
+  }, [load]);
 
   async function connect() {
     setBusy(true);
     setError(null);
     try {
-      const { address: signedIn } = await signIn();
-      setAddress(signedIn);
+      await signIn();
+      await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
     } finally {
@@ -68,55 +51,125 @@ export default function Home() {
 
   async function disconnect() {
     await signOut();
-    setAddress(null);
+    setGrove(null);
   }
+
+  async function plant(species: SpeciesKey) {
+    const plot = grove?.freePlots[0];
+    if (plot === undefined) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/grove/plant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ species, plot }),
+      });
+      const data = (await res.json()) as GroveState & { error?: string };
+      if (!res.ok) throw new Error(data.error ?? 'Could not plant that.');
+      setGrove(data);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Could not plant that.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const plants = grove?.plants.length ? grove.plants : grove ? [] : SAMPLE;
+  const day = grove?.day ?? 60;
 
   return (
     <main className={styles.wrap}>
       <div className={styles.head}>
         <h1 className={styles.title}>Nimiq Grove</h1>
-        <span className={styles.day}>Day {day}</span>
+        <span className={styles.day}>{grove ? `Day ${grove.day}` : 'A sample grove'}</span>
       </div>
 
       <div className={styles.canvasFrame}>
-        <Grove plants={DEMO_PLOT} day={day} className={styles.canvas} />
+        <Grove plants={plants} day={day} className={styles.canvas} />
       </div>
 
-      <input
-        className={styles.slider}
-        type="range"
-        min={1}
-        max={90}
-        value={day}
-        onChange={(e) => setDay(Number(e.target.value))}
-        aria-label="Day of staking"
-      />
+      {grove ? (
+        <>
+          <dl className={styles.stats}>
+            <div>
+              <dt>Days staked</dt>
+              <dd>{grove.daysStaked}</dd>
+            </div>
+            <div>
+              <dt>Staked</dt>
+              <dd>{grove.stakedLuna > 0 ? `${formatNim(grove.stakedLuna)} NIM` : '—'}</dd>
+            </div>
+            <div>
+              <dt>Plots</dt>
+              <dd>
+                {grove.plotsUnlocked - grove.freePlots.length}/{grove.plotsUnlocked}
+              </dd>
+            </div>
+          </dl>
 
-      <div className={styles.account}>
-        {address ? (
-          <>
-            <span className={styles.addr}>{address}</span>
-            <button className={styles.button} onClick={() => void disconnect()} type="button">
+          {grove.chainOffline ? (
+            <p className={styles.warn}>
+              Can&apos;t reach the chain right now, so this is from what we last saw. Nothing is lost.
+            </p>
+          ) : null}
+
+          {grove.freePlots.length > 0 ? (
+            <div className={styles.planter}>
+              <h2 className={styles.planterTitle}>
+                Plant in plot {grove.freePlots[0]! + 1}
+                <span> — you can&apos;t change it later</span>
+              </h2>
+              <div className={styles.speciesRow}>
+                {grove.speciesUnlocked.map((key) => (
+                  <button
+                    key={key}
+                    className={styles.species}
+                    disabled={busy}
+                    onClick={() => void plant(key)}
+                    type="button"
+                  >
+                    {SPECIES[key].label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className={styles.hint}>
+              Every cleared plot is planted. {grove.next ? null : 'The grove is complete.'}
+            </p>
+          )}
+
+          {grove.next ? (
+            <p className={styles.hint}>
+              {SPECIES[grove.next.species].label} unlocks after {grove.next.atDay} unbroken days
+              staked — {grove.next.daysAway} to go.
+              {grove.stakedLuna === 0 ? ` Staking starts at ${MINIMUM_STAKE_NIM} NIM.` : ''}
+            </p>
+          ) : null}
+
+          <div className={styles.account}>
+            <span className={styles.addr}>{grove.address}</span>
+            <button className={styles.ghost} onClick={() => void disconnect()} type="button">
               Sign out
             </button>
-          </>
-        ) : (
-          <button
-            className={styles.button}
-            onClick={() => void connect()}
-            disabled={busy}
-            type="button"
-          >
-            {busy ? 'Waiting for the wallet…' : signInLabel(kind)}
-          </button>
-        )}
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className={styles.hint}>
+            This is somebody else&apos;s grove. Claim a plot and yours starts growing today —
+            staking is optional, and the first plant is free.
+          </p>
+          <div className={styles.account}>
+            <button className={styles.button} onClick={() => void connect()} disabled={busy} type="button">
+              {busy ? 'Waiting for the wallet…' : kind === 'hub' ? 'Sign in with Nimiq Wallet' : 'Claim your plot'}
+            </button>
+          </div>
+        </>
+      )}
 
       {error ? <p className={styles.error}>{error}</p> : null}
-
-      <p className={styles.hint}>
-        {providerNote(kind)} Plot is a placeholder until the engine lands.
-      </p>
     </main>
   );
 }
