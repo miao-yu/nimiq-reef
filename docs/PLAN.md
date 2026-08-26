@@ -11,7 +11,8 @@ when strangers, and probably council members, first open this. Written 25 Aug.
 
 ## 0. What already exists and works
 
-Deployed at https://grove.nimiq.cafe, running as `grove.service` on the VPS.
+Deployed at https://reef.nimiq.cafe, running as `grove.service` on the VPS
+(the unit and paths still say `grove`; only the public hostname moved).
 Do not rebuild any of this.
 
 | Working | Where |
@@ -388,12 +389,10 @@ and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.
 
 ## 5. Decided 25 Aug — treat these as settled
 
-- **Name: Reef.** A reef is built slowly by many small organisms into something
-  that hosts everything else, which is what a staking pool is. Move to
-  `reef.nimiq.cafe`: add the DNA record in Cloudflare **grey cloud**, copy
-  `deploy/nginx/grove.conf`, then
-  `certbot --nginx -d reef.nimiq.cafe`. Rename user-facing copy in all three
-  languages; internal identifiers can migrate later.
+- **Name: Reef.** Done, 26 Aug — `reef.nimiq.cafe` is live with its own
+  certificate. Internal identifiers (`grove.service`, `/opt/grove`, the `grove`
+  database) deliberately still say grove; renaming them buys nothing and risks
+  a broken deploy. User-facing copy in three languages is still owed, in Step 8.
 - **Unstaking is forgiving.** The streak resets and rarity odds fall back, no
   new rolls come from staking — but **every specimen stays**. The whole app sits
   on top of somebody's real money; taking it back must never cost them the

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
-const ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN ?? 'https://grove.nimiq.cafe';
-const DESCRIPTION = 'A garden that grows from your staking. Nothing here is simulated.';
+const ORIGIN = process.env.NEXT_PUBLIC_APP_ORIGIN ?? 'https://reef.nimiq.cafe';
+const DESCRIPTION = 'A tank that fills as you stake. Nothing here is simulated.';
 
 /**
  * The card is what actually travels. A crawler has no session, so /api/share
@@ -11,19 +11,19 @@ const DESCRIPTION = 'A garden that grows from your staking. Nothing here is simu
  */
 export const metadata: Metadata = {
   metadataBase: new URL(ORIGIN),
-  title: 'Nimiq Grove',
+  title: 'Reef',
   description: DESCRIPTION,
   openGraph: {
-    title: 'Nimiq Grove',
+    title: 'Reef',
     description: DESCRIPTION,
     url: ORIGIN,
-    siteName: 'Nimiq Grove',
+    siteName: 'Reef',
     type: 'website',
-    images: [{ url: '/api/share', width: 1200, height: 630, alt: 'A grove growing from staking' }],
+    images: [{ url: '/api/share', width: 1200, height: 630, alt: 'An aquarium filling as you stake' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Nimiq Grove',
+    title: 'Reef',
     description: DESCRIPTION,
     images: ['/api/share'],
   },

@@ -67,5 +67,5 @@ function drawCaption(ctx: SKRSContext2D, caption: string, width: number, height:
 
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.font = '400 26px sans-serif';
-  ctx.fillText('grove.nimiq.cafe', pad, height - pad);
+  ctx.fillText('reef.nimiq.cafe', pad, height - pad);
 }

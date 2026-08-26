@@ -10,7 +10,7 @@ import styles from './page.module.css';
  * apps. The `nimiqpay://` scheme is handled by the app itself and warns rather
  * than blocking, so a plain tappable link is the shortest route onto a device.
  */
-const APP_URL = 'https://grove.nimiq.cafe';
+const APP_URL = 'https://reef.nimiq.cafe';
 const DEEPLINK = `nimiqpay://miniapp?url=${encodeURIComponent(APP_URL)}`;
 
 export default function OpenInNimiqPay() {
@@ -29,7 +29,7 @@ export default function OpenInNimiqPay() {
   return (
     <main className={styles.wrap}>
       <div className={styles.step}>
-        <h1 className={styles.title}>Open Grove in Nimiq Pay</h1>
+        <h1 className={styles.title}>Open Reef in Nimiq Pay</h1>
         <p className={styles.sub}>Open this page on the phone that has Nimiq Pay installed.</p>
       </div>
 
