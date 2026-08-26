@@ -12,6 +12,7 @@ import {
   drawSubstrate,
   drawSurface,
   drawWater,
+  drawAir,
   makeBubbles,
 } from './scene';
 import type { Inhabitant, RenderOptions } from './types';
@@ -41,6 +42,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   ctx.save();
   clipToTank(ctx, tank);
 
+  drawAir(ctx, tank, p);
   drawWater(ctx, tank, p);
   drawShafts(ctx, tank, p, time);
   drawSubstrate(ctx, tank, p);

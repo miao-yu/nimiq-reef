@@ -22,7 +22,7 @@ for (const size of [192, 512]) {
     time: 11.4,
     inhabitants: LIFE.map(([species, tier, seed]) => ({ species, tier, seed })),
     palette: TANK_PALETTE,
-    tankFill: 1,
+    waterLevel: 1,
     motion: false,
     scale: size * 0.42,
   });

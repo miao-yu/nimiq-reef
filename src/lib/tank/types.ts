@@ -49,11 +49,10 @@ export interface RenderOptions {
   inhabitants: readonly Inhabitant[];
   palette: TankPalette;
   /**
-   * How much of the canvas the tank occupies, 0..1. This is the one thing
-   * stake amount drives — money buys the vessel, never what lives in it.
+   * How much of the glass holds water, 0..1. The one thing stake amount drives
+   * visually — the glass itself is the same size for everyone, and depth never
+   * gates what can live in it.
    */
-  tankFill?: number;
-  /** 0..1 of the tank's height that holds water. Falls when NIM is withdrawn. */
   waterLevel?: number;
   scale?: number;
   /**

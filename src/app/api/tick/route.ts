@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
-import { allReefAddresses, recordDay, recordTick } from '@/lib/server/reef-repo';
+import {
+  allReefAddresses,
+  recordDay,
+  recordEpochActivity,
+  recordTick,
+} from '@/lib/server/reef-repo';
+import { EPOCH_MS } from '@/lib/reef/charges';
 import { env } from '@/lib/server/env';
 
 export const runtime = 'nodejs';
@@ -24,8 +30,10 @@ export async function POST(request: Request) {
   }
 
   let blockNumber: number | null = null;
+  let epoch = 0;
   try {
     blockNumber = await rpc.getBlockNumber();
+    epoch = await rpc.getEpochNumber();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown';
     // Record the miss. A silent skip is indistinguishable from "nobody staked",
@@ -34,9 +42,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Chain unreachable', detail: message }, { status: 503 });
   }
 
+  // Charges are priced in epochs, so a protocol change to epoch length would
+  // silently mis-price them. Notice it here rather than in a player's balance.
+  const { Policy } = await import('@nimiq/core');
+  const actualEpochMs = Number(Policy.BLOCK_SEPARATION_TIME) * Policy.BLOCKS_PER_EPOCH;
+  const epochDrift = actualEpochMs !== EPOCH_MS ? `epoch is ${actualEpochMs}ms, charges assume ${EPOCH_MS}ms` : undefined;
+
   const addresses = await allReefAddresses();
   let staked = 0;
   let failures = 0;
+  let bonuses = 0;
 
   for (let i = 0; i < addresses.length; i += CONCURRENCY) {
     const batch = addresses.slice(i, i + CONCURRENCY);
@@ -44,9 +59,14 @@ export async function POST(request: Request) {
       batch.map(async (address) => {
         try {
           const staker = await rpc.getStakerByAddress(address);
-          const balance = staker ? Number(staker.balance) : 0;
-          if (balance > 0) staked++;
-          await recordDay(address, balance, staker?.delegation ?? null);
+          const stakedLuna = staker ? Number(staker.balance) : 0;
+          if (stakedLuna > 0) staked++;
+          await recordDay(address, stakedLuna, staker?.delegation ?? null);
+
+          // A wallet used during an epoch earns one extra charge for it.
+          // Balance change is the proxy — see recordEpochActivity.
+          const wallet = await rpc.getBalance(address);
+          if (await recordEpochActivity(address, epoch, wallet)) bonuses++;
         } catch (error) {
           // One address failing must not abandon the rest of the run.
           if (error instanceof RpcUnavailableError) failures++;
@@ -60,8 +80,10 @@ export async function POST(request: Request) {
     blockNumber,
     addresses.length,
     staked,
-    failures > 0 ? `${failures} address lookups failed` : undefined,
+    [failures > 0 ? `${failures} address lookups failed` : undefined, epochDrift]
+      .filter(Boolean)
+      .join('; ') || undefined,
   );
 
-  return NextResponse.json({ blockNumber, reefs: addresses.length, staked, failures });
+  return NextResponse.json({ blockNumber, epoch, reefs: addresses.length, staked, bonuses, failures });
 }

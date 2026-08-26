@@ -9,6 +9,16 @@ export function drawRoom(ctx: Ctx, w: number, h: number, p: TankPalette): void {
   ctx.fillRect(0, 0, w, h);
 }
 
+/** The air gap above the waterline. Without it a shallow tank looks broken. */
+export function drawAir(ctx: Ctx, t: TankRect, p: TankPalette): void {
+  if (t.surfaceY <= t.y + 1) return;
+  const g = ctx.createLinearGradient(0, t.y, 0, t.surfaceY);
+  g.addColorStop(0, p.room);
+  g.addColorStop(1, hexAlpha(p.waterTop, 0.28));
+  ctx.fillStyle = g;
+  ctx.fillRect(t.x, t.y, t.w, t.surfaceY - t.y);
+}
+
 export function drawWater(ctx: Ctx, t: TankRect, p: TankPalette): void {
   const g = ctx.createLinearGradient(0, t.surfaceY, 0, t.y + t.h);
   g.addColorStop(0, p.waterTop);

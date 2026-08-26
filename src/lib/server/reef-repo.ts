@@ -3,6 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
 import { addDays, utcDay } from '@/lib/reef/day';
 import { handleFor } from '@/lib/reef/handle';
+import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey } from '@/lib/reef';
 
 interface ReefRow extends RowDataPacket {
@@ -255,17 +256,62 @@ export async function listSpecimens(address: string): Promise<Specimen[]> {
 }
 
 /**
- * When recent rolls happened, for the token bucket to replay.
+ * Everything that moved the charge balance recently, for the bucket to replay:
+ * rolls spend, earned bonuses add.
  *
  * Only the window in which the bucket could still be short matters; anything
  * older has certainly regenerated.
  */
-export async function recentRolls(address: string, windowMs: number): Promise<Date[]> {
-  const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT rolled_at FROM rolls WHERE address = ? AND rolled_at > (NOW() - INTERVAL ? SECOND) ORDER BY rolled_at',
-    [address, Math.ceil(windowMs / 1000)],
+export async function chargeEvents(address: string, windowMs: number): Promise<ChargeEvent[]> {
+  const seconds = Math.ceil(windowMs / 1000);
+  const [spends] = await db().query<RowDataPacket[]>(
+    'SELECT rolled_at AS at FROM rolls WHERE address = ? AND rolled_at > (NOW() - INTERVAL ? SECOND)',
+    [address, seconds],
   );
-  return rows.map((r) => new Date(r.rolled_at as string | Date));
+  const [grants] = await db().query<RowDataPacket[]>(
+    'SELECT granted_at AS at FROM bonus_charges WHERE address = ? AND granted_at > (NOW() - INTERVAL ? SECOND)',
+    [address, seconds],
+  );
+  return [
+    ...spends.map((r) => ({ at: new Date(r.at as string | Date), delta: -1 })),
+    ...grants.map((r) => ({ at: new Date(r.at as string | Date), delta: 1 })),
+  ];
+}
+
+/**
+ * Record what the chain says about an address this epoch, and grant a bonus
+ * charge if the balance moved since the previous one.
+ *
+ * Balance change is a proxy for activity: getTransactionsByAddress needs a
+ * history index the validator does not run. It catches payments in and out,
+ * and also a staking reward landing — an approximation, and a documented one.
+ *
+ * The primary key on bonus_charges is the cap. However many transactions
+ * somebody makes in an epoch, they earn exactly one.
+ */
+export async function recordEpochActivity(
+  address: string,
+  epoch: number,
+  balanceLuna: number,
+): Promise<boolean> {
+  const [prev] = await db().query<RowDataPacket[]>(
+    'SELECT balance_luna FROM epoch_activity WHERE address = ? AND epoch < ? ORDER BY epoch DESC LIMIT 1',
+    [address, epoch],
+  );
+  await db().execute(
+    `INSERT INTO epoch_activity (address, epoch, balance_luna) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE balance_luna = VALUES(balance_luna), observed_at = CURRENT_TIMESTAMP`,
+    [address, epoch, balanceLuna],
+  );
+
+  const before = prev[0] ? Number(prev[0].balance_luna) : null;
+  if (before === null || before === balanceLuna) return false;
+
+  const [res] = await db().execute<ResultSetHeader>(
+    'INSERT IGNORE INTO bonus_charges (address, epoch) VALUES (?, ?)',
+    [address, epoch],
+  );
+  return res.affectedRows === 1;
 }
 
 /**

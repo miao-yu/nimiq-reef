@@ -8,7 +8,7 @@ import {
   feedStreak,
   feedingCounts,
   rememberBestStreak,
-  recentRolls,
+  chargeEvents,
 } from './reef-repo';
 import { reefDay } from '@/lib/reef/day';
 import { slotsFor, speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
@@ -42,7 +42,7 @@ export async function getReefState(address: string): Promise<ReefState> {
     fedTodayQuery(address),
     feedStreak(address),
     feedingCounts(address),
-    recentRolls(address, FULL_AFTER_MS),
+    chargeEvents(address, FULL_AFTER_MS),
   ]);
   const charges = chargesFrom(spent);
   if (feeding > reef.bestStreak) await rememberBestStreak(address, feeding);

@@ -12,7 +12,7 @@ import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
-import { fillForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/tank/geometry';
 import { SPECIES } from '@/lib/reef/species';
 import { SEEDED_COMMUNITY, layoutCommunity, type CommunityPlant } from '@/lib/reef/community';
 import { formatNim } from '@/lib/nimiq/policy';
@@ -91,7 +91,7 @@ export default function Home() {
       <div className={styles.canvasFrame}>
         <Tank
           inhabitants={inhabitants}
-          tankFill={reef ? fillForStake(reef.stakedLuna) : 0.7}
+          waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
           className={styles.canvas}
         />
       </div>

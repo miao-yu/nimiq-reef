@@ -16,8 +16,7 @@ import type { Inhabitant } from '@/lib/tank/types';
 export interface ShareOptions {
   inhabitants: readonly Inhabitant[];
   /** 0..1, from stake amount. */
-  tankFill: number;
-  waterLevel?: number;
+  waterLevel: number;
   caption: string;
   width?: number;
   height?: number;
@@ -25,8 +24,7 @@ export interface ShareOptions {
 
 export function renderShareImage({
   inhabitants,
-  tankFill,
-  waterLevel = 1,
+  waterLevel,
   caption,
   width = 1200,
   height = 630,
@@ -42,7 +40,6 @@ export function renderShareImage({
     time: STILL_TIME,
     inhabitants,
     palette: TANK_PALETTE,
-    tankFill,
     waterLevel,
     motion: false,
   });

@@ -5,7 +5,7 @@ import { communitySnapshot } from '@/lib/server/reef-repo';
 import { renderShareImage } from '@/lib/server/share-image';
 import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/reef';
 import { adaptPlants } from '@/lib/tank/adapt';
-import { fillForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/tank/geometry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,7 +31,7 @@ export async function GET() {
     return png(
       renderShareImage({
         inhabitants: adaptPlants(reef.plants),
-        tankFill: fillForStake(reef.stakedLuna),
+        waterLevel: depthForStake(reef.stakedLuna),
         caption,
       }),
     );
@@ -44,7 +44,7 @@ export async function GET() {
       ? `${snapshot.totalPlants} living in the reef`
       : 'A tank that fills as you stake';
   return png(
-    renderShareImage({ inhabitants: adaptPlants(plants), tankFill: 0.86, caption }),
+    renderShareImage({ inhabitants: adaptPlants(plants), waterLevel: 0.88, caption }),
   );
 }
 

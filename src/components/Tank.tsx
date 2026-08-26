@@ -5,15 +5,13 @@ import { paletteFromCss, renderTank, type Inhabitant } from '@/lib/tank';
 
 interface TankProps {
   inhabitants: readonly Inhabitant[];
-  /** 0..1 of the canvas the glass occupies. From stake amount only. */
-  tankFill: number;
-  /** 0..1. Falls when NIM is withdrawn; moves the surface, never the floor. */
-  waterLevel?: number;
+  /** 0..1 of the glass that holds water. From stake amount only. */
+  waterLevel: number;
   className?: string;
   label?: string;
 }
 
-export function Tank({ inhabitants, tankFill, waterLevel = 1, className, label }: TankProps) {
+export function Tank({ inhabitants, waterLevel, className, label }: TankProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const size = useRef({ w: 0, h: 0 });
   const frame = useRef<number | null>(null);
@@ -32,12 +30,11 @@ export function Tank({ inhabitants, tankFill, waterLevel = 1, className, label }
         time,
         inhabitants,
         palette: paletteFromCss(),
-        tankFill,
         waterLevel,
         motion,
       });
     },
-    [inhabitants, tankFill, waterLevel],
+    [inhabitants, waterLevel],
   );
 
   const fit = useCallback(() => {

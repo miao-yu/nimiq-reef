@@ -16,11 +16,14 @@ export function lerp(a: number, b: number, t: number): number {
  * read as grand without giving them anything that lives in it.
  */
 export function tankRect(options: RenderOptions): TankRect {
-  const fill = clamp(options.tankFill ?? 0.5, 0, 1);
-  const level = clamp(options.waterLevel ?? 1, 0.25, 1);
+  const level = clamp(options.waterLevel ?? 1, 0.18, 1);
 
-  const w = options.width * lerp(0.46, 0.97, fill);
-  const h = options.height * lerp(0.52, 0.95, fill);
+  // Everybody gets the same glass. An earlier version scaled the box with the
+  // stake, which spent a newcomer's most valuable pixels on empty room at
+  // exactly the moment the app is trying to earn their attention — and it was
+  // a second visual for a number the water level already carries.
+  const w = options.width * 0.97;
+  const h = options.height * 0.95;
   const x = (options.width - w) / 2;
   // Sits low in the frame, like a tank on a table rather than floating.
   const y = options.height - h - options.height * 0.025;
@@ -34,16 +37,22 @@ export function tankRect(options: RenderOptions): TankRect {
 }
 
 /**
- * How much of the canvas the tank fills, from the stake.
+ * How deep the water sits, from the stake. The one thing amount governs
+ * visually — the glass is the same size for everyone.
  *
  * Log scale from the 100 NIM protocol minimum up to a million, because the
- * difference between 100 and 1,000 NIM should be as visible as the difference
- * between 100,000 and a million. A zero stake still gets a real tank — the free
- * tier is a tank, not a locked door.
+ * step from 100 to 1,000 NIM should read as clearly as the step from 100,000
+ * to a million. A zero stake still gets real water: the free tier is a tank,
+ * not a locked door.
+ *
+ * Depth is deliberately **not** a gate on which species can live there. "A
+ * whale needs deep water" is intuitive and wrong for us — it would stop a
+ * year-long small staker from displaying the whale they earned, which is
+ * punishing loyalty for poverty.
  */
-export function fillForStake(stakedLuna: number): number {
+export function depthForStake(stakedLuna: number): number {
   const nim = stakedLuna / 1e5;
-  if (nim <= 0) return 0.34;
+  if (nim <= 0) return 0.42;
   const t = (Math.log10(Math.max(100, Math.min(1e6, nim))) - 2) / 4;
-  return 0.4 + t * 0.57;
+  return 0.55 + t * 0.45;
 }

@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Tank } from '@/components/Tank';
-import { fillForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/tank/geometry';
 import { SPECIES, SPECIES_ORDER, speciesUnlocked } from '@/lib/reef/species';
 import { tierWeights, slotsFor } from '@/lib/reef/progression';
 import { rng } from '@/lib/tank/rng';
@@ -67,7 +67,7 @@ export default function Preview() {
       <div className={styles.canvasFrame}>
         <Tank
           inhabitants={inhabitants}
-          tankFill={fillForStake(nim * 1e5)}
+          waterLevel={depthForStake(nim * 1e5)}
           className={styles.canvas}
           label={`A simulated reef after ${days} days staked with ${nim} NIM.`}
         />
@@ -85,7 +85,7 @@ export default function Preview() {
             value={nimSlider}
             onChange={(e) => setNimSlider(Number(e.target.value))}
           />
-          <small>Buys the vessel — {slotsFor(nim * 1e5)} places to display something.</small>
+          <small>Sets the depth — {slotsFor(nim * 1e5)} places to display something.</small>
         </label>
 
         <label className={styles.ctl}>

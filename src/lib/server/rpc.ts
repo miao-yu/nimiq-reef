@@ -72,6 +72,17 @@ export const rpc = {
   getActiveValidators: () => call<ActiveValidator[]>('getActiveValidators'),
 
   getBlockNumber: () => call<number>('getBlockNumber'),
+
+  /** Spendable balance. A single account lookup, cheap enough for the tick. */
+  async getBalance(address: string): Promise<number> {
+    try {
+      const account = await call<{ balance: number }>('getAccountByAddress', [address]);
+      return Number(account.balance ?? 0);
+    } catch (error) {
+      if (error instanceof RpcUnavailableError) throw error;
+      return 0;
+    }
+  },
   getEpochNumber: () => call<number>('getEpochNumber'),
   isConsensusEstablished: () => call<boolean>('isConsensusEstablished'),
 
