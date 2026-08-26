@@ -9,7 +9,7 @@ import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
 import { AccountBar } from '@/components/AccountBar';
-import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
+import { currentSession, signIn, signOut, signUp } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
@@ -59,14 +59,14 @@ export default function Home() {
     });
   }, [load]);
 
-  async function connect() {
+  async function connect(fresh = false) {
     setBusy(true);
     setError(null);
     try {
-      await signIn();
+      await (fresh ? signUp() : signIn());
       await load();
     } catch (cause) {
-      report('connect:failed', cause);
+      report(fresh ? 'signup:failed' : 'connect:failed', cause);
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
     } finally {
       setBusy(false);
@@ -163,6 +163,23 @@ export default function Home() {
             </button>
             <ShareButton label={t('shareThis')} />
           </div>
+          {/* Only the browser needs this door. Inside Nimiq Pay a wallet
+              already exists, so offering to create one would be noise. */}
+          {kind === 'hub' ? (
+            <>
+              <button
+                className={styles.secondary}
+                onClick={() => void connect(true)}
+                disabled={busy}
+                type="button"
+              >
+                {t('newToNimiq')}
+              </button>
+              <Link className={styles.secondary} href="/open">
+                {t('openOnPhone')}
+              </Link>
+            </>
+          ) : null}
         </>
       )}
 

@@ -53,3 +53,15 @@
   padding: 7px 13px;
   cursor: pointer;
 }
+
+/* The QR inherits the page ink so it survives both themes; a hardcoded black
+   disappears on a dark ground. */
+.qr {
+  width: 200px;
+  height: 200px;
+  color: var(--ink);
+  background: var(--ground);
+  padding: 10px;
+  border-radius: 12px;
+  align-self: center;
+}

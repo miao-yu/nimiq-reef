@@ -53,6 +53,12 @@ export function createHubProvider(): ReefProvider {
     async listAccounts() {
       return [await address()];
     },
+    // The Hub's own create / import flow. chooseAddress() assumes an account
+    // already exists, so without this a newcomer opens the wallet and finds
+    // nothing to choose — a dead end at the very first step.
+    async onboard() {
+      await hub.onboard({ appName: APP_NAME });
+    },
     async sign(message: string): Promise<SignatureResult> {
       const signed = await hub.signMessage({ appName: APP_NAME, signer: chosen, message });
       // The Hub reports which address signed. Trust that over anything cached,
