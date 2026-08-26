@@ -21,3 +21,5 @@ next-env.d.ts
 # icon build output
 .icons/
 tsconfig.tsbuildinfo
+.render/
+.icons/

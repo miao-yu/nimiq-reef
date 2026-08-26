@@ -56,12 +56,18 @@ export const STILL_TIME = 11.4;
  * decelerates into the glass, turns, and accelerates away — which is what an
  * actual fish does. A triangle wave snaps direction at full speed and reads
  * as a bouncing sprite.
+ *
+ * `interest` is 0..1 and says how much food is in the water. It pulls swimmers
+ * toward the surface, where the flakes are, and speeds them up a little. It
+ * does not move crawlers or drifters — a shrimp does not race a guppy to the
+ * top, and a jelly does not care.
  */
 export function placeAt(
   inhabitant: Inhabitant,
   tank: TankRect,
   time: number,
   index: number,
+  interest = 0,
 ): Placement {
   const r = rng(inhabitant.seed + index * 7919);
   const style = STYLE[inhabitant.species];
@@ -69,7 +75,9 @@ export function placeAt(
 
   const phase = r() * Math.PI * 2;
   // Nearer things read as faster even at the same real speed.
-  const speed = SPEED[inhabitant.species] * (0.8 + r() * 0.4) * (0.7 + depth * 0.45);
+  const eager = Math.min(1, Math.max(0, interest));
+  const speed =
+    SPEED[inhabitant.species] * (0.8 + r() * 0.4) * (0.7 + depth * 0.45) * (1 + eager * 0.45);
   const swimmable = tank.groundY - tank.surfaceY;
 
   if (style === 'crawl') {
@@ -104,9 +112,14 @@ export function placeAt(
   const band = style === 'glide' ? 0.16 + r() * 0.5 : 0.1 + r() * 0.66;
   const bob = Math.sin(time * (style === 'glide' ? 0.3 : 0.75) + phase) * (style === 'glide' ? 0.05 : 0.035);
 
+  // Toward the food, not all the way to it: a tank where every fish pins
+  // itself to the surface reads as distress, not as feeding time.
+  const rise = eager * 0.55;
+  const level = band * (1 - rise) + 0.1 * rise;
+
   return {
     x: tank.x + tank.w * (inset + u * (1 - inset * 2)),
-    y: tank.surfaceY + swimmable * Math.min(0.92, Math.max(0.06, band + bob)),
+    y: tank.surfaceY + swimmable * Math.min(0.92, Math.max(0.06, level + bob)),
     dir: Math.cos(angle) >= 0 ? 1 : -1,
     depth,
   };

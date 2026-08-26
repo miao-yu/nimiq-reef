@@ -1,4 +1,10 @@
-# Open discussions
+# Discussions
+
+**Settled and built on 26 Aug** — the address is the identity (handles dropped),
+browsers can stake and can feed a reef they reached by address, feeding is
+visible and grants a charge, and reefs have public pages at `/r/<address>` with
+an opt-out. What follows is kept because the reasoning still explains the shape
+of the code; the "Leaning" notes are what was chosen.
 
 Design questions that are not settled. Each one records what the code does
 *today* — verified, not remembered — before proposing anything, because most of

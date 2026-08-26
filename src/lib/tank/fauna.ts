@@ -70,15 +70,57 @@ function tail(ctx: Ctx, len: number, spread: number, wag: number): void {
   ctx.fill();
 }
 
-function eye(ctx: Ctx, x: number, y: number, r: number): void {
-  ctx.fillStyle = 'rgba(255,255,255,.93)';
+/**
+ * One eye, and most of the character in the tank.
+ *
+ * Every species draws through here, so this is where "collectible" is decided
+ * rather than in nine separate silhouettes. Three things do the work: it is
+ * larger than anatomy would suggest, it carries a catchlight, and it blinks.
+ *
+ * All of it stays a pure function of `time` and `seed` — no state, no
+ * Math.random() — because the server draws share cards with the same code and
+ * a creature that blinked differently there would not be the same creature.
+ */
+function eye(ctx: Ctx, x: number, y: number, r: number, time = 0, seed = 0): void {
+  // Deliberately oversized, and additively rather than proportionally: a
+  // guppy in a phone-sized tank has a two-pixel eye, which is a dot with no
+  // expression, while a whale's is already large enough. A flat boost fixes
+  // the first without inflating the second.
+  const R = Math.max(2.4, r * 1.15 + 1.6);
+
+  // Each creature blinks on its own clock, so a tank never blinks in unison.
+  const period = 4.1 + (seed % 9) * 0.53;
+  const phase = (time + seed * 0.41) % period;
+  const CLOSE = 0.16;
+  const lid = phase < CLOSE ? 1 - Math.abs(phase - CLOSE / 2) / (CLOSE / 2) : 0;
+  const open = 1 - lid * 0.9;
+
+  // Looking around: a slow drift, far too small to notice directly and very
+  // noticeable by its absence.
+  const gaze = Math.sin(time * 0.47 + seed) * R * 0.16;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1, Math.max(0.06, open));
+
+  ctx.fillStyle = 'rgba(255,255,255,.95)';
   ctx.beginPath();
-  ctx.arc(x, y, Math.max(1.3, r), 0, Math.PI * 2);
+  ctx.arc(0, 0, R, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = 'rgba(9,20,28,.9)';
+
+  ctx.fillStyle = 'rgba(9,20,28,.92)';
   ctx.beginPath();
-  ctx.arc(x + r * 0.22, y, Math.max(0.7, r * 0.5), 0, Math.PI * 2);
+  ctx.arc(gaze + R * 0.16, 0, Math.max(0.9, R * 0.52), 0, Math.PI * 2);
   ctx.fill();
+
+  // The catchlight. Up and to the left, matching the surface light everything
+  // else in the tank is lit by.
+  ctx.fillStyle = 'rgba(255,255,255,.85)';
+  ctx.beginPath();
+  ctx.arc(gaze - R * 0.18, -R * 0.3, Math.max(0.5, R * 0.24), 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
 }
 
 interface Args {
@@ -109,7 +151,7 @@ function guppy({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.lineTo(-L * 0.2, -H * 0.38);
   ctx.closePath();
   ctx.fill();
-  eye(ctx, L * 0.3, -H * 0.12, L * 0.055);
+  eye(ctx, L * 0.3, -H * 0.12, L * 0.055, time, seed);
 }
 
 function angel({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -157,7 +199,7 @@ function angel({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
-  eye(ctx, L * 0.2, -H * 0.14, L * 0.05);
+  eye(ctx, L * 0.2, -H * 0.14, L * 0.05, time, seed);
 }
 
 function jelly({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -229,7 +271,7 @@ function shrimp({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.quadraticCurveTo(L * 0.7, -L * a, L * 1.0, -L * (a * 0.4) + i * L * 0.1);
     ctx.stroke();
   });
-  eye(ctx, L * 0.32, -L * 0.09, L * 0.055);
+  eye(ctx, L * 0.32, -L * 0.09, L * 0.055, time, seed);
 }
 
 function sleek({ ctx, L, colour, time, rate, seed }: Args, dorsal: number, snout: number): void {
@@ -282,7 +324,7 @@ function sleek({ ctx, L, colour, time, rate, seed }: Args, dorsal: number, snout
     ctx.quadraticCurveTo(gx - L * 0.02, 0, gx, H * 0.2);
     ctx.stroke();
   }
-  eye(ctx, L * 0.36, -H * 0.18, L * 0.042);
+  eye(ctx, L * 0.36, -H * 0.18, L * 0.042, time, seed);
 }
 
 function lionfish(a: Args): void {
@@ -311,7 +353,7 @@ function lionfish(a: Args): void {
   ctx.beginPath();
   ctx.ellipse(0, 0, L * 0.4, H * 0.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  eye(ctx, L * 0.24, -H * 0.14, L * 0.05);
+  eye(ctx, L * 0.24, -H * 0.14, L * 0.05, time, seed);
 }
 
 function ray({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -344,7 +386,7 @@ function ray({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.moveTo(-L * 0.78, flap * span * 0.19);
   ctx.quadraticCurveTo(-L * 0.95, flap * span * 0.24, -L * 1.06, flap * span * 0.3);
   ctx.stroke();
-  eye(ctx, L * 0.3, -span * 0.16, L * 0.04);
+  eye(ctx, L * 0.3, -span * 0.16, L * 0.04, time, seed);
 }
 
 function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -363,7 +405,7 @@ function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.quadraticCurveTo(spread - L * 0.1 + curl, L * 0.48, spread - L * 0.34 + curl, L * 0.66);
     ctx.stroke();
   }
-  eye(ctx, L * 0.26, -L * 0.16, L * 0.06);
+  eye(ctx, L * 0.26, -L * 0.16, L * 0.06, time, seed);
 }
 
 function turtle({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -429,7 +471,7 @@ function turtle({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.lineTo(L * 0.5, -L * 0.01);
   ctx.closePath();
   ctx.fill();
-  eye(ctx, L * 0.47, -L * 0.12, L * 0.035);
+  eye(ctx, L * 0.47, -L * 0.12, L * 0.035, time, seed);
 }
 
 function whale({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -492,7 +534,7 @@ function whale({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.quadraticCurveTo(L * 0.3, H * 0.26, L * 0.08, H * 0.28);
   ctx.stroke();
 
-  eye(ctx, L * 0.33, -H * 0.06, L * 0.026);
+  eye(ctx, L * 0.33, -H * 0.06, L * 0.026, time, seed);
 }
 
 type Painter = (a: Args) => void;

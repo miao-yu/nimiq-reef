@@ -55,6 +55,12 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   drawSubstrate(ctx, tank, p);
   drawCaustics(ctx, tank, p, time);
 
+  // Feeding excites the tank for as long as the flakes are falling. Saturates
+  // quickly — the difference between one feeding and four is how much food is
+  // in the water, not how much more frantic the fish get.
+  const fed = Math.min(MAX_FEEDINGS_SHOWN, Math.max(0, Math.floor(options.feedings ?? 0)));
+  const interest = fed === 0 ? 0 : Math.min(1, 0.55 + (fed - 1) * 0.15);
+
   const flora = options.inhabitants.filter((i) => i.species === 'grass');
   const fauna = options.inhabitants.filter((i) => i.species !== 'grass');
 
@@ -66,7 +72,11 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
 
   // Far to near, so nearer things overlap what is behind them.
   const placed = fauna
-    .map((inhabitant, index) => ({ inhabitant, index, at: placeAt(inhabitant, tank, time, index) }))
+    .map((inhabitant, index) => ({
+      inhabitant,
+      index,
+      at: placeAt(inhabitant, tank, time, index, interest),
+    }))
     .sort((a, b) => a.at.depth - b.at.depth);
 
   placed.forEach(({ inhabitant, index, at }) => {
@@ -90,7 +100,6 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   });
 
   ctx.globalAlpha = 1;
-  const fed = Math.min(MAX_FEEDINGS_SHOWN, Math.max(0, Math.floor(options.feedings ?? 0)));
   for (let i = 0; i < fed; i++) drawFlakes(ctx, tank, p, FLAKES[i]!, time + i * 3.1);
   drawBubbles(ctx, tank, p, BUBBLES, time);
   drawSurface(ctx, tank, p, time);
