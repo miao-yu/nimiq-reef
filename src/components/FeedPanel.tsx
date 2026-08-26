@@ -19,6 +19,13 @@ interface Candidate {
  * way to build one — wallet addresses are all we have. It is also the only
  * place in the app where two people touch.
  */
+function hhmm(ms: number): string {
+  const total = Math.max(0, Math.round(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: ReefState) => void }) {
   const { t } = useLocale();
   const [busy, setBusy] = useState(false);
@@ -94,6 +101,26 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
 
   return (
     <div className={styles.panel}>
+      <div className={styles.head}>
+        <span className={styles.label}>{reef.fedToday ? t('fedAlready') : t('feed')}</span>
+        <span className={styles.next}>{t('dayResets', { time: hhmm(reef.dayResetsInMs) })}</span>
+      </div>
+
+      {/* Feeding runs on the UTC day while charges run on the epoch. Two
+          clocks on purpose — the chain's clock governs what the chain gives
+          you, your day governs what you do — but a bar each makes the
+          difference visible rather than confusing. */}
+      <div
+        className={styles.day}
+        role="progressbar"
+        aria-valuenow={Math.round(reef.dayProgress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Progress through the UTC day"
+      >
+        <span style={{ width: `${Math.round(reef.dayProgress * 100)}%` }} />
+      </div>
+
       <button
         className={styles.cta}
         onClick={() => void feedOwn()}
@@ -102,7 +129,9 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
       >
         {reef.fedToday ? t('fedAlready') : t('feed')}
       </button>
-      <p className={styles.note}>{t('feedNote')}</p>
+      <p className={styles.note}>
+        {t('feedNote')} {t('dayResetsUtc')}
+      </p>
 
       {reef.receivedToday > 0 ? (
         <p className={styles.received}>{t('fedBy', { n: reef.receivedToday })}</p>

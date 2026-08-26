@@ -11,7 +11,7 @@ import {
   chargeEvents,
   lastKnownEpoch,
 } from './reef-repo';
-import { reefDay } from '@/lib/reef/day';
+import { reefDay, utcDayClock } from '@/lib/reef/day';
 import { speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
 import { slotsFor } from '@/lib/reef/vessel';
 import { chargesFrom, MAX_CHARGES } from '@/lib/reef/charges';
@@ -53,6 +53,7 @@ export async function getReefState(address: string): Promise<ReefState> {
     chargeEvents(address, clock.epoch - MAX_CHARGES),
   ]);
   const charges = chargesFrom(spent, clock.epoch, clock.msToNext, clock.epochMs);
+  const dayClock = utcDayClock();
   if (feeding > reef.bestStreak) await rememberBestStreak(address, feeding);
 
   // Money creates room. If a withdrawal shrinks the tank below what is already
@@ -83,6 +84,8 @@ export async function getReefState(address: string): Promise<ReefState> {
     epochProgress: charges.epochProgress,
 
     fedToday,
+    dayResetsInMs: dayClock.resetsInMs,
+    dayProgress: dayClock.progress,
     feedStreak: feeding,
     bestStreak: Math.max(reef.bestStreak, feeding),
     gaveToday: false,

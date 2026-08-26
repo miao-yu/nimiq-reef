@@ -39,3 +39,10 @@
 .candidate:hover:not(:disabled) { border-color: var(--leaf); }
 .candidate:disabled { opacity: 0.5; cursor: default; }
 .error { margin: 0; font-size: 0.86rem; color: #b0453a; }
+
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.label { font-size: 0.92rem; font-weight: 600; }
+.next { font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.day { height: 3px; border-radius: 2px; background: var(--surface-2, #e1eaef); overflow: hidden; }
+.day span { display: block; height: 100%; background: var(--leaf); opacity: 0.55; }

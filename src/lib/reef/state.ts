@@ -39,8 +39,12 @@ export interface ReefState {
   speciesUnlocked: SpeciesKey[];
   next: { atDay: number; species: SpeciesKey; daysAway: number } | null;
 
-  /** Feeding. */
+  /** Feeding. Day-timed, unlike charges — see docs/SPEC-tank.md. */
   fedToday: boolean;
+  /** ms until the UTC day turns and feeding is available again. */
+  dayResetsInMs: number;
+  /** 0..1 through the UTC day. */
+  dayProgress: number;
   feedStreak: number;
   bestStreak: number;
   gaveToday: boolean;

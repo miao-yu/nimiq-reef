@@ -19,3 +19,19 @@ export function addDays(day: string, delta: number): string {
 export function reefDay(firstDay: string, at: Date = new Date()): number {
   return daysBetween(firstDay, utcDay(at)) + 1;
 }
+
+/**
+ * Where we are in the current UTC day.
+ *
+ * Computed on the server because the server decides what day it is. A client
+ * clock that is off by hours would otherwise show a countdown that disagrees
+ * with the moment the streak actually rolls over — which is worse than showing
+ * nothing.
+ */
+export function utcDayClock(at: Date = new Date()): { resetsInMs: number; progress: number } {
+  const elapsed = at.getTime() - Date.parse(`${utcDay(at)}T00:00:00Z`);
+  return {
+    resetsInMs: Math.max(0, MS_PER_DAY - elapsed),
+    progress: Math.min(1, Math.max(0, elapsed / MS_PER_DAY)),
+  };
+}
