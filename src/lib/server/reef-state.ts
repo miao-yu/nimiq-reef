@@ -2,7 +2,7 @@ import 'server-only';
 import { rpc, RpcUnavailableError } from './rpc';
 import { daysStaked, ensureReef, listPlants } from './reef-repo';
 import { reefDay } from '@/lib/reef/day';
-import { plotsUnlocked, speciesUnlocked, nextMilestone, MAX_PLOTS } from '@/lib/reef/progression';
+import { slotsFor, speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
 export type { ReefState };
 import type { ReefState } from '@/lib/reef/state';
 
@@ -28,9 +28,12 @@ export async function getReefState(address: string): Promise<ReefState> {
 
   const [plants, streak] = await Promise.all([listPlants(address), daysStaked(address)]);
 
-  const unlocked = plotsUnlocked(streak);
-  const taken = new Set(plants.map((p) => Math.round(p.x * 4 - 0.5)));
-  const freePlots = Array.from({ length: unlocked }, (_, i) => i).filter((i) => !taken.has(i));
+  // Money creates room. If a withdrawal shrinks the tank below what is already
+  // in it, nothing is evicted — the floor is what you hold. Withdrawals lower
+  // the water, never harm a specimen.
+  const capacity = Math.max(slotsFor(stakedLuna), plants.length);
+  const taken = new Set(plants.map((p) => p.slot));
+  const freePlots = Array.from({ length: capacity }, (_, i) => i).filter((i) => !taken.has(i));
 
   return {
     address,
@@ -39,8 +42,8 @@ export async function getReefState(address: string): Promise<ReefState> {
     daysStaked: streak,
     stakedLuna,
     delegation,
-    plotsUnlocked: unlocked,
-    plotsTotal: MAX_PLOTS,
+    plotsUnlocked: capacity,
+    plotsTotal: capacity,
     freePlots,
     speciesUnlocked: speciesUnlocked(streak),
     next: nextMilestone(streak),

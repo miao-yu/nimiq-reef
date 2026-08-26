@@ -14,3 +14,6 @@ next-env.d.ts
 
 # Local-only notes (prod hostnames, keys) — this repo goes public
 *.local.md
+
+# progression check build output
+.progression/

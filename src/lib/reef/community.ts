@@ -20,6 +20,7 @@ export function layoutCommunity(plants: readonly CommunityPlant[]): Plant[] {
   const n = plants.length;
   if (n === 0) return [];
   return plants.map((p, i) => ({
+    slot: i,
     x: (i + 0.5) / n,
     species: p.species,
     plantedDay: COMMUNITY_DAY - p.ageDays,
@@ -29,10 +30,10 @@ export function layoutCommunity(plants: readonly CommunityPlant[]): Plant[] {
 
 /** Shown until anyone has planted anything — a garden, not an empty field. */
 export const SEEDED_COMMUNITY: CommunityPlant[] = [
-  { species: 'sprout', ageDays: 1, seed: 26 },
-  { species: 'fern', ageDays: 3, seed: 52 },
-  { species: 'bloom', ageDays: 5, seed: 8 },
-  { species: 'elder', ageDays: 9, seed: 77 },
-  { species: 'sprout', ageDays: 2, seed: 31 },
-  { species: 'fern', ageDays: 6, seed: 63 },
+  { species: 'grass', ageDays: 3, seed: 52 },
+  { species: 'guppy', ageDays: 1, seed: 26 },
+  { species: 'guppy', ageDays: 2, seed: 31 },
+  { species: 'angel', ageDays: 5, seed: 8 },
+  { species: 'jelly', ageDays: 6, seed: 63 },
+  { species: 'shark', ageDays: 9, seed: 77 },
 ];

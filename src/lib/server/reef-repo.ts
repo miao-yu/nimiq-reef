@@ -54,9 +54,11 @@ export async function listPlants(address: string): Promise<Plant[]> {
     'SELECT plot_index, species, planted_day, seed FROM plants WHERE address = ? ORDER BY plot_index',
     [address],
   );
-  return rows.map((r) => ({
-    // Spread plots evenly across the ground rather than storing a position.
-    x: (r.plot_index + 0.5) / 4,
+  return rows.map((r, i) => ({
+    slot: r.plot_index,
+    // Spread evenly across the tank rather than storing a position, so a reef
+    // stays composed however many specimens are in it.
+    x: (i + 0.5) / Math.max(1, rows.length),
     species: r.species,
     plantedDay: r.planted_day,
     seed: r.seed,
