@@ -1,6 +1,7 @@
-# Nimiq Grove
+# Reef
 
-Mini App for the Nimiq Mini Apps Competition, Cycle II. Deadline **18 Sep 2026,
+Mini App for the Nimiq Mini Apps Competition, Cycle II. Formerly Grove;
+the garden became an aquarium. Deadline **18 Sep 2026,
 23:59 UTC**. Solo build.
 
 A garden that grows from real staking activity. Read `docs/DECISIONS.md` before

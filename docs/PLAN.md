@@ -309,26 +309,43 @@ and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.
   surface the competition does not judge.
 - Any leaderboard.
 
-## 5. Open, non-blocking
+## 5. Decided 25 Aug — treat these as settled
 
-- **Name.** `Reef` is proposed. Until decided, stay on `grove.nimiq.cafe`;
-  renaming needs a subdomain and a certificate, about ten minutes.
-- **Does unstaking empty the tank?** Currently forgiving: growth pauses, nothing
-  dies. Never answered explicitly.
-- **Withdrawals lowering the water level** — honest, or does it read as
-  punishment?
+- **Name: Reef.** A reef is built slowly by many small organisms into something
+  that hosts everything else, which is what a staking pool is. Move to
+  `reef.nimiq.cafe`: add the DNA record in Cloudflare **grey cloud**, copy
+  `deploy/nginx/grove.conf`, then
+  `certbot --nginx -d reef.nimiq.cafe`. Rename user-facing copy in all three
+  languages; internal identifiers can migrate later.
+- **Unstaking is forgiving.** The streak resets and rarity odds fall back, no
+  new rolls come from staking — but **every specimen stays**. The whole app sits
+  on top of somebody's real money; taking it back must never cost them the
+  collection.
+- **Withdrawals lower the water level.** The vessel tracks the real balance in
+  both directions, which is what makes "money creates room" honest rather than
+  a one-way ratchet. Level only — never harms a specimen.
+
+## 6. Open, non-blocking
+
 - Cloudflare SSL mode → Full (strict), now that the origin certificate matches.
 - Repo goes public before submission; scan history for secrets first.
 - Nimiq Pay directory listing is optional and separate from the competition.
 
-## 6. Still owed from earlier phases
+## 7. Still owed from earlier phases
 
 - The **testnet staking test** never happened. `sendNewStakerTransaction` is
   still unproven on a device. Long-press settings ~10s in Nimiq Pay to reveal
   the network switch, then Get free NIM.
 - Sip & Ship calls: 2, 9, 16 Sep. Marketing is 25 of 105 points.
+- **Stake now, not later.** The whale unlocks at 12 unbroken days. Entries go
+  public on 7 Sep and judging runs after 18 Sep, so anybody starting at the
+  public date reaches day 12 on the very last day — and a judge signing in
+  afterwards never sees one at all. The whale is the signature payoff and the
+  joke the app is built around. Staking on **25 Aug** puts a whale in the
+  demo tank by **6 Sep**, a day before entries go public, so it exists in the
+  community view and in everyone's field guide from day one.
 
-## 7. Testing
+## 8. Testing
 
 `scripts/auth-smoke.mjs` must keep passing — case 7, the impersonation attempt,
 must stay **401**. If it ever returns 200, any wallet can claim any tank.
@@ -337,7 +354,7 @@ Replace `scripts/grove-smoke.mjs` with `tank-smoke.mjs` covering: charges cap at
 3, a fourth roll is 409, releasing keeps the guide entry, giving twice from one
 device in a day is 409, and giving with no session is 401.
 
-## 8. Where the points come from
+## 9. Where the points come from
 
 | Category | Pts | Earned by |
 | --- | --- | --- |
