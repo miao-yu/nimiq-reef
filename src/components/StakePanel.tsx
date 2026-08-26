@@ -22,10 +22,13 @@ interface Props {
 /**
  * Staking, from inside the app.
  *
- * Convenience only. Reef reads the chain, so a delegation made anywhere —
- * Nimiq Pay's own staking screen, the desktop wallet, a hand-built transaction
- * — reaches the reef on the next tick just the same. Nothing here is a
- * gatekeeper.
+ * Works in both places now, by different routes: Nimiq Pay builds, signs and
+ * broadcasts on its own, while a browser has the server build the bytes, the
+ * Hub sign them and the server broadcast them.
+ *
+ * Still convenience only. Reef reads the chain, so a delegation made anywhere —
+ * Nimiq Pay's staking screen, the desktop wallet, a hand-built transaction —
+ * reaches the reef on the next tick just the same. Nothing here is a gatekeeper.
  */
 export function StakePanel({ reef, onDone }: Props) {
   const { t } = useLocale();
@@ -70,15 +73,10 @@ export function StakePanel({ reef, onDone }: Props) {
       // reef — so refresh rather than pretending the stake is already counted.
       await onDone();
     } catch (cause) {
-      const browserLimit = cause instanceof Error && cause.message === 'BROWSER_STAKING_UNAVAILABLE';
-      if (!browserLimit) report('stake', cause);
-      setError(
-        browserLimit
-          ? t('stakeElsewhere')
-          : cause instanceof Error
-            ? cause.message
-            : 'The wallet declined that.',
-      );
+      report('stake', cause);
+      // The Hub and Nimiq Pay both refuse in the user's own words when a user
+      // cancels, so pass the message through rather than flattening it.
+      setError(cause instanceof Error ? cause.message : 'The wallet declined that.');
     } finally {
       setBusy(false);
     }

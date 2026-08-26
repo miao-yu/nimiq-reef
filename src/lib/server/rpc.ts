@@ -73,6 +73,12 @@ export const rpc = {
 
   getBlockNumber: () => call<number>('getBlockNumber'),
 
+  /** A name — 'MainAlbatross' — not the number TransactionBuilder wants. */
+  getNetworkId: () => call<string>('getNetworkId'),
+
+  /** Broadcast a signed transaction. Returns its hash. */
+  sendRawTransaction: (raw: string) => call<string>('sendRawTransaction', [raw]),
+
   /** Spendable balance. A single account lookup, cheap enough for the tick. */
   async getBalance(address: string): Promise<number> {
     try {

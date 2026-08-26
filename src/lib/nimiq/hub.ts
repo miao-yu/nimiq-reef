@@ -6,6 +6,9 @@ import type { ReefProvider, SignatureResult } from './types';
 /**
  * Sign-in through the regular Nimiq Wallet (Hub), for browsers outside Nimiq Pay.
  *
+ * It can also stake: `signStaking` takes serialised bytes, so the server builds
+ * the transaction and broadcasts the signed result. See src/lib/server/staking.ts.
+ *
  * The Hub frames signed messages as
  *   HubApi.MSG_PREFIX + byteLength + message, hashed with SHA-256
  * which is exactly the `hub-prefixed-sha256` candidate in
@@ -66,21 +69,68 @@ export function createHubProvider(): ReefProvider {
     async isConsensusEstablished() {
       return true;
     },
-    // The Hub *can* stake — signStaking() exists — but it takes a pre-built
-    // serialised transaction and returns a signed one for us to broadcast,
-    // where Nimiq Pay does all of that itself. Building it here would mean
-    // shipping @nimiq/core's WASM to a mobile-first bundle plus a broadcast
-    // endpoint, so it is deferred rather than impossible.
-    //
-    // It is also not needed: Reef reads the chain, so a delegation made in the
-    // Nimiq Wallet lands in the tank on the next tick regardless.
-    async sendNewStakerTransaction() {
-      throw new Error('BROWSER_STAKING_UNAVAILABLE');
+    // Staking in a browser, in three steps: the server builds the bytes, the
+    // Hub signs them, the server broadcasts. `signStaking` takes a serialised
+    // transaction from anywhere, which is what makes this possible without
+    // shipping @nimiq/core's WebAssembly to the page.
+    async sendNewStakerTransaction({ delegation, value }) {
+      return stake(hub, { value, delegation });
     },
-    async sendStakeTransaction() {
-      throw new Error('BROWSER_STAKING_UNAVAILABLE');
+    async sendStakeTransaction({ value }) {
+      return stake(hub, { value });
     },
   };
+}
+
+interface StakeRequest {
+  value: number;
+  delegation?: string;
+}
+
+/**
+ * Build, sign, broadcast.
+ *
+ * The Hub returns an array because a staking action can take more than one
+ * transaction; every one it hands back is relayed, and the server checks each
+ * came from this address and goes to the staking contract before it does.
+ */
+async function stake(hub: HubApi, request: StakeRequest): Promise<string> {
+  const built = await post<{ raw: string; kind: string }>('/api/stake/build', {
+    value: request.value,
+    delegation: request.delegation ?? null,
+  });
+
+  const signed = await hub.signStaking({
+    appName: APP_NAME,
+    // The Hub shows these next to the addresses it is asking about, so a user
+    // can tell what they are agreeing to without decoding an address.
+    senderLabel: 'Your wallet',
+    recipientLabel: 'Nimiq staking',
+    transaction: hexToBytes(built.raw),
+  });
+
+  const { hashes } = await post<{ hashes: string[] }>('/api/stake/send', {
+    raw: signed.map((tx) => tx.serializedTx),
+  });
+  return hashes[0] ?? '';
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'same-origin',
+    body: JSON.stringify(body),
+  });
+  const data = (await res.json()) as T & { error?: string };
+  if (!res.ok) throw new Error(data.error ?? 'The request failed.');
+  return data;
+}
+
+function hexToBytes(hex: string): Uint8Array {
+  const out = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
+  return out;
 }
 
 /** The Hub needs a real browser with popups; it cannot work server-side. */
