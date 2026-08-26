@@ -101,28 +101,6 @@ export async function listPlants(address: string): Promise<Plant[]> {
   }));
 }
 
-export type PlantOutcome = 'planted' | 'plot-taken';
-
-/**
- * Fill a plot. Relies on UNIQUE (address, plot_index) rather than a read-then-
- * write check, so two taps racing each other cannot both plant — the second
- * loses at the database, not at a lucky moment in application code.
- */
-export async function plant(
-  address: string,
-  plotIndex: number,
-  species: SpeciesKey,
-  plantedDay: number,
-  seed: number,
-): Promise<PlantOutcome> {
-  const [result] = await db().execute<ResultSetHeader>(
-    `INSERT IGNORE INTO plants (address, plot_index, species, planted_day, seed)
-     VALUES (?, ?, ?, ?, ?)`,
-    [address, plotIndex, species, plantedDay, seed],
-  );
-  return result.affectedRows === 1 ? 'planted' : 'plot-taken';
-}
-
 /** Record what the chain said about this address today. Called by the tick. */
 export async function recordDay(
   address: string,
@@ -276,14 +254,18 @@ export async function listSpecimens(address: string): Promise<Specimen[]> {
   }));
 }
 
-/** Rolls since the charge balance was last settled. */
-export async function rollsSince(address: string, since: Date | null): Promise<number> {
-  if (!since) return 0;
+/**
+ * When recent rolls happened, for the token bucket to replay.
+ *
+ * Only the window in which the bucket could still be short matters; anything
+ * older has certainly regenerated.
+ */
+export async function recentRolls(address: string, windowMs: number): Promise<Date[]> {
   const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT COUNT(*) AS n FROM rolls WHERE address = ? AND rolled_at > ?',
-    [address, since],
+    'SELECT rolled_at FROM rolls WHERE address = ? AND rolled_at > (NOW() - INTERVAL ? SECOND) ORDER BY rolled_at',
+    [address, Math.ceil(windowMs / 1000)],
   );
-  return Number(rows[0]?.n ?? 0);
+  return rows.map((r) => new Date(r.rolled_at as string | Date));
 }
 
 /**
@@ -307,10 +289,6 @@ export async function recordRoll(
     const [res] = await conn.execute<ResultSetHeader>(
       'INSERT INTO specimens (address, species, tier, seed, slot) VALUES (?, ?, ?, ?, ?)',
       [address, species, tier, seed, slot],
-    );
-    await conn.execute(
-      'UPDATE reefs SET charges_updated_at = CURRENT_TIMESTAMP WHERE address = ?',
-      [address],
     );
     await conn.commit();
     return res.insertId;
