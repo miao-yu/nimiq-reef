@@ -113,26 +113,51 @@ function guppy({ ctx, L, colour, time, rate, seed }: Args): void {
 }
 
 function angel({ ctx, L, colour, time, rate, seed }: Args): void {
-  const H = L * 0.92;
-  const wag = Math.sin(time * rate + seed) * L * 0.1;
+  const H = L * 1.05;
+  const wag = Math.sin(time * rate + seed) * L * 0.07;
   ctx.fillStyle = colour;
+  // Compressed and taller than it is long — that proportion is the species.
   ctx.beginPath();
-  ctx.ellipse(0, 0, L * 0.42, H * 0.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, 0, L * 0.32, H * 0.46, 0, 0, Math.PI * 2);
   ctx.fill();
-  // The trailing dorsal and anal fins are the whole silhouette.
-  [-1, 1].forEach((s) => {
+  // Pointed snout.
+  ctx.beginPath();
+  ctx.moveTo(L * 0.28, -H * 0.1);
+  ctx.quadraticCurveTo(L * 0.5, 0, L * 0.28, H * 0.12);
+  ctx.closePath();
+  ctx.fill();
+  // Swept dorsal and anal fins, thin rather than the great crescents they were.
+  [-1, 1].forEach((sign) => {
     ctx.beginPath();
-    ctx.moveTo(L * 0.12, s * H * 0.4);
-    ctx.quadraticCurveTo(-L * 0.15, s * H * 1.15, -L * 0.55, s * H * 1.0 + wag);
-    ctx.quadraticCurveTo(-L * 0.2, s * H * 0.62, -L * 0.26, s * H * 0.3);
+    ctx.moveTo(L * 0.14, sign * H * 0.34);
+    ctx.quadraticCurveTo(-L * 0.02, sign * H * 0.86, -L * 0.34, sign * H * 0.92 + wag);
+    ctx.quadraticCurveTo(-L * 0.16, sign * H * 0.5, -L * 0.26, sign * H * 0.24);
     ctx.closePath();
     ctx.fill();
   });
+  // Trailing pelvic filaments.
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = Math.max(0.8, L * 0.026);
+  [0, 1].forEach((i) => {
+    ctx.beginPath();
+    ctx.moveTo(L * 0.1, H * 0.36);
+    ctx.quadraticCurveTo(L * 0.02, H * 0.75, -L * 0.06 + i * L * 0.06, H * 1.0 + wag);
+    ctx.stroke();
+  });
   ctx.save();
-  ctx.translate(-L * 0.36, 0);
-  tail(ctx, L * 0.24, H * 0.5, wag);
+  ctx.translate(-L * 0.3, 0);
+  tail(ctx, L * 0.2, H * 0.36, wag);
   ctx.restore();
-  eye(ctx, L * 0.26, -H * 0.14, L * 0.05);
+  // Bands.
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = '#0A1A22';
+  [-0.1, 0.16].forEach((dx) => {
+    ctx.beginPath();
+    ctx.ellipse(L * dx, 0, L * 0.05, H * 0.42, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+  eye(ctx, L * 0.2, -H * 0.14, L * 0.05);
 }
 
 function jelly({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -160,52 +185,104 @@ function jelly({ ctx, L, colour, time, rate, seed }: Args): void {
 }
 
 function shrimp({ ctx, L, colour, time, rate, seed }: Args): void {
-  const curl = Math.sin(time * rate + seed) * 0.16;
-  ctx.strokeStyle = colour;
-  ctx.lineCap = 'round';
-  ctx.lineWidth = L * 0.3;
-  ctx.beginPath();
-  ctx.moveTo(L * 0.34, 0);
-  ctx.quadraticCurveTo(0, L * (0.12 + curl), -L * 0.34, L * (0.3 + curl));
-  ctx.stroke();
-  ctx.lineWidth = Math.max(0.8, L * 0.05);
-  [0.2, 0.35].forEach((a) => {
+  const curl = Math.sin(time * rate + seed) * 0.18;
+  ctx.fillStyle = colour;
+  // Segments along an arc. A shrimp is a stack of plates, not a tube.
+  for (let i = 0; i < 6; i++) {
+    const t = i / 5;
+    const x = L * (0.3 - t * 0.62);
+    const y = L * (t * t * (0.34 + curl));
+    const r = L * (0.17 - t * 0.06);
     ctx.beginPath();
-    ctx.moveTo(L * 0.34, -L * 0.04);
-    ctx.quadraticCurveTo(L * 0.6, -L * a, L * 0.85, -L * (a * 0.6));
+    ctx.ellipse(x, y, r * 1.15, r, t * (0.6 + curl), 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Tail fan.
+  ctx.save();
+  ctx.translate(-L * 0.32, L * (0.34 + curl));
+  ctx.rotate(0.7 + curl);
+  [-0.5, 0, 0.5].forEach((a) => {
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-L * 0.2, Math.sin(a) * L * 0.16 - L * 0.05);
+    ctx.lineTo(-L * 0.16, Math.sin(a) * L * 0.16 + L * 0.05);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+  // Legs.
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = Math.max(0.7, L * 0.028);
+  ctx.lineCap = 'round';
+  for (let i = 0; i < 4; i++) {
+    const x = L * (0.2 - i * 0.11);
+    ctx.beginPath();
+    ctx.moveTo(x, L * 0.1);
+    ctx.quadraticCurveTo(x - L * 0.04, L * 0.24, x - L * 0.1, L * 0.3);
+    ctx.stroke();
+  }
+  // Antennae, most of a shrimp's silhouette.
+  ctx.lineWidth = Math.max(0.6, L * 0.022);
+  [0.16, 0.3].forEach((a, i) => {
+    ctx.beginPath();
+    ctx.moveTo(L * 0.36, -L * 0.04);
+    ctx.quadraticCurveTo(L * 0.7, -L * a, L * 1.0, -L * (a * 0.4) + i * L * 0.1);
     ctx.stroke();
   });
-  eye(ctx, L * 0.3, -L * 0.08, L * 0.06);
+  eye(ctx, L * 0.32, -L * 0.09, L * 0.055);
 }
 
 function sleek({ ctx, L, colour, time, rate, seed }: Args, dorsal: number, snout: number): void {
-  const H = L * 0.4;
-  const wag = Math.sin(time * rate + seed) * L * 0.12;
+  const H = L * 0.36;
+  const wag = Math.sin(time * rate + seed) * L * 0.09;
   ctx.fillStyle = colour;
+
   ctx.beginPath();
-  ctx.moveTo(L * (0.5 + snout), 0);
-  ctx.quadraticCurveTo(L * 0.1, -H * 0.66, -L * 0.34, -H * 0.3);
-  ctx.quadraticCurveTo(-L * 0.44, 0, -L * 0.34, H * 0.3);
-  ctx.quadraticCurveTo(L * 0.1, H * 0.7, L * (0.5 + snout), 0);
+  ctx.moveTo(L * (0.5 + snout), -H * 0.04);
+  ctx.quadraticCurveTo(L * 0.16, -H * 0.56, -L * 0.14, -H * 0.46);
+  ctx.quadraticCurveTo(-L * 0.34, -H * 0.34, -L * 0.42, -H * 0.1);
+  ctx.quadraticCurveTo(-L * 0.34, H * 0.26, -L * 0.1, H * 0.44);
+  ctx.quadraticCurveTo(L * 0.2, H * 0.56, L * (0.5 + snout), -H * 0.04);
   ctx.closePath();
   ctx.fill();
+
+  // Dorsal, rooted on the back rather than floating above it.
   ctx.beginPath();
-  ctx.moveTo(L * 0.02, -H * 0.5);
-  ctx.lineTo(-L * 0.1, -H * dorsal);
-  ctx.lineTo(-L * 0.2, -H * 0.46);
+  ctx.moveTo(L * 0.08, -H * 0.48);
+  ctx.quadraticCurveTo(L * 0.0, -H * dorsal, -L * 0.14, -H * 0.44);
   ctx.closePath();
   ctx.fill();
+
   ctx.beginPath();
-  ctx.moveTo(L * 0.06, H * 0.3);
-  ctx.lineTo(-L * 0.14, H * 0.95);
-  ctx.lineTo(-L * 0.18, H * 0.28);
+  ctx.moveTo(L * 0.14, H * 0.36);
+  ctx.quadraticCurveTo(L * 0.02, H * 1.0, -L * 0.1, H * 0.42);
   ctx.closePath();
   ctx.fill();
+
+  // Crescent caudal: upper lobe longer, with a notch. This is the read.
   ctx.save();
-  ctx.translate(-L * 0.34, 0);
-  tail(ctx, L * 0.3, H * 1.5, wag);
+  ctx.translate(-L * 0.42, -H * 0.06 + wag);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.quadraticCurveTo(-L * 0.1, -H * 0.5, -L * 0.24, -H * 1.18);
+  ctx.quadraticCurveTo(-L * 0.16, -H * 0.34, -L * 0.06, H * 0.06);
+  ctx.quadraticCurveTo(-L * 0.16, H * 0.36, -L * 0.22, H * 0.72);
+  ctx.quadraticCurveTo(-L * 0.08, H * 0.28, 0, 0);
+  ctx.closePath();
+  ctx.fill();
   ctx.restore();
-  eye(ctx, L * 0.34, -H * 0.16, L * 0.045);
+
+  // Gills.
+  ctx.strokeStyle = 'rgba(10,22,30,.22)';
+  ctx.lineWidth = Math.max(0.7, L * 0.014);
+  for (let i = 0; i < 4; i++) {
+    const gx = L * (0.2 - i * 0.045);
+    ctx.beginPath();
+    ctx.moveTo(gx, -H * 0.24);
+    ctx.quadraticCurveTo(gx - L * 0.02, 0, gx, H * 0.2);
+    ctx.stroke();
+  }
+  eye(ctx, L * 0.36, -H * 0.18, L * 0.042);
 }
 
 function lionfish(a: Args): void {
@@ -239,22 +316,35 @@ function lionfish(a: Args): void {
 
 function ray({ ctx, L, colour, time, rate, seed }: Args): void {
   const flap = Math.sin(time * rate + seed);
+  const span = L * 0.56;
   ctx.fillStyle = colour;
-  // A flattened diamond seen from slightly above; the wings beat vertically.
+  // Wingspan is wider than the body is long. Without that it is an arrowhead.
   ctx.beginPath();
-  ctx.moveTo(L * 0.42, 0);
-  ctx.quadraticCurveTo(0, -L * (0.16 + flap * 0.1), -L * 0.42, -L * 0.3 * (1 + flap * 0.25));
-  ctx.quadraticCurveTo(-L * 0.2, 0, -L * 0.42, L * 0.3 * (1 - flap * 0.25));
-  ctx.quadraticCurveTo(0, L * (0.16 - flap * 0.1), L * 0.42, 0);
+  ctx.moveTo(L * 0.46, 0);
+  ctx.quadraticCurveTo(L * 0.26, -span * 0.46, -L * 0.1, -span * (0.92 + flap * 0.22));
+  ctx.quadraticCurveTo(-L * 0.3, -span * 0.3, -L * 0.34, 0);
+  ctx.quadraticCurveTo(-L * 0.3, span * 0.3, -L * 0.16, span * (0.92 - flap * 0.22));
+  ctx.quadraticCurveTo(L * 0.1, span * 0.34, L * 0.46, 0);
   ctx.closePath();
   ctx.fill();
-  ctx.strokeStyle = colour;
-  ctx.lineWidth = Math.max(1, L * 0.03);
+  // Head bump, so the leading edge is not a knife.
   ctx.beginPath();
-  ctx.moveTo(-L * 0.36, 0);
-  ctx.quadraticCurveTo(-L * 0.7, flap * L * 0.08, -L * 0.95, flap * L * 0.14);
+  ctx.ellipse(L * 0.28, 0, L * 0.14, span * 0.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Whip tail, thick at the root.
+  ctx.strokeStyle = colour;
+  ctx.lineCap = 'round';
+  ctx.lineWidth = Math.max(1.4, L * 0.055);
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.3, 0);
+  ctx.quadraticCurveTo(-L * 0.6, flap * span * 0.14, -L * 0.8, flap * span * 0.2);
   ctx.stroke();
-  eye(ctx, L * 0.24, -L * 0.06, L * 0.04);
+  ctx.lineWidth = Math.max(0.8, L * 0.022);
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.78, flap * span * 0.19);
+  ctx.quadraticCurveTo(-L * 0.95, flap * span * 0.24, -L * 1.06, flap * span * 0.3);
+  ctx.stroke();
+  eye(ctx, L * 0.3, -span * 0.16, L * 0.04);
 }
 
 function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
@@ -277,72 +367,132 @@ function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
 }
 
 function turtle({ ctx, L, colour, time, rate, seed }: Args): void {
-  const paddle = Math.sin(time * rate + seed) * 0.5;
+  const paddle = Math.sin(time * rate + seed);
   ctx.fillStyle = colour;
-  [-1, 1].forEach((s, i) => {
-    ctx.save();
-    ctx.translate(-L * 0.02, s * L * 0.2);
-    ctx.rotate(s * (0.4 + paddle * (i ? 1 : -1) * 0.35));
-    ctx.beginPath();
-    ctx.ellipse(-L * 0.18, 0, L * 0.26, L * 0.09, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  });
+
+  // Rear flipper, behind the shell.
+  ctx.save();
+  ctx.translate(-L * 0.3, L * 0.12);
+  ctx.rotate(0.5 - paddle * 0.25);
   ctx.beginPath();
-  ctx.ellipse(0, 0, L * 0.42, L * 0.3, 0, 0, Math.PI * 2);
+  ctx.ellipse(-L * 0.1, 0, L * 0.15, L * 0.06, 0, 0, Math.PI * 2);
   ctx.fill();
-  ctx.globalAlpha = 0.32;
-  ctx.fillStyle = 'rgba(255,255,255,.8)';
-  for (let i = 0; i < 5; i++) {
+  ctx.restore();
+
+  // Carapace: domed on top, flat beneath. A plain ellipse reads as a lemon.
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.4, L * 0.06);
+  ctx.quadraticCurveTo(-L * 0.34, -L * 0.32, 0, -L * 0.34);
+  ctx.quadraticCurveTo(L * 0.34, -L * 0.32, L * 0.4, L * 0.04);
+  ctx.quadraticCurveTo(L * 0.2, L * 0.22, 0, L * 0.23);
+  ctx.quadraticCurveTo(-L * 0.2, L * 0.22, -L * 0.4, L * 0.06);
+  ctx.closePath();
+  ctx.fill();
+
+  // Scutes — hexagons, not portholes.
+  ctx.globalAlpha = 0.26;
+  ctx.strokeStyle = '#08161E';
+  ctx.lineWidth = Math.max(0.8, L * 0.016);
+  for (let i = 0; i < 4; i++) {
+    const cx = -L * 0.21 + i * L * 0.14;
+    const cy = -L * 0.08 - Math.cos((i - 1.5) * 0.7) * L * 0.04;
     ctx.beginPath();
-    ctx.ellipse(-L * 0.2 + i * L * 0.1, -L * 0.04, L * 0.045, L * 0.07, 0, 0, Math.PI * 2);
-    ctx.fill();
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2 + 0.5;
+      const px = cx + Math.cos(a) * L * 0.075;
+      const py = cy + Math.sin(a) * L * 0.075;
+      if (k === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.stroke();
   }
   ctx.globalAlpha = 1;
+
+  // Front flipper, the big one, in front of the shell.
   ctx.fillStyle = colour;
+  ctx.save();
+  ctx.translate(L * 0.2, L * 0.12);
+  ctx.rotate(0.75 + paddle * 0.4);
   ctx.beginPath();
-  ctx.ellipse(L * 0.46, -L * 0.04, L * 0.12, L * 0.09, 0, 0, Math.PI * 2);
+  ctx.ellipse(L * 0.16, 0, L * 0.24, L * 0.075, 0, 0, Math.PI * 2);
   ctx.fill();
-  eye(ctx, L * 0.52, -L * 0.06, L * 0.035);
+  ctx.restore();
+
+  // Head on a short neck, with a beak.
+  ctx.beginPath();
+  ctx.ellipse(L * 0.43, -L * 0.08, L * 0.13, L * 0.1, -0.15, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(L * 0.53, -L * 0.11);
+  ctx.lineTo(L * 0.6, -L * 0.05);
+  ctx.lineTo(L * 0.5, -L * 0.01);
+  ctx.closePath();
+  ctx.fill();
+  eye(ctx, L * 0.47, -L * 0.12, L * 0.035);
 }
 
 function whale({ ctx, L, colour, time, rate, seed }: Args): void {
-  const H = L * 0.36;
-  const wag = Math.sin(time * rate + seed) * L * 0.07;
+  const H = L * 0.44;
+  const wag = Math.sin(time * rate + seed) * L * 0.05;
   ctx.fillStyle = colour;
-  ctx.beginPath();
-  ctx.moveTo(L * 0.5, H * 0.06);
-  ctx.quadraticCurveTo(L * 0.3, -H * 0.72, -L * 0.1, -H * 0.6);
-  ctx.quadraticCurveTo(-L * 0.36, -H * 0.42, -L * 0.42, -H * 0.16);
-  ctx.quadraticCurveTo(-L * 0.34, H * 0.34, -L * 0.02, H * 0.62);
-  ctx.quadraticCurveTo(L * 0.3, H * 0.72, L * 0.5, H * 0.06);
-  ctx.closePath();
-  ctx.fill();
-  // Fluke, horizontal — a whale is not a big fish and the tail says so.
+
+  // Fluke first, so the body's tail stock sits over its root. Two lobes with a
+  // centre notch — a whale is not a fish and the tail is what says so.
   ctx.save();
-  ctx.translate(-L * 0.4, -H * 0.14 + wag);
+  ctx.translate(-L * 0.4, wag);
   ctx.beginPath();
-  ctx.moveTo(0, 0);
-  ctx.quadraticCurveTo(-L * 0.12, -H * 0.1, -L * 0.26, -H * 0.42);
-  ctx.quadraticCurveTo(-L * 0.06, -H * 0.12, 0, H * 0.06);
-  ctx.quadraticCurveTo(-L * 0.06, H * 0.24, -L * 0.24, H * 0.5);
-  ctx.quadraticCurveTo(-L * 0.1, H * 0.16, 0, 0);
+  ctx.moveTo(L * 0.1, -H * 0.11);
+  ctx.quadraticCurveTo(-L * 0.06, -H * 0.42, -L * 0.3, -H * 0.74);
+  // Back to the centre notch, not to the outbound line — otherwise both lobes
+  // collapse into slivers and the tail disappears.
+  ctx.quadraticCurveTo(-L * 0.12, -H * 0.26, -L * 0.05, 0);
+  ctx.quadraticCurveTo(-L * 0.12, H * 0.26, -L * 0.3, H * 0.74);
+  ctx.quadraticCurveTo(-L * 0.06, H * 0.42, L * 0.1, H * 0.11);
   ctx.closePath();
   ctx.fill();
   ctx.restore();
+
+  // Body: blunt head, deep chest, narrowing hard to the stock.
   ctx.beginPath();
-  ctx.moveTo(L * 0.04, H * 0.42);
-  ctx.quadraticCurveTo(-L * 0.06, H * 0.95, -L * 0.16, H * 0.5);
+  ctx.moveTo(L * 0.48, -H * 0.12);
+  ctx.quadraticCurveTo(L * 0.34, -H * 0.5, L * 0.02, -H * 0.5);
+  ctx.quadraticCurveTo(-L * 0.24, -H * 0.44, -L * 0.4, -H * 0.12);
+  ctx.quadraticCurveTo(-L * 0.3, H * 0.02, -L * 0.4, H * 0.12);
+  ctx.quadraticCurveTo(-L * 0.16, H * 0.5, L * 0.1, H * 0.52);
+  ctx.quadraticCurveTo(L * 0.4, H * 0.5, L * 0.48, -H * 0.12);
   ctx.closePath();
   ctx.fill();
-  // Pale underside, the read that makes it unmistakably a whale.
-  ctx.globalAlpha = 0.26;
+
+  // Pale underside.
+  ctx.globalAlpha = 0.3;
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.ellipse(L * 0.08, H * 0.34, L * 0.3, H * 0.2, 0, 0, Math.PI * 2);
+  ctx.moveTo(L * 0.4, H * 0.14);
+  ctx.quadraticCurveTo(L * 0.08, H * 0.56, -L * 0.24, H * 0.3);
+  ctx.quadraticCurveTo(L * 0.02, H * 0.3, L * 0.4, H * 0.14);
+  ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = 1;
-  eye(ctx, L * 0.34, -H * 0.14, L * 0.028);
+
+  // Pectoral fin, long and low.
+  ctx.fillStyle = colour;
+  ctx.beginPath();
+  ctx.moveTo(L * 0.18, H * 0.34);
+  ctx.quadraticCurveTo(L * 0.02, H * 0.92, -L * 0.14, H * 0.74);
+  ctx.quadraticCurveTo(-L * 0.02, H * 0.5, L * 0.06, H * 0.34);
+  ctx.closePath();
+  ctx.fill();
+
+  // Mouth line, the other half of the read.
+  ctx.strokeStyle = 'rgba(8,20,28,.28)';
+  ctx.lineWidth = Math.max(1, L * 0.014);
+  ctx.beginPath();
+  ctx.moveTo(L * 0.47, -H * 0.06);
+  ctx.quadraticCurveTo(L * 0.3, H * 0.26, L * 0.08, H * 0.28);
+  ctx.stroke();
+
+  eye(ctx, L * 0.33, -H * 0.06, L * 0.026);
 }
 
 type Painter = (a: Args) => void;
