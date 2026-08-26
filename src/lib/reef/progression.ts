@@ -2,7 +2,7 @@ import { SPECIES, SPECIES_ORDER } from './species';
 import type { SpeciesKey } from './types';
 
 /**
- * How a grove advances.
+ * How a reef advances.
  *
  * Guardrail: every threshold below is measured in **unbroken days staked**.
  * None of them look at how much NIM is staked. A wallet with 100 NIM and one

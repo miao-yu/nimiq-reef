@@ -33,10 +33,10 @@ These are not style preferences. Breaking either one changes what this app is.
 **1. Pace growth on time, never on stake size.**
 Species unlock from unbroken days staked. A wallet with 100 NIM and one with
 100,000 NIM grow the same garden; the difference is what lands in their wallet.
-Scaling growth with stake makes it pay-to-win, lets a whale flatten the grove on
+Scaling growth with stake makes it pay-to-win, lets a whale flatten the reef on
 day one, and makes the app read as an investment product.
 
-**2. Nothing in the grove ever converts back to NIM.**
+**2. Nothing in the reef ever converts back to NIM.**
 Plants are status, memory, decoration. No trading, no gifting, no marketplace,
 no cash-out. The moment a rare species has a price, this is a yield farm in a
 costume — which judges see through and regulators care about. Real NIM stays
@@ -45,10 +45,10 @@ real and withdrawable at the staking contract.
 ## Scope
 
 **In v1**
-- One grove per wallet, four species
+- One reef per wallet, four species
 - Real 15-minute tick driven by the node
 - Limited plots, so planting is a permanent choice
-- Read-only community grove
+- Read-only community reef
 - Share as a rendered image
 - Free tier that grows without staking anything
 
@@ -77,7 +77,7 @@ in `~/Projects` are out of date.
   to one candidate — see `docs/RESEARCH.md`.
 - **Domain and TLS certificate.** Mini Apps must be served over HTTPS, so
   this blocks on-device testing, not just launch.
-- **Does unstaking kill the grove?** Brutal drives retention; forgiving avoids
+- **Does unstaking kill the reef?** Brutal drives retention; forgiving avoids
   punishing someone who simply needs their money back. Leaning forgiving —
   growth pauses, nothing dies.
 - **What the plants actually are.** Botanical is the obvious read. A reef or a

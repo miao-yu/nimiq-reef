@@ -27,7 +27,7 @@ function normalize(address: string): string {
  *   2. that public key derives to the address being claimed.
  *
  * Checking only (1) lets an attacker sign the challenge with their own key,
- * claim someone else's address, and inherit that grove. Verified against
+ * claim someone else's address, and inherit that reef. Verified against
  * @nimiq/core 2.20.0 — a foreign key passes (1) and fails (2).
  */
 export function verifyWalletSignature(input: VerifyInput): VerifyResult {

@@ -13,7 +13,7 @@ export interface CommunityPlant {
  * Lay the community's plants out across one canvas.
  *
  * Positions are assigned here rather than stored, so the strip stays evenly
- * spread however many plants come back — and a grove with three plants does
+ * spread however many plants come back — and a reef with three plants does
  * not leave a gap where somebody else's used to be.
  */
 export function layoutCommunity(plants: readonly CommunityPlant[]): Plant[] {

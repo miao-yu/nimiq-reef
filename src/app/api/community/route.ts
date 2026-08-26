@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { communitySnapshot } from '@/lib/server/grove-repo';
+import { communitySnapshot } from '@/lib/server/reef-repo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

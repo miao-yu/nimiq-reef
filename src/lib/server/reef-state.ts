@@ -1,13 +1,13 @@
 import 'server-only';
 import { rpc, RpcUnavailableError } from './rpc';
-import { daysStaked, ensureGrove, listPlants } from './grove-repo';
-import { groveDay } from '@/lib/grove/day';
-import { plotsUnlocked, speciesUnlocked, nextMilestone, MAX_PLOTS } from '@/lib/grove/progression';
-export type { GroveState };
-import type { GroveState } from '@/lib/grove/state';
+import { daysStaked, ensureReef, listPlants } from './reef-repo';
+import { reefDay } from '@/lib/reef/day';
+import { plotsUnlocked, speciesUnlocked, nextMilestone, MAX_PLOTS } from '@/lib/reef/progression';
+export type { ReefState };
+import type { ReefState } from '@/lib/reef/state';
 
-export async function getGroveState(address: string): Promise<GroveState> {
-  const grove = await ensureGrove(address);
+export async function getReefState(address: string): Promise<ReefState> {
+  const reef = await ensureReef(address);
 
   let stakedLuna = 0;
   let delegation: string | null = null;
@@ -34,7 +34,7 @@ export async function getGroveState(address: string): Promise<GroveState> {
 
   return {
     address,
-    day: groveDay(grove.firstDay),
+    day: reefDay(reef.firstDay),
     plants,
     daysStaked: streak,
     stakedLuna,

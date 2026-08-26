@@ -22,13 +22,13 @@ Expected:
 ```
 
 Lines 6–8 are the ones that matter. If 7 ever returns 200, the address
-derivation check has been broken and any wallet can claim any grove.
+derivation check has been broken and any wallet can claim any reef.
 
 ## Planting rules
 
 ```bash
 npm run dev
-node scripts/grove-smoke.mjs
+node scripts/reef-smoke.mjs
 ```
 
 Cases 3, 5 and 6 are the whole game:
@@ -40,7 +40,7 @@ Cases 3, 5 and 6 are the whole game:
 7. plant with no session:       401
 ```
 
-If 5 ever returns 200, planting has stopped being a decision and the grove is
+If 5 ever returns 200, planting has stopped being a decision and the reef is
 a toy again. The permanence is enforced by UNIQUE (address, plot_index), so it
 holds even when two taps race.
 

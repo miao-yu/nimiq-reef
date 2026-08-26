@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 /**
  * The elected validator set, for choosing where to delegate.
  *
- * Grove is validator-neutral: this lists everyone the chain elected, sorted by
+ * Reef is validator-neutral: this lists everyone the chain elected, sorted by
  * address so the ordering carries no opinion. Our own pool gets no default, no
  * highlight, and no preferential position.
  *

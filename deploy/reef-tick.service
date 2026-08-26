@@ -1,0 +1,14 @@
+# /etc/systemd/system/reef-tick.service
+[Unit]
+Description=Nimiq Reef watering tick
+After=reef.service
+
+[Service]
+Type=oneshot
+# The secret lives in the app env, readable only by the reef user.
+EnvironmentFile=/opt/reef/app.env
+ExecStart=/usr/bin/curl -sS --fail --max-time 120 \
+  -X POST http://127.0.0.1:3200/api/tick \
+  -H "Authorization: Bearer ${TICK_SECRET}"
+User=reef
+Group=reef

@@ -73,7 +73,7 @@ someone has begun unwinding — which the streak logic depends on.
 `rpc-interface/src/blockchain.rs:170-172` marks it "extremely computationally
 expensive" — it walks every staker in the staking contract. Same warning on
 `getValidators` and `getAccounts`. The pool can afford it once per epoch; a web
-request cannot. Grove is validator-neutral anyway, so always look up a single
+request cannot. Reef is validator-neutral anyway, so always look up a single
 staker by address.
 
 ## SETTLED: what bytes does Nimiq Pay sign?
@@ -100,23 +100,23 @@ frame the same way, so local runs still exercise the production path.
 
 `new HubApi()` derives its endpoint from the page hostname and falls back to
 `http://localhost:8080` for anything it does not recognise as a Nimiq domain.
-`grove.nimiq.cafe` is not on that list, so Hub sign-in silently pointed at a dev
+`reef.nimiq.cafe` is not on that list, so Hub sign-in silently pointed at a dev
 server. The endpoint is now pinned to `https://hub.nimiq.com`.
 
 ## Opening an unlisted Mini App on a device
 
-Researched 24 Aug 2026, after `nimpay.app/miniapps/open/grove.nimiq.cafe`
+Researched 24 Aug 2026, after `nimpay.app/miniapps/open/reef.nimiq.cafe`
 returned "not in the directory".
 
 **Use the Custom URL field.** In Nimiq Pay → Mini Apps there is a Custom URL
-input; paste `https://grove.nimiq.cafe` and it loads. This is the documented
+input; paste `https://reef.nimiq.cafe` and it loads. This is the documented
 path for testing and needs no listing.
 Source: https://nimiq.dev/mini-apps/development/load-local-mini-app
 
 Why the deeplink failed: `nimpay.app/miniapps/open/<host>` is a **server-side
 allowlist**, not a generic opener. It resolves only for hosts in the directory
 feed at https://nimpay.app/api/miniapps. Confirmed by probe — listed apps
-return 200, `grove.nimiq.cafe` returns 404 `Unknown mini app host`, and so does
+return 200, `reef.nimiq.cafe` returns 404 `Unknown mini app host`, and so does
 a real Cycle 1 entry that was never listed. The overview page's claim that the
 HTTPS link "works with any domain" is wrong.
 
@@ -146,5 +146,5 @@ costing 100 real NIM on mainnet. The switch affects Nimiq provider operations
 only; EVM stays on mainnet.
 
 Caveat: our server reads a **mainnet** node, so a testnet delegation will not
-appear in a grove. That is fine for Phase 0, whose goal is only to prove the
+appear in a reef. That is fine for Phase 0, whose goal is only to prove the
 SDK call works end to end from the app.

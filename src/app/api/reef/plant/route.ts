@@ -1,10 +1,10 @@
 import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
-import { getGroveState } from '@/lib/server/grove-state';
-import { plant } from '@/lib/server/grove-repo';
-import { SPECIES_ORDER } from '@/lib/grove';
-import type { SpeciesKey } from '@/lib/grove';
+import { getReefState } from '@/lib/server/reef-state';
+import { plant } from '@/lib/server/reef-repo';
+import { SPECIES_ORDER } from '@/lib/reef';
+import type { SpeciesKey } from '@/lib/reef';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Plot must be a whole number.' }, { status: 400 });
   }
 
-  const state = await getGroveState(address);
+  const state = await getReefState(address);
 
   if (!state.speciesUnlocked.includes(species as SpeciesKey)) {
     return NextResponse.json(
@@ -62,5 +62,5 @@ export async function POST(request: Request) {
     );
   }
 
-  return NextResponse.json(await getGroveState(address));
+  return NextResponse.json(await getReefState(address));
 }

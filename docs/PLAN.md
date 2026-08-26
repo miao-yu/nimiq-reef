@@ -11,8 +11,8 @@ when strangers, and probably council members, first open this. Written 25 Aug.
 
 ## 0. What already exists and works
 
-Deployed at https://reef.nimiq.cafe, running as `grove.service` on the VPS
-(the unit and paths still say `grove`; only the public hostname moved).
+Deployed at https://reef.nimiq.cafe, running as `reef.service` on the VPS
+(the unit and paths still say `reef`; only the public hostname moved).
 Do not rebuild any of this.
 
 | Working | Where |
@@ -21,16 +21,16 @@ Do not rebuild any of this.
 | Session cookies (jose JWT) | `src/lib/server/session.ts` |
 | Nimiq Pay + Hub + dev-mock providers | `src/lib/nimiq/provider.ts` |
 | Albatross RPC client | `src/lib/server/rpc.ts` |
-| 15-minute tick on a systemd timer | `src/app/api/tick/route.ts`, `deploy/grove-tick.*` |
+| 15-minute tick on a systemd timer | `src/app/api/tick/route.ts`, `deploy/reef-tick.*` |
 | Schema + forward-only migrations | `migrations/`, `scripts/migrate.mjs` |
-| Deterministic canvas renderer | `src/lib/grove/render.ts` |
+| Deterministic canvas renderer | `src/lib/reef/render.ts` |
 | Server-side share PNG (`@napi-rs/canvas`) | `src/lib/server/share-image.ts` |
 | Staking from in-app, neutral validator picker | `src/components/StakePanel.tsx` |
 | i18n en/de/es off `getHostLanguage()` | `src/lib/i18n/` |
 | Client error reporting (no console on a phone) | `src/lib/client-log.ts` |
 | Deploy script, builds on the box | `deploy/deploy.sh` |
 
-Run it: `GROVE_SSH=root@<host> ./deploy/deploy.sh` (host is in
+Run it: `REEF_SSH=root@<host> ./deploy/deploy.sh` (host is in
 `docs/DEPLOY.local.md`, which is gitignored — **this repo goes public**).
 
 ---
@@ -187,8 +187,8 @@ Each step is one commit. Do not batch them.
 
 ### Step 1 — the renderer *(largest, do it first, everything is judged through it)*
 
-Replace `src/lib/grove/render.ts` drawing with an aquarium. Keep the
-`renderGrove(ctx, options)` signature and the seeded determinism.
+Replace `src/lib/reef/render.ts` drawing with an aquarium. Keep the
+`renderReef(ctx, options)` signature and the seeded determinism.
 
 - Water gradient, brighter at the surface.
 - Light shafts from above, slowly drifting.
@@ -212,7 +212,7 @@ PNG; a still frame looks composed.
 
 ### Step 2 — species and progression
 
-Rewrite `src/lib/grove/species.ts` and `progression.ts`.
+Rewrite `src/lib/reef/species.ts` and `progression.ts`.
 
 ```
 grass   Common     unlockDay 0
@@ -240,12 +240,12 @@ to about 20 at a million.
 Forward-only; do not edit `001_init.sql`.
 
 ```sql
-ALTER TABLE groves
+ALTER TABLE reefs
   ADD COLUMN handle VARCHAR(32) NOT NULL DEFAULT '',
   ADD COLUMN charges_updated_at DATETIME NULL,
   ADD COLUMN best_streak SMALLINT UNSIGNED NOT NULL DEFAULT 0;
 -- backfill handles, then:
-ALTER TABLE groves ADD UNIQUE KEY uniq_handle (handle);
+ALTER TABLE reefs ADD UNIQUE KEY uniq_handle (handle);
 
 -- Everything ever discovered. Permanent.
 CREATE TABLE specimens (
@@ -260,7 +260,7 @@ CREATE TABLE specimens (
   PRIMARY KEY (id),
   UNIQUE KEY uniq_slot (address, slot),
   KEY idx_addr (address),
-  CONSTRAINT fk_spec_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_spec_reef FOREIGN KEY (address) REFERENCES reefs (address) ON DELETE CASCADE
 );
 
 -- Charge spends, one row per roll. Also the audit trail.
@@ -271,14 +271,14 @@ CREATE TABLE rolls (
   source     ENUM('charge','payment') NOT NULL,
   PRIMARY KEY (id),
   KEY idx_addr_time (address, rolled_at),
-  CONSTRAINT fk_roll_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_roll_reef FOREIGN KEY (address) REFERENCES reefs (address) ON DELETE CASCADE
 );
 
 CREATE TABLE feeds (
   address VARCHAR(44) NOT NULL,
   day     DATE NOT NULL,
   PRIMARY KEY (address, day),
-  CONSTRAINT fk_feed_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_feed_reef FOREIGN KEY (address) REFERENCES reefs (address) ON DELETE CASCADE
 );
 
 CREATE TABLE feedings (
@@ -292,8 +292,8 @@ CREATE TABLE feedings (
   -- The rate limit. In the database, not in a check that can be raced.
   UNIQUE KEY one_per_device_per_day (device_hash, day),
   KEY idx_recipient_day (to_address, day),
-  CONSTRAINT fk_fed_from FOREIGN KEY (from_address) REFERENCES groves (address) ON DELETE CASCADE,
-  CONSTRAINT fk_fed_to   FOREIGN KEY (to_address)   REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_fed_from FOREIGN KEY (from_address) REFERENCES reefs (address) ON DELETE CASCADE,
+  CONSTRAINT fk_fed_to   FOREIGN KEY (to_address)   REFERENCES reefs (address) ON DELETE CASCADE
 );
 ```
 
@@ -342,14 +342,14 @@ Server-side only. The client never decides how many charges it has.
 
 ### Step 8 — UI and copy
 
-Rework `src/app/page.tsx`, rename `Grove.tsx` → `Tank.tsx`, update all three
+Rework `src/app/page.tsx`, rename `Reef.tsx` → `Tank.tsx`, update all three
 languages in `src/lib/i18n/strings.ts`. Keep the signed-out community view: a
 stranger must see a living tank **before** any wallet prompt.
 
 ### Step 9 — the simulator, in the app
 
 Drag days and NIM, see what the tank becomes. Cheap, because the renderer is
-already fully parametric — the sliders just drive `renderGrove` directly.
+already fully parametric — the sliders just drive `renderReef` directly.
 
 It does three jobs at once, which is why it is a numbered step and not a nice
 to have:
@@ -390,8 +390,8 @@ and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.
 ## 5. Decided 25 Aug — treat these as settled
 
 - **Name: Reef.** Done, 26 Aug — `reef.nimiq.cafe` is live with its own
-  certificate. Internal identifiers (`grove.service`, `/opt/grove`, the `grove`
-  database) deliberately still say grove; renaming them buys nothing and risks
+  certificate. Internal identifiers (`reef.service`, `/opt/reef`, the `reef`
+  database) deliberately still say reef; renaming them buys nothing and risks
   a broken deploy. User-facing copy in three languages is still owed, in Step 8.
 - **Unstaking is forgiving.** The streak resets and rarity odds fall back, no
   new rolls come from staking — but **every specimen stays**. The whole app sits
@@ -426,7 +426,7 @@ and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.
 `scripts/auth-smoke.mjs` must keep passing — case 7, the impersonation attempt,
 must stay **401**. If it ever returns 200, any wallet can claim any tank.
 
-Replace `scripts/grove-smoke.mjs` with `tank-smoke.mjs` covering: charges cap at
+Replace `scripts/reef-smoke.mjs` with `tank-smoke.mjs` covering: charges cap at
 3, a fourth roll is 409, releasing keeps the guide entry, giving twice from one
 device in a day is 409, and giving with no session is 401.
 

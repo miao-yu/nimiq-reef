@@ -6,13 +6,13 @@
  */
 export type ProviderKind = 'nimiq-pay' | 'hub' | 'mock';
 
-/** The slice of the Nimiq Pay provider Grove actually uses. */
+/** The slice of the Nimiq Pay provider Reef actually uses. */
 export interface SignatureResult {
   publicKey: string;
   signature: string;
 }
 
-export interface GroveProvider {
+export interface ReefProvider {
   listAccounts(): Promise<string[]>;
   sign(message: string): Promise<SignatureResult>;
   getBlockNumber(): Promise<number>;

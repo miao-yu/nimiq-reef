@@ -6,7 +6,7 @@ const DESCRIPTION = 'A tank that fills as you stake. Nothing here is simulated.'
 
 /**
  * The card is what actually travels. A crawler has no session, so /api/share
- * serves it the community grove — which is the right thing for a stranger to
+ * serves it the community reef — which is the right thing for a stranger to
  * see anyway.
  */
 export const metadata: Metadata = {

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
-import { getGroveState } from '@/lib/server/grove-state';
-import { communitySnapshot } from '@/lib/server/grove-repo';
+import { getReefState } from '@/lib/server/reef-state';
+import { communitySnapshot } from '@/lib/server/reef-repo';
 import { renderShareImage } from '@/lib/server/share-image';
-import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/grove';
+import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/reef';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { fillForStake } from '@/lib/tank/geometry';
 
@@ -11,7 +11,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * A PNG of your grove, or of the community's when nobody is signed in.
+ * A PNG of your reef, or of the community's when nobody is signed in.
  *
  * People screenshot gardens, and Marketing is a quarter of the competition
  * score — so this exists to make the thing worth posting an actual artefact
@@ -21,17 +21,17 @@ export async function GET() {
   const address = await currentAddress();
 
   if (address) {
-    const grove = await getGroveState(address);
+    const reef = await getReefState(address);
     const caption =
-      grove.plants.length === 0
-        ? `Day ${grove.day} — nothing planted yet`
-        : grove.daysStaked > 0
-          ? `Day ${grove.day} — ${grove.daysStaked} ${grove.daysStaked === 1 ? 'day' : 'days'} staked`
-          : `Day ${grove.day} in my grove`;
+      reef.plants.length === 0
+        ? `Day ${reef.day} — nothing planted yet`
+        : reef.daysStaked > 0
+          ? `Day ${reef.day} — ${reef.daysStaked} ${reef.daysStaked === 1 ? 'day' : 'days'} staked`
+          : `Day ${reef.day} in my reef`;
     return png(
       renderShareImage({
-        inhabitants: adaptPlants(grove.plants),
-        tankFill: fillForStake(grove.stakedLuna),
+        inhabitants: adaptPlants(reef.plants),
+        tankFill: fillForStake(reef.stakedLuna),
         caption,
       }),
     );

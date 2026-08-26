@@ -1,4 +1,4 @@
-import type { GroveProvider, SignatureResult } from './types';
+import type { ReefProvider, SignatureResult } from './types';
 
 /**
  * Stand-in for Nimiq Pay so the app is developable in a desktop browser.
@@ -12,7 +12,7 @@ import type { GroveProvider, SignatureResult } from './types';
  * `encoding=raw-utf8` in a dev log proves nothing about the device. See
  * src/lib/server/signed-message.ts.
  */
-export function createMockProvider(): GroveProvider {
+export function createMockProvider(): ReefProvider {
   let cached: string | undefined;
 
   async function address(): Promise<string> {

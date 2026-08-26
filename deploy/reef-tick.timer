@@ -1,9 +1,9 @@
-# /etc/systemd/system/grove-tick.timer
+# /etc/systemd/system/reef-tick.timer
 #
 # Every 15 minutes — the same cadence the pool's payout job runs at, which is
 # what makes "one watering" a real unit rather than an invented one.
 [Unit]
-Description=Water the groves every 15 minutes
+Description=Water the reefs every 15 minutes
 
 [Timer]
 OnBootSec=2min

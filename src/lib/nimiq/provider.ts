@@ -1,10 +1,10 @@
 'use client';
 
-import type { GroveProvider } from './types';
+import type { ReefProvider } from './types';
 import { createMockProvider } from './mock';
 import { createHubProvider } from './hub';
 
-let cached: Promise<GroveProvider> | undefined;
+let cached: Promise<ReefProvider> | undefined;
 
 /**
  * Pick a signing provider, best first.
@@ -18,7 +18,7 @@ let cached: Promise<GroveProvider> | undefined;
  * can only ever time out. Keep that wait short rather than making browser users
  * sit through it.
  */
-export function getProvider(): Promise<GroveProvider> {
+export function getProvider(): Promise<ReefProvider> {
   cached ??= resolve();
   return cached;
 }
@@ -28,7 +28,7 @@ export function resetProvider(): void {
   cached = undefined;
 }
 
-async function resolve(): Promise<GroveProvider> {
+async function resolve(): Promise<ReefProvider> {
   try {
     const { init } = await import('@nimiq/mini-app-sdk');
     const nimiq = await init({ timeout: 1500 });

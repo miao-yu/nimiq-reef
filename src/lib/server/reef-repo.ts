@@ -1,10 +1,10 @@
 import 'server-only';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
-import { addDays, utcDay } from '@/lib/grove/day';
-import type { Plant, SpeciesKey } from '@/lib/grove';
+import { addDays, utcDay } from '@/lib/reef/day';
+import type { Plant, SpeciesKey } from '@/lib/reef';
 
-interface GroveRow extends RowDataPacket {
+interface ReefRow extends RowDataPacket {
   address: string;
   first_day: Date | string;
   created_at: Date;
@@ -27,25 +27,25 @@ function asDay(value: Date | string): string {
   return typeof value === 'string' ? value.slice(0, 10) : value.toISOString().slice(0, 10);
 }
 
-export interface GroveRecord {
+export interface ReefRecord {
   address: string;
   firstDay: string;
 }
 
-/** Create the grove on first sight. Idempotent — safe to call on every request. */
-export async function ensureGrove(address: string): Promise<GroveRecord> {
+/** Create the reef on first sight. Idempotent — safe to call on every request. */
+export async function ensureReef(address: string): Promise<ReefRecord> {
   const today = utcDay();
   await db().execute(
-    `INSERT INTO groves (address, first_day) VALUES (?, ?)
+    `INSERT INTO reefs (address, first_day) VALUES (?, ?)
      ON DUPLICATE KEY UPDATE last_seen_at = CURRENT_TIMESTAMP`,
     [address, today],
   );
-  const [rows] = await db().query<GroveRow[]>(
-    'SELECT address, first_day, created_at FROM groves WHERE address = ?',
+  const [rows] = await db().query<ReefRow[]>(
+    'SELECT address, first_day, created_at FROM reefs WHERE address = ?',
     [address],
   );
   const row = rows[0];
-  if (!row) throw new Error(`Grove missing immediately after insert: ${address}`);
+  if (!row) throw new Error(`Reef missing immediately after insert: ${address}`);
   return { address: row.address, firstDay: asDay(row.first_day) };
 }
 
@@ -92,7 +92,7 @@ export async function recordDay(
   delegation: string | null,
 ): Promise<void> {
   await db().execute(
-    `INSERT INTO grove_days (address, day, staked_luna, delegation)
+    `INSERT INTO reef_days (address, day, staked_luna, delegation)
      VALUES (?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE
        staked_luna = VALUES(staked_luna),
@@ -112,7 +112,7 @@ export async function recordDay(
  */
 export async function daysStaked(address: string, lookback = 400): Promise<number> {
   const [rows] = await db().query<DayRow[]>(
-    `SELECT day, staked_luna FROM grove_days
+    `SELECT day, staked_luna FROM reef_days
      WHERE address = ? AND day >= ?
      ORDER BY day DESC`,
     [address, addDays(utcDay(), -lookback)],
@@ -135,9 +135,9 @@ export async function daysStaked(address: string, lookback = 400): Promise<numbe
   return streak;
 }
 
-/** Addresses the tick should look up. Groves only exist once someone signs in. */
-export async function allGroveAddresses(): Promise<string[]> {
-  const [rows] = await db().query<RowDataPacket[]>('SELECT address FROM groves');
+/** Addresses the tick should look up. Reefs only exist once someone signs in. */
+export async function allReefAddresses(): Promise<string[]> {
+  const [rows] = await db().query<RowDataPacket[]>('SELECT address FROM reefs');
   return rows.map((r) => r.address as string);
 }
 
@@ -148,21 +148,21 @@ export async function recordTick(
   error?: string,
 ): Promise<void> {
   await db().execute(
-    'INSERT INTO ticks (block_number, groves_seen, groves_staked, error) VALUES (?, ?, ?, ?)',
+    'INSERT INTO ticks (block_number, reefs_seen, reefs_staked, error) VALUES (?, ?, ?, ?)',
     [blockNumber, seen, staked, error ?? null],
   );
 }
 
 export interface CommunityPlant {
   species: SpeciesKey;
-  /** How many days ago it was planted, across every grove. */
+  /** How many days ago it was planted, across every reef. */
   ageDays: number;
   seed: number;
 }
 
 export interface CommunitySnapshot {
   plants: CommunityPlant[];
-  groves: number;
+  reefs: number;
   totalPlants: number;
   stakedToday: number;
 }
@@ -170,8 +170,8 @@ export interface CommunitySnapshot {
 /**
  * Everyone's plants, for the view a first-time visitor lands on.
  *
- * Ages are normalised to "days ago" because each grove counts its own days
- * from its own first day — mixing raw planted_day values across groves would
+ * Ages are normalised to "days ago" because each reef counts its own days
+ * from its own first day — mixing raw planted_day values across reefs would
  * render a two-day-old sprout as ancient.
  *
  * Deliberately no addresses: this is a garden, not a leaderboard, and nobody
@@ -183,7 +183,7 @@ export async function communitySnapshot(limit = 14): Promise<CommunitySnapshot> 
             p.seed,
             DATEDIFF(UTC_DATE(), g.first_day) + 1 - p.planted_day AS age_days
      FROM plants p
-     JOIN groves g ON g.address = p.address
+     JOIN reefs g ON g.address = p.address
      ORDER BY p.planted_at DESC
      LIMIT ?`,
     [limit],
@@ -191,9 +191,9 @@ export async function communitySnapshot(limit = 14): Promise<CommunitySnapshot> 
 
   const [[counts]] = await db().query<RowDataPacket[]>(
     `SELECT
-       (SELECT COUNT(*) FROM groves) AS groves,
+       (SELECT COUNT(*) FROM reefs) AS reefs,
        (SELECT COUNT(*) FROM plants) AS total_plants,
-       (SELECT COUNT(*) FROM grove_days WHERE day = UTC_DATE() AND staked_luna > 0) AS staked_today`,
+       (SELECT COUNT(*) FROM reef_days WHERE day = UTC_DATE() AND staked_luna > 0) AS staked_today`,
   );
 
   return {
@@ -202,7 +202,7 @@ export async function communitySnapshot(limit = 14): Promise<CommunitySnapshot> 
       ageDays: Math.max(0, Number(r.age_days)),
       seed: Number(r.seed),
     })),
-    groves: Number(counts?.groves ?? 0),
+    reefs: Number(counts?.reefs ?? 0),
     totalPlants: Number(counts?.total_plants ?? 0),
     stakedToday: Number(counts?.staked_today ?? 0),
   };

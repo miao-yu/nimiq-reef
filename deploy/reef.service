@@ -1,24 +1,24 @@
-# /etc/systemd/system/grove.service
+# /etc/systemd/system/reef.service
 #
-# Nimiq Grove. Shares a box with a live validator, so this unit is locked down:
-# it runs as its own user, cannot escalate, and can only write inside /opt/grove.
+# Nimiq Reef. Shares a box with a live validator, so this unit is locked down:
+# it runs as its own user, cannot escalate, and can only write inside /opt/reef.
 [Unit]
-Description=Nimiq Grove
+Description=Nimiq Reef
 After=network-online.target mysql.service
 Wants=network-online.target
 
 [Service]
 Type=simple
-User=grove
-Group=grove
-WorkingDirectory=/opt/grove/app
+User=reef
+Group=reef
+WorkingDirectory=/opt/reef/app
 
 Environment=NODE_ENV=production
 Environment=PORT=3200
 # Bind to loopback only. nginx is the only thing that may reach it.
 Environment=HOSTNAME=127.0.0.1
-EnvironmentFile=/opt/grove/db.env
-EnvironmentFile=/opt/grove/app.env
+EnvironmentFile=/opt/reef/db.env
+EnvironmentFile=/opt/reef/app.env
 
 ExecStart=/usr/bin/node .next/standalone/server.js
 Restart=on-failure
@@ -35,11 +35,11 @@ ProtectControlGroups=true
 RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictSUIDSGID=true
 LockPersonality=true
-ReadWritePaths=/opt/grove
+ReadWritePaths=/opt/reef
 
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=grove
+SyslogIdentifier=reef
 
 [Install]
 WantedBy=multi-user.target

@@ -1,4 +1,4 @@
-const B = process.env.GROVE_URL ?? 'http://127.0.0.1:3000';
+const B = process.env.REEF_URL ?? 'http://127.0.0.1:3000';
 const j = async (r) => ({ status: r.status, body: await r.json(), setCookie: r.headers.get('set-cookie') });
 const post = (p, b) => fetch(B + p, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(b) }).then(j);
 

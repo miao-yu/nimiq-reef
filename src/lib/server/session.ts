@@ -3,7 +3,7 @@ import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import { env } from './env';
 
-const COOKIE = 'grove_session';
+const COOKIE = 'reef_session';
 const MAX_AGE_S = 60 * 60 * 24 * 30;
 
 function key(): Uint8Array {

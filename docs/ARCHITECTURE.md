@@ -13,7 +13,7 @@ One VPS. One Next.js app. The node and MySQL are on localhost.
   │                      │        │             │
   │                      │        └── tick job, every 15 min
   │                      ▼                      │
-  │        MySQL `grove`     Nimiq node :8648   │
+  │        MySQL `reef`     Nimiq node :8648   │
   │        (own user)        (localhost only)   │
   └─────────────────────────────────────────────┘
 ```
@@ -27,10 +27,10 @@ The earlier plan split the app across Vercel and a private engine so the web
 tier held no credentials. This is simpler and one deploy, at the cost of the app
 sharing a machine with a live validator. Mitigations live in
 `docs/DEPLOY.local.md` and are not optional: RPC bound to localhost, a separate
-unprivileged system user, a `grove` database user with no grants on the pool's
+unprivileged system user, a `reef` database user with no grants on the pool's
 tables, nginx terminating TLS.
 
-Revisit if the grove ever holds anything worth stealing. Today it holds
+Revisit if the reef ever holds anything worth stealing. Today it holds
 plant positions.
 
 ## Sign-in
@@ -48,12 +48,12 @@ No accounts, no passwords. The player proves wallet control with a signature.
 
 Step 5's second check is not optional. Verifying only the signature lets anyone
 sign a nonce with their own key, claim someone else's address, and inherit that
-grove. `../nimiq-cafe` already does this correctly — reuse that code.
+reef. `../nimiq-cafe` already does this correctly — reuse that code.
 
 ## The tick
 
 `payout.ts` in `nimiq-pos-pool` already runs a batched job every 15 minutes on
-this same box. The grove tick uses the same cadence and the same source of truth:
+this same box. The reef tick uses the same cadence and the same source of truth:
 
 - `getStakerByAddress` → stake size → plot width
 - unbroken days staked → which species are unlocked
@@ -64,7 +64,7 @@ that can drift from the chain.
 
 ## Renderer
 
-`src/lib/grove` is pure TypeScript with no React and no DOM beyond a canvas
+`src/lib/reef` is pure TypeScript with no React and no DOM beyond a canvas
 context, and it is deterministic — every plant carries a seed, and the renderer
 never calls `Math.random()`. That is what lets the server draw the exact same
-grove for a share image that the phone drew for the player.
+reef for a share image that the phone drew for the player.

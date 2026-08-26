@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { getProvider } from '@/lib/nimiq/provider';
 import { formatNim, MINIMUM_STAKE_NIM, nimToLuna } from '@/lib/nimiq/policy';
 import { report } from '@/lib/client-log';
-import type { GroveState } from '@/lib/grove';
+import type { ReefState } from '@/lib/reef';
 import { useLocale } from '@/lib/i18n';
 import styles from './StakePanel.module.css';
 
@@ -15,28 +15,28 @@ interface Validator {
 }
 
 interface Props {
-  grove: GroveState;
+  reef: ReefState;
   onDone: () => void | Promise<void>;
 }
 
 /**
  * Staking, from inside the app.
  *
- * Convenience only. Grove reads the chain, so a delegation made anywhere —
+ * Convenience only. Reef reads the chain, so a delegation made anywhere —
  * Nimiq Pay's own staking screen, the desktop wallet, a hand-built transaction
- * — reaches the grove on the next tick just the same. Nothing here is a
+ * — reaches the reef on the next tick just the same. Nothing here is a
  * gatekeeper.
  */
-export function StakePanel({ grove, onDone }: Props) {
+export function StakePanel({ reef, onDone }: Props) {
   const { t } = useLocale();
   const [validators, setValidators] = useState<Validator[]>([]);
-  const [delegation, setDelegation] = useState(grove.delegation ?? '');
+  const [delegation, setDelegation] = useState(reef.delegation ?? '');
   const [amount, setAmount] = useState(String(MINIMUM_STAKE_NIM));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
 
-  const alreadyStaking = grove.stakedLuna > 0 && grove.delegation !== null;
+  const alreadyStaking = reef.stakedLuna > 0 && reef.delegation !== null;
 
   useEffect(() => {
     if (alreadyStaking) return;
@@ -67,7 +67,7 @@ export function StakePanel({ grove, onDone }: Props) {
         : await provider.sendNewStakerTransaction({ delegation, value });
       setSent(hash);
       // The chain needs a moment, and the tick is what actually updates the
-      // grove — so refresh rather than pretending the stake is already counted.
+      // reef — so refresh rather than pretending the stake is already counted.
       await onDone();
     } catch (cause) {
       const browserLimit = cause instanceof Error && cause.message === 'BROWSER_STAKING_UNAVAILABLE';
@@ -104,7 +104,7 @@ export function StakePanel({ grove, onDone }: Props) {
 
       {alreadyStaking ? (
         <p className={styles.note}>
-          Delegated to <code>{grove.delegation}</code> · {formatNim(grove.stakedLuna)} NIM
+          Delegated to <code>{reef.delegation}</code> · {formatNim(reef.stakedLuna)} NIM
         </p>
       ) : (
         <label className={styles.field}>

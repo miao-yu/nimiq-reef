@@ -26,14 +26,14 @@ const config: NextConfig = {
          *
          * Sending *no* Cache-Control is not neutral — it is an invitation for
          * any intermediary to invent one. Cloudflare did exactly that: it
-         * cached /api/grove and served one signed-in user's tank to everyone,
+         * cached /api/reef and served one signed-in user's tank to everyone,
          * and cached /api/auth/session as `{"address":null}` so signed-in
          * users were told they were signed out.
          *
          * Note: Next applies *every* matching rule and the later one wins, so
          * ordering does not protect this — the page rule below must keep
          * excluding `api/` explicitly. Verified by observation: without the
-         * exclusion, /api/grove came back `public, s-maxage=60`.
+         * exclusion, /api/reef came back `public, s-maxage=60`.
          */
         source: '/api/:path*',
         headers: [

@@ -7,7 +7,7 @@
  * the whole game — if any of them starts returning 200, planting is no longer
  * a decision.
  */
-const B = process.env.GROVE_URL ?? 'http://127.0.0.1:3000';
+const B = process.env.REEF_URL ?? 'http://127.0.0.1:3000';
 
 const j = async (r) => ({ status: r.status, body: await r.json(), setCookie: r.headers.get('set-cookie') });
 const post = (p, b, cookie) =>
@@ -26,26 +26,26 @@ const verify = await post('/api/auth/verify', {
 const cookie = (verify.setCookie ?? '').split(';')[0];
 console.log('1. signed in as', w.address);
 
-const g0 = await j(await fetch(B + '/api/grove', { headers: { cookie } }));
-console.log('2. fresh grove:', JSON.stringify({
+const g0 = await j(await fetch(B + '/api/reef', { headers: { cookie } }));
+console.log('2. fresh reef:', JSON.stringify({
   day: g0.body.day, daysStaked: g0.body.daysStaked,
   plotsUnlocked: g0.body.plotsUnlocked, species: g0.body.speciesUnlocked,
   free: g0.body.freePlots, chainOffline: g0.body.chainOffline,
 }));
 
-const locked = await post('/api/grove/plant', { species: 'elder', plot: 0 }, cookie);
+const locked = await post('/api/reef/plant', { species: 'elder', plot: 0 }, cookie);
 console.log('3. plant a locked species:', locked.status, JSON.stringify(locked.body.error ?? locked.body));
 
-const ok = await post('/api/grove/plant', { species: 'sprout', plot: 0 }, cookie);
+const ok = await post('/api/reef/plant', { species: 'sprout', plot: 0 }, cookie);
 console.log('4. plant sprout in plot 0:', ok.status, ok.status === 200 ? `${ok.body.plants.length} plant(s)` : JSON.stringify(ok.body));
 
-const again = await post('/api/grove/plant', { species: 'sprout', plot: 0 }, cookie);
+const again = await post('/api/reef/plant', { species: 'sprout', plot: 0 }, cookie);
 console.log('5. plant over it (permanence):', again.status, JSON.stringify(again.body.error ?? again.body));
 
-const uncleared = await post('/api/grove/plant', { species: 'sprout', plot: 1 }, cookie);
+const uncleared = await post('/api/reef/plant', { species: 'sprout', plot: 1 }, cookie);
 console.log('6. plant in an uncleared plot:', uncleared.status, JSON.stringify(uncleared.body.error ?? uncleared.body));
 
-const anon = await post('/api/grove/plant', { species: 'sprout', plot: 1 }, undefined);
+const anon = await post('/api/reef/plant', { species: 'sprout', plot: 1 }, undefined);
 console.log('7. plant with no session:', anon.status, JSON.stringify(anon.body.error ?? anon.body));
 
 const pass =

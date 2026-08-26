@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
  *
  * The key lives in memory for the life of the process, so restarting the dev
  * server gives you a fresh address — which is useful for testing a brand new
- * grove.
+ * reef.
  */
 let keys: { priv: PrivateKey; pub: PublicKey } | undefined;
 

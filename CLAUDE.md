@@ -1,6 +1,6 @@
 # Reef
 
-Mini App for the Nimiq Mini Apps Competition, Cycle II. Formerly Grove;
+Mini App for the Nimiq Mini Apps Competition, Cycle II. Formerly Reef;
 the garden became an aquarium. Deadline **18 Sep 2026,
 23:59 UTC**. Solo build.
 
@@ -8,7 +8,7 @@ A garden that grows from real staking activity. Read `docs/DECISIONS.md` before
 proposing anything — especially the two guardrails, which are load-bearing:
 
 1. Growth is paced by **time staked**, never by stake size.
-2. Nothing in the grove ever converts back to NIM.
+2. Nothing in the reef ever converts back to NIM.
 
 The date that matters is **Mon 7 Sep**, when entries go public for early-access
 testing — not the 18th.
@@ -31,7 +31,7 @@ node scripts/auth-smoke.mjs   # sign-in, replay and impersonation checks
 
 ## Conventions
 
-- `src/lib/grove` stays framework-free and deterministic — no React, no
+- `src/lib/reef` stays framework-free and deterministic — no React, no
   `Math.random()`. The server reuses it to render share images, and that is the
   only reason a shared card matches what the phone drew.
 - **Never call `getStakersByValidatorAddress`** from a request; the node source
@@ -54,7 +54,7 @@ Albatross source, with dates. Two rules that came out of it:
   it extremely expensive. Look up one staker by address.
 - **The sign-in check has two halves**: verify the signature *and* that the
   public key derives to the claimed address. Dropping the second lets any
-  wallet claim any grove. `scripts/auth-smoke.mjs` case 7 guards this.
+  wallet claim any reef. `scripts/auth-smoke.mjs` case 7 guards this.
 
 ## Do not copy from `../nimiq-pos-pool` or `../nimiq-cafe`
 

@@ -15,13 +15,13 @@ export interface Plant {
   /** Horizontal position across the plot, 0..1. */
   x: number;
   species: SpeciesKey;
-  /** Day index (relative to the grove's first day) it was planted. */
+  /** Day index (relative to the reef's first day) it was planted. */
   plantedDay: number;
-  /** Stable per-plant seed so a grove looks identical on every render. */
+  /** Stable per-plant seed so a reef looks identical on every render. */
   seed: number;
 }
 
-export interface GrovePalette {
+export interface ReefPalette {
   skyTop: string;
   skyBottom: string;
   soil: string;
@@ -37,10 +37,10 @@ export interface GrovePalette {
 export interface RenderOptions {
   width: number;
   height: number;
-  /** Current day of the grove. Plants younger than this are not drawn. */
+  /** Current day of the reef. Plants younger than this are not drawn. */
   day: number;
   plants: readonly Plant[];
-  palette: GrovePalette;
+  palette: ReefPalette;
   /** Global size multiplier, so small canvases stay legible. */
   scale?: number;
   /**

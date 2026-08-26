@@ -1,13 +1,13 @@
 # Spec — daily tending and watering strangers
 
-Two mechanics that give Grove a reason to open today, and a way to act on
-somebody else's grove without a friend graph we do not have.
+Two mechanics that give Reef a reason to open today, and a way to act on
+somebody else's reef without a friend graph we do not have.
 
 Written 25 Aug 2026. Target: shipped before the public date, Mon 7 Sep.
 
 ## Why these two
 
-The gap is not decoration, it is that **Grove currently has no daily action at
+The gap is not decoration, it is that **Reef currently has no daily action at
 all.** You plant three or four things in week one and become a spectator. Every
 app that retains in this category has a reason to open today — ORO is 3.9M users
 around a single daily tap; GlowCave is an ambient collection game with one free
@@ -34,13 +34,13 @@ A third rule, new, from what the research turned up:
 3. **No referral pyramid.** DNA on World App runs a five-level tree with 10×
    multipliers per tier and tradable referral NFTs; it has 835K users and it is
    a pyramid scheme in a costume. World's own first-party programme is single
-   level with per-user caps. If Grove ever does referrals, that is the ceiling.
+   level with per-user caps. If Reef ever does referrals, that is the ceiling.
 
 ---
 
-## Mechanic 1 — tend your own grove
+## Mechanic 1 — tend your own reef
 
-**One tend per grove per UTC day.** Free, works with zero stake.
+**One tend per reef per UTC day.** Free, works with zero stake.
 
 The tick already waters automatically off your staking position. Hand-tending
 must therefore do something *different* or it is busywork with a button. It
@@ -79,17 +79,17 @@ points actually live.
 
 ---
 
-## Mechanic 2 — water a stranger's grove
+## Mechanic 2 — water a stranger's reef
 
 **One given watering per device per UTC day.**
 
-You are shown three groves that have not been watered today, and you can water
+You are shown three reefs that have not been watered today, and you can water
 one. No friend graph, no invites, no follow list.
 
 ### Selection
 
-Weighted toward groves with the **fewest lifetime waterings received**, so
-newcomers and quiet groves get attention rather than the same few gardens
+Weighted toward reefs with the **fewest lifetime waterings received**, so
+newcomers and quiet reefs get attention rather than the same few gardens
 collecting everything. Random among that pool, and never your own.
 
 ### What each side gets
@@ -98,10 +98,10 @@ collecting everything. Random among that pool, and never your own.
   total. Received waterings also add flowers to the ground for that day, so
   being watered *looks* like something, not just a number.
 - **Giver:** a lifetime `given` count, and at 5 given a **bird** appears in the
-  grove — a small permanent marker that you are someone who waters other people.
+  reef — a small permanent marker that you are someone who waters other people.
 
 Being watered deliberately does **not** advance the recipient's tending streak.
-Otherwise a popular grove farms its streak passively while its owner never opens
+Otherwise a popular reef farms its streak passively while its owner never opens
 the app, and the streak stops meaning "you showed up".
 
 ### Anti-abuse
@@ -115,16 +115,16 @@ That primitive exists for this and, going by Cycle 1, almost nobody used it.
 
 Fallbacks: outside Nimiq Pay the identifier is unavailable, so **giving is
 disabled outside the host app** rather than falling back to something weaker.
-Tending your own grove needs no device gate — multi-walleting to tend your own
-groves gains nothing, since each wallet is its own grove.
+Tending your own reef needs no device gate — multi-walleting to tend your own
+reefs gains nothing, since each wallet is its own reef.
 
 ---
 
 ## Handles
 
-Social features need to name a grove without naming a wallet.
+Social features need to name a reef without naming a wallet.
 
-Add a `handle` to each grove: a short generated slug, `quiet-fern-42` shaped,
+Add a `handle` to each reef: a short generated slug, `quiet-fern-42` shaped,
 unique, assigned on creation. Every social surface uses it. **The address never
 appears in a payload a stranger can read** — it is already public on-chain, but
 linking it to in-app behaviour is a step we should not take on someone's behalf,
@@ -137,18 +137,18 @@ Handles also give people something to say out loud, which the address does not.
 ## Data model
 
 ```sql
-ALTER TABLE groves
+ALTER TABLE reefs
   ADD COLUMN handle VARCHAR(32) NOT NULL,
   ADD COLUMN best_streak SMALLINT UNSIGNED NOT NULL DEFAULT 0,
   ADD UNIQUE KEY uniq_handle (handle);
 
--- One row per grove per day it was tended. Presence is the fact; there is
+-- One row per reef per day it was tended. Presence is the fact; there is
 -- nothing else to store.
 CREATE TABLE tends (
   address VARCHAR(44) NOT NULL,
   day     DATE        NOT NULL,
   PRIMARY KEY (address, day),
-  CONSTRAINT fk_tends_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_tends_reef FOREIGN KEY (address) REFERENCES reefs (address) ON DELETE CASCADE
 );
 
 CREATE TABLE waterings (
@@ -164,8 +164,8 @@ CREATE TABLE waterings (
   -- lose a race with a double tap.
   UNIQUE KEY one_per_device_per_day (device_hash, day),
   KEY idx_recipient_day (to_address, day),
-  CONSTRAINT fk_water_from FOREIGN KEY (from_address) REFERENCES groves (address) ON DELETE CASCADE,
-  CONSTRAINT fk_water_to   FOREIGN KEY (to_address)   REFERENCES groves (address) ON DELETE CASCADE
+  CONSTRAINT fk_water_from FOREIGN KEY (from_address) REFERENCES reefs (address) ON DELETE CASCADE,
+  CONSTRAINT fk_water_to   FOREIGN KEY (to_address)   REFERENCES reefs (address) ON DELETE CASCADE
 );
 ```
 
@@ -178,16 +178,16 @@ Note `tends` has no unique-per-device key. That is intentional — see anti-abus
 
 | Route | Behaviour |
 | --- | --- |
-| `POST /api/grove/tend` | Tend own grove. Idempotent per day: a second call returns the same state rather than an error. |
-| `GET /api/water/candidates` | Three groves to water, by handle. Excludes self and anything already watered today by this device. |
+| `POST /api/reef/tend` | Tend own reef. Idempotent per day: a second call returns the same state rather than an error. |
+| `GET /api/water/candidates` | Three reefs to water, by handle. Excludes self and anything already watered today by this device. |
 | `POST /api/water` | `{ handle, deviceId }`. Records it. 409 if this device already gave today. |
 
-`GroveState` gains: `tendedToday`, `tendStreak`, `bestStreak`, `cosmetics[]`,
+`ReefState` gains: `tendedToday`, `tendStreak`, `bestStreak`, `cosmetics[]`,
 `wateredTodayBy`, `wateredLifetime`, `givenLifetime`, `handle`.
 
 ## Renderer
 
-Three additions to `renderGrove`, all driven by an options field so the share
+Three additions to `renderReef`, all driven by an options field so the share
 image gets them too:
 
 - `groundCover: number` — flower density in the soil, from streak plus today's
@@ -202,9 +202,9 @@ share card renders identically to the phone.
 
 - **Day boundary during a session.** Everything is UTC and derived on read, so a
   session spanning midnight simply sees the new day on the next request.
-- **Tending before the grove exists.** `ensureGrove` already runs on every state
+- **Tending before the reef exists.** `ensureReef` already runs on every state
   read; tend goes through the same path.
-- **Watering a grove that gets deleted.** Cascade handles it.
+- **Watering a reef that gets deleted.** Cascade handles it.
 - **Device identifier denied.** The user refused the prompt: giving stays
   disabled and says so plainly. Not an error state.
 - **Clock skew on the phone.** The day comes from the server. The client never
@@ -214,7 +214,7 @@ share card renders identically to the phone.
 
 - Watering someone back (needs a notification surface we do not have)
 - Display names (handles are enough, and names need moderation)
-- Validator groves — the stretch, specced separately if these two land early
+- Validator reefs — the stretch, specced separately if these two land early
 - Any leaderboard. If one is ever added it ranks **days staked**, never amount:
   a 100 NIM staker and a whale accumulate that identically, so it is the only
   ranking that does not contradict guardrail 1.
@@ -223,8 +223,8 @@ share card renders identically to the phone.
 
 - **Functionality** — the standing weakness. A thing that only grows by itself
   reads as a toy; a daily action plus a social action is a game.
-- **Marketing** — watering strangers is the first mechanic in Grove that
+- **Marketing** — watering strangers is the first mechanic in Reef that
   produces an interaction between two people, which is what makes a community
-  grove worth returning to.
+  reef worth returning to.
 - **Design** — three cosmetics is a small, drawable surface rather than a
   sprawl, which suits the one phase we have left for polish.

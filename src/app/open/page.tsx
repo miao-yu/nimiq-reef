@@ -4,7 +4,7 @@ import { useState } from 'react';
 import styles from './page.module.css';
 
 /**
- * Getting Grove into Nimiq Pay while it is not in the directory.
+ * Getting Reef into Nimiq Pay while it is not in the directory.
  *
  * The nimpay.app HTTPS opener is a server-side allowlist and 404s for unlisted
  * apps. The `nimiqpay://` scheme is handled by the app itself and warns rather

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
-import { allGroveAddresses, recordDay, recordTick } from '@/lib/server/grove-repo';
+import { allReefAddresses, recordDay, recordTick } from '@/lib/server/reef-repo';
 import { env } from '@/lib/server/env';
 
 export const runtime = 'nodejs';
@@ -29,12 +29,12 @@ export async function POST(request: Request) {
   } catch (error) {
     const message = error instanceof Error ? error.message : 'unknown';
     // Record the miss. A silent skip is indistinguishable from "nobody staked",
-    // and grove_days would grow a hole nobody could explain later.
+    // and reef_days would grow a hole nobody could explain later.
     await recordTick(null, 0, 0, message);
     return NextResponse.json({ error: 'Chain unreachable', detail: message }, { status: 503 });
   }
 
-  const addresses = await allGroveAddresses();
+  const addresses = await allReefAddresses();
   let staked = 0;
   let failures = 0;
 
@@ -63,5 +63,5 @@ export async function POST(request: Request) {
     failures > 0 ? `${failures} address lookups failed` : undefined,
   );
 
-  return NextResponse.json({ blockNumber, groves: addresses.length, staked, failures });
+  return NextResponse.json({ blockNumber, reefs: addresses.length, staked, failures });
 }

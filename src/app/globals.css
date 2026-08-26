@@ -1,4 +1,4 @@
-/* Grove tokens. The canvas renderer reads --sky-*, --soil*, --leaf-*, --trunk
+/* Reef tokens. The canvas renderer reads --sky-*, --soil*, --leaf-*, --trunk
    and --bloom-* straight off :root, so themes need no JS palette table. */
 :root {
   --ground: #f2f5ee;

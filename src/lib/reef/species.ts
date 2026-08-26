@@ -9,7 +9,7 @@ import type { SpeciesDef, SpeciesKey } from './types';
  * problem instead, and the real ladder now spans days to years.
  *
  * Guardrail: unlockDay is measured in *unbroken days staked*, never in NIM.
- * Growth must not scale with stake size or the grove becomes pay-to-win and a
+ * Growth must not scale with stake size or the reef becomes pay-to-win and a
  * whale flattens it on day one. See docs/DECISIONS.md.
  */
 export const SPECIES: Record<SpeciesKey, SpeciesDef> = {

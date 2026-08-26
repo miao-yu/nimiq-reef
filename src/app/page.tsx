@@ -11,10 +11,10 @@ import {
   SEEDED_COMMUNITY,
   layoutCommunity,
   type CommunityPlant,
-  type GroveState,
+  type ReefState,
   type Plant,
   type SpeciesKey,
-} from '@/lib/grove';
+} from '@/lib/reef';
 import { formatNim } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
 import { installErrorReporting, report } from '@/lib/client-log';
@@ -26,29 +26,29 @@ import styles from './page.module.css';
 export default function Home() {
   const { t } = useLocale();
   const [kind, setKind] = useState<ProviderKind | null>(null);
-  const [grove, setGrove] = useState<GroveState | null>(null);
+  const [reef, setReef] = useState<ReefState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [community, setCommunity] = useState<{
     plants: CommunityPlant[];
-    groves: number;
+    reefs: number;
     totalPlants: number;
     stakedToday: number;
   } | null>(null);
 
   const load = useCallback(async () => {
-    const res = await fetch('/api/grove', { credentials: 'same-origin', cache: 'no-store' });
+    const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
     if (res.ok) {
-      setGrove((await res.json()) as GroveState);
+      setReef((await res.json()) as ReefState);
     } else {
       report('load:not-ok', `HTTP ${res.status}`);
-      setGrove(null);
+      setReef(null);
     }
   }, []);
 
   useEffect(() => {
     installErrorReporting();
-    // Load the community grove first and unconditionally: the page has to be
+    // Load the community reef first and unconditionally: the page has to be
     // alive before anyone is asked for a wallet.
     void fetch('/api/community')
       .then((r) => (r.ok ? r.json() : null))
@@ -68,7 +68,7 @@ export default function Home() {
       await signIn();
       report('connect:signed-in', 'verify ok');
       await load();
-      report('connect:loaded', 'grove fetched');
+      report('connect:loaded', 'reef fetched');
     } catch (cause) {
       report('connect:failed', cause);
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
@@ -79,23 +79,23 @@ export default function Home() {
 
   async function disconnect() {
     await signOut();
-    setGrove(null);
+    setReef(null);
   }
 
   async function plant(species: SpeciesKey) {
-    const plot = grove?.freePlots[0];
+    const plot = reef?.freePlots[0];
     if (plot === undefined) return;
     setBusy(true);
     setError(null);
     try {
-      const res = await fetch('/api/grove/plant', {
+      const res = await fetch('/api/reef/plant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ species, plot }),
       });
-      const data = (await res.json()) as GroveState & { error?: string };
+      const data = (await res.json()) as ReefState & { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not plant that.');
-      setGrove(data);
+      setReef(data);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not plant that.');
     } finally {
@@ -103,77 +103,77 @@ export default function Home() {
     }
   }
 
-  // Signed in: your own grove. Signed out: everyone's, falling back to a
+  // Signed in: your own reef. Signed out: everyone's, falling back to a
   // seeded one so the very first visitor never meets bare soil.
   const communityPlants = community?.plants.length ? community.plants : SEEDED_COMMUNITY;
-  const plants: Plant[] = grove ? grove.plants : layoutCommunity(communityPlants);
+  const plants: Plant[] = reef ? reef.plants : layoutCommunity(communityPlants);
 
   return (
     <main className={styles.wrap}>
       <div className={styles.head}>
         <h1 className={styles.title}>Reef</h1>
         <span className={styles.day}>
-          {grove
-            ? t('day', { n: grove.day })
-            : community && community.groves > 0
-              ? t('grovesGrowing', { n: community.groves })
-              : t('communityGrove')}
+          {reef
+            ? t('day', { n: reef.day })
+            : community && community.reefs > 0
+              ? t('reefsGrowing', { n: community.reefs })
+              : t('communityReef')}
         </span>
       </div>
 
       <div className={styles.canvasFrame}>
         <Tank
           inhabitants={adaptPlants(plants)}
-          tankFill={grove ? fillForStake(grove.stakedLuna) : 0.62}
+          tankFill={reef ? fillForStake(reef.stakedLuna) : 0.62}
           className={styles.canvas}
         />
       </div>
 
-      {grove ? (
+      {reef ? (
         <>
           <dl className={styles.stats}>
             <div>
               <dt>{t('daysStaked')}</dt>
-              <dd>{grove.daysStaked}</dd>
+              <dd>{reef.daysStaked}</dd>
             </div>
             <div>
               <dt>{t('staked')}</dt>
-              <dd>{grove.stakedLuna > 0 ? `${formatNim(grove.stakedLuna)} NIM` : '—'}</dd>
+              <dd>{reef.stakedLuna > 0 ? `${formatNim(reef.stakedLuna)} NIM` : '—'}</dd>
             </div>
             <div>
               <dt>{t('plots')}</dt>
               <dd>
-                {grove.plotsUnlocked - grove.freePlots.length}/{grove.plotsUnlocked}
+                {reef.plotsUnlocked - reef.freePlots.length}/{reef.plotsUnlocked}
               </dd>
             </div>
           </dl>
 
-          {grove.chainOffline ? (
+          {reef.chainOffline ? (
             <p className={styles.warn}>
               {t('chainOffline')}
             </p>
           ) : null}
 
-          {grove.freePlots.length > 0 ? (
+          {reef.freePlots.length > 0 ? (
             <div className={styles.planter}>
               <h2 className={styles.planterTitle}>
                 {/* An empty plot after you already planted means you *earned* one.
                     Saying "plant in plot 2" makes a reward read as the same
                     question asked twice. */}
-                {grove.plants.length > 0
-                  ? t('newPlotOpened', { n: grove.freePlots[0]! + 1 })
-                  : t('plantInPlot', { n: grove.freePlots[0]! + 1 })}
+                {reef.plants.length > 0
+                  ? t('newPlotOpened', { n: reef.freePlots[0]! + 1 })
+                  : t('plantInPlot', { n: reef.freePlots[0]! + 1 })}
                 <span> {t('permanent')}</span>
               </h2>
-              {grove.plants.length > 0 && grove.daysStaked > 0 ? (
+              {reef.plants.length > 0 && reef.daysStaked > 0 ? (
                 <p className={styles.hint}>
                   {t('unlockedByStaking', {
-                    species: SPECIES[grove.speciesUnlocked[grove.speciesUnlocked.length - 1]!].label,
+                    species: SPECIES[reef.speciesUnlocked[reef.speciesUnlocked.length - 1]!].label,
                   })}
                 </p>
               ) : null}
               <div className={styles.speciesRow}>
-                {grove.speciesUnlocked.map((key) => (
+                {reef.speciesUnlocked.map((key) => (
                   <button
                     key={key}
                     className={styles.species}
@@ -192,20 +192,20 @@ export default function Home() {
             </p>
           )}
 
-          {grove.next ? (
+          {reef.next ? (
             <p className={styles.hint}>
               {t('unlocksAfter', {
-                species: SPECIES[grove.next.species].label,
-                n: grove.next.atDay,
-                away: grove.next.daysAway,
+                species: SPECIES[reef.next.species].label,
+                n: reef.next.atDay,
+                away: reef.next.daysAway,
               })}
             </p>
           ) : null}
 
-          <StakePanel grove={grove} onDone={load} />
+          <StakePanel reef={reef} onDone={load} />
 
           <div className={styles.account}>
-            <span className={styles.addr}>{grove.address}</span>
+            <span className={styles.addr}>{reef.address}</span>
             <ShareButton label={t('shareYours')} />
             <button className={styles.ghost} onClick={() => void disconnect()} type="button">
               {t('signOut')}

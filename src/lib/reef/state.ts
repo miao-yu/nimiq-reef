@@ -1,9 +1,9 @@
 import type { Plant, SpeciesKey } from './types';
 
-/** What the client knows about a grove. Shared shape, no server imports. */
-export interface GroveState {
+/** What the client knows about a reef. Shared shape, no server imports. */
+export interface ReefState {
   address: string;
-  /** Day 1 is the day the grove was created. Growth is measured from here. */
+  /** Day 1 is the day the reef was created. Growth is measured from here. */
   day: number;
   plants: Plant[];
   /** Unbroken days staked. Everything unlocks off this, never off amount. */

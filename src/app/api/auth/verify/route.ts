@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Signature did not verify.' }, { status: 401 });
   }
 
-  console.info(`[grove] sign-in ok address=${result.address}`);
+  console.info(`[reef] sign-in ok address=${result.address}`);
 
   await createSession(result.address);
   return NextResponse.json({ address: result.address });

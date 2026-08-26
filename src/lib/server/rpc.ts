@@ -97,6 +97,6 @@ export const rpc = {
  *
  * core-rs-albatross marks it "extremely computationally expensive" — it walks
  * every staker in the staking contract. The pool can afford it once per epoch;
- * a web request cannot, and Grove is validator-neutral so there is no single
+ * a web request cannot, and Reef is validator-neutral so there is no single
  * validator to enumerate anyway. Always look up one staker by address.
  */

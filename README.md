@@ -1,4 +1,4 @@
-# Nimiq Grove
+# Nimiq Reef
 
 A garden that grows from real staking activity, built as a Mini App for
 [Nimiq Pay](https://nimiq.dev/mini-apps). Your stake is soil, each payout tick
@@ -24,15 +24,15 @@ node and MySQL on localhost; see `docs/ARCHITECTURE.md`.
 ```
 src/
   app/              Next.js App Router
-  components/       React components (Grove canvas)
-  lib/grove/        Renderer — pure, no React, no DOM beyond canvas
+  components/       React components (Reef canvas)
+  lib/reef/        Renderer — pure, no React, no DOM beyond canvas
   lib/server/       Node RPC, MySQL pool, env (server-only)
 docs/
   DECISIONS.md      What was decided and why, plus what is still open
   ARCHITECTURE.md   How Vercel, the engine, and the node fit together
 ```
 
-The renderer in `src/lib/grove` is deliberately framework-free and
+The renderer in `src/lib/reef` is deliberately framework-free and
 deterministic, so the same code can draw a share image server-side.
 
 ## License

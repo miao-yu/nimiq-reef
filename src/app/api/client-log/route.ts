@@ -39,6 +39,6 @@ export async function POST(request: Request) {
   const stack = String(body.stack ?? '').slice(0, MAX_BYTES);
   const ua = (request.headers.get('user-agent') ?? '').slice(0, 120);
 
-  console.error(`[grove:client] at=${at} msg=${message} ua=${ua}${stack ? `\n${stack}` : ''}`);
+  console.error(`[reef:client] at=${at} msg=${message} ua=${ua}${stack ? `\n${stack}` : ''}`);
   return NextResponse.json({ ok: true });
 }

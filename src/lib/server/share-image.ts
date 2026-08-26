@@ -6,12 +6,12 @@ import { STILL_TIME } from '@/lib/tank/motion';
 import type { Inhabitant } from '@/lib/tank/types';
 
 /**
- * Draw a grove to a PNG, server-side.
+ * Draw a reef to a PNG, server-side.
  *
- * This reuses `renderGrove` unchanged — the same function the phone runs. That
+ * This reuses `renderReef` unchanged — the same function the phone runs. That
  * is why the renderer has no React, no DOM beyond a canvas context, and no
  * Math.random(): every plant carries a seed, so the image somebody shares is
- * pixel-identical to the grove they were looking at.
+ * pixel-identical to the reef they were looking at.
  */
 export interface ShareOptions {
   inhabitants: readonly Inhabitant[];

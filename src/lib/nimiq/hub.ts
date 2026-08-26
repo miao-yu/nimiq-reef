@@ -1,7 +1,7 @@
 'use client';
 
 import HubApi from '@nimiq/hub-api';
-import type { GroveProvider, SignatureResult } from './types';
+import type { ReefProvider, SignatureResult } from './types';
 
 /**
  * Sign-in through the regular Nimiq Wallet (Hub), for browsers outside Nimiq Pay.
@@ -31,7 +31,7 @@ function toHex(bytes: Uint8Array): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
-export function createHubProvider(): GroveProvider {
+export function createHubProvider(): ReefProvider {
   const hub = new HubApi(HUB_ENDPOINT);
   let chosen: string | undefined;
 
