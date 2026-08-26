@@ -14,6 +14,7 @@ import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { depthForStake } from '@/lib/reef/vessel';
+import { foodInWater } from '@/lib/reef/feeding';
 import { SPECIES } from '@/lib/reef/species';
 import { SEEDED_COMMUNITY, layoutCommunity, type CommunityPlant } from '@/lib/reef/community';
 import { formatNim } from '@/lib/nimiq/policy';
@@ -95,7 +96,7 @@ export default function Home() {
         <Tank
           inhabitants={inhabitants}
           waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
-          feedings={reef?.receivedToday ?? 0}
+          feedings={reef ? foodInWater(reef) : 0}
           className={styles.canvas}
         />
       </div>

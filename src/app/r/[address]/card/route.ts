@@ -3,6 +3,7 @@ import { publicReef } from '@/lib/server/reef-repo';
 import { renderReefCard } from '@/lib/server/share-image';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { depthForStake } from '@/lib/reef/vessel';
+import { foodInWater } from '@/lib/reef/feeding';
 import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
 
 export const runtime = 'nodejs';
@@ -33,7 +34,7 @@ export async function GET(_: Request, ctx: { params: Promise<{ address: string }
   const png = renderReefCard(
     adaptPlants(reef.plants),
     depthForStake(reef.stakedLuna),
-    reef.receivedToday,
+    foodInWater(reef),
   );
 
   // Cache-Control is not set here: next.config's page rule applies to

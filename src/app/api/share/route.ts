@@ -6,6 +6,7 @@ import { renderShareImage } from '@/lib/server/share-image';
 import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/reef';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { depthForStake } from '@/lib/reef/vessel';
+import { foodInWater } from '@/lib/reef/feeding';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,7 @@ export async function GET() {
       renderShareImage({
         inhabitants: adaptPlants(reef.plants),
         waterLevel: depthForStake(reef.stakedLuna),
-        feedings: reef.receivedToday,
+        feedings: foodInWater(reef),
         caption,
       }),
     );

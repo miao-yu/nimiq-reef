@@ -442,6 +442,7 @@ export interface PublicReef {
   plants: Plant[];
   stakedLuna: number;
   daysStaked: number;
+  fedToday: boolean;
   receivedToday: number;
   receivedLifetime: number;
 }
@@ -468,10 +469,11 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     'SELECT staked_luna FROM reef_days WHERE address = ? ORDER BY day DESC LIMIT 1',
     [address],
   );
-  const [plants, streak, counts] = await Promise.all([
+  const [plants, streak, counts, fed] = await Promise.all([
     listPlants(address),
     daysStaked(address),
     feedingCounts(address),
+    fedToday(address),
   ]);
 
   return {
@@ -480,6 +482,7 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     plants,
     stakedLuna: Number(stakeRows[0]?.staked_luna ?? 0),
     daysStaked: streak,
+    fedToday: fed,
     receivedToday: counts.receivedToday,
     receivedLifetime: counts.receivedLifetime,
   };
