@@ -9,8 +9,8 @@ proposing anything — especially the two guardrails, which are load-bearing:
 1. Growth is paced by **time staked**, never by stake size.
 2. Nothing in the grove ever converts back to NIM.
 
-Plan and schedule: `docs/PLAN.md`. The date that matters is **Mon 7 Sep**,
-when submissions go public for early-access testing — not the 18th.
+The date that matters is **Mon 7 Sep**, when entries go public for early-access
+testing — not the 18th.
 
 ## Shape
 
@@ -31,7 +31,12 @@ node scripts/auth-smoke.mjs   # sign-in, replay and impersonation checks
 ## Conventions
 
 - `src/lib/grove` stays framework-free and deterministic — no React, no
-  `Math.random()`. The server reuses it to render share images.
+  `Math.random()`. The server reuses it to render share images, and that is the
+  only reason a shared card matches what the phone drew.
+- **Never call `getStakersByValidatorAddress`** from a request; the node source
+  marks it extremely expensive. Use `getStakerByAddress`.
+- Rules that matter go in **database constraints**, not in application code that
+  can lose a race to a double tap.
 - Canvas colors come from CSS custom properties on `:root`, so themes need no
   JS palette table. Add new colors as tokens in `globals.css`, in all three
   theme states (bare `:root`, the `prefers-color-scheme` block, and

@@ -1,145 +1,350 @@
-# Implementation plan
+# Implementation plan — the Tank
 
-Solo build. 26 days: Mon 24 Aug → Fri 18 Sep 2026, 23:59 UTC.
+**This document is the handoff.** It assumes no memory of the conversation that
+produced it. Read it, then `docs/SPEC-tank.md`, then start at Step 1.
 
-**The real deadline is Mon 7 Sep.** Submissions go public at the start of week 3
-for early-access testing, so that is when strangers first open this. The 11 days
-after are polish and reacting to feedback, not construction.
-
-## Sequencing principle
-
-Do the things that can invalidate the design first. Three unknowns can each cost
-days if they surface late:
-
-1. HTTPS and a domain — Mini Apps will not load over plain HTTP, so **nothing
-   can be tested on a phone until this exists**.
-2. Which message encoding Nimiq Pay signs (`docs/RESEARCH.md`).
-3. Whether the staking calls behave as their type signatures suggest.
-
-All three are Phase 0. None of them are hard; all of them are fatal in week four.
+Deadline: **Fri 18 Sep 2026, 23:59 UTC**. The date that actually matters is
+**Mon 7 Sep**, when all entries go public for early-access testing — that is
+when strangers, and probably council members, first open this. Written 25 Aug.
 
 ---
 
-## Phase 0 — De-risk · Mon 24 – Wed 26 Aug
+## 0. What already exists and works
 
-Goal: a real phone, running the real app, over real HTTPS.
+Deployed at https://grove.nimiq.cafe, running as `grove.service` on the VPS.
+Do not rebuild any of this.
 
-- [ ] Domain pointed at the VPS, nginx + TLS certificate
-- [ ] Deploy the current scaffold (`node .next/standalone/server.js`)
-- [ ] Harden per `docs/DEPLOY.local.md` — RPC on localhost, own system user,
-      `grove` MySQL user with no grants on the pool
-- [ ] Open it in Nimiq Pay via the **Custom URL** field (the nimpay.app deeplink
-      is an allowlist and 404s for unlisted apps — see `docs/RESEARCH.md`)
-- [ ] Sign in from the device; **read the `encoding` in the log and pin
-      `signed-message.ts` to the winner**
-- [ ] Fire one `sendNewStakerTransaction` on **testnet** — long-press settings
-      for 10s to switch networks, then Get free NIM. Costs nothing.
-- [ ] Sip & Ship call #1 (Wed 26 Aug) — showing up is scored
+| Working | Where |
+| --- | --- |
+| Wallet sign-in, both halves verified | `src/lib/server/auth.ts`, `src/app/api/auth/*` |
+| Session cookies (jose JWT) | `src/lib/server/session.ts` |
+| Nimiq Pay + Hub + dev-mock providers | `src/lib/nimiq/provider.ts` |
+| Albatross RPC client | `src/lib/server/rpc.ts` |
+| 15-minute tick on a systemd timer | `src/app/api/tick/route.ts`, `deploy/grove-tick.*` |
+| Schema + forward-only migrations | `migrations/`, `scripts/migrate.mjs` |
+| Deterministic canvas renderer | `src/lib/grove/render.ts` |
+| Server-side share PNG (`@napi-rs/canvas`) | `src/lib/server/share-image.ts` |
+| Staking from in-app, neutral validator picker | `src/components/StakePanel.tsx` |
+| i18n en/de/es off `getHostLanguage()` | `src/lib/i18n/` |
+| Client error reporting (no console on a phone) | `src/lib/client-log.ts` |
+| Deploy script, builds on the box | `deploy/deploy.sh` |
 
-**Exit:** signing in from a phone works, and the verifier accepts exactly one
-encoding.
-
-**If this slips past Fri 28 Aug, stop and fix it before writing features.**
-
----
-
-## Phase 1 — The loop · Thu 27 Aug – Tue 1 Sep
-
-Goal: a garden that grows on its own from real staking data.
-
-- [ ] Schema: `groves`, `plants`, `ticks`, `streaks`
-- [ ] Grove state derived on read from `getStakerByAddress` + streak history —
-      never a stored `growth` number that can drift from the chain
-- [ ] Tick job every 15 minutes, matching the pool's cadence
-- [ ] Free tier: a plot that grows without staking anything
-- [ ] Planting: limited plots, permanent choices
-- [ ] Species unlock from unbroken days staked — never from stake size
-
-**Exit:** sign in, plant, come back after a tick, see it advanced.
-
-The planting constraint is the fix for the Functionality score. A garden that
-only grows by itself reads as a toy; one where choosing an elder tree costs you
-three blooms is a game. It is a day of work and it is not optional.
+Run it: `GROVE_SSH=root@<host> ./deploy/deploy.sh` (host is in
+`docs/DEPLOY.local.md`, which is gitignored — **this repo goes public**).
 
 ---
 
-## Phase 2 — Make it a product · Wed 2 – Mon 7 Sep
+## 1. The decision this plan implements
 
-Goal: something a stranger can open and understand in sixty seconds.
+**Switch from a garden to an aquarium.** Plants do not move; fish do. For an
+ambient app whose whole proposition is "worth opening to look at", that is the
+difference between boring and not.
 
-- [ ] First-60-seconds flow: community grove alive **before** any wallet prompt
-- [ ] Staking in-app: `sendNewStakerTransaction`, `sendStakeTransaction`
-- [ ] Community grove, read-only
-- [ ] Share image, server-rendered PNG from the same deterministic renderer
-- [ ] `getHostLanguage()` for UI strings
-- [ ] Empty, loading and error states everywhere
-- [ ] Sip & Ship call #2 (Wed 2 Sep)
+The mechanics are decided. Do not redesign them; if something seems wrong,
+raise it rather than quietly changing it.
 
-**Exit — Mon 7 Sep:** public, working, no dead ends. This is the date that
-matters.
+### Three axes, three sources
 
-Build the share image in this phase, not later. Marketing is 25 points and a
-screenshot people actually post is most of how you earn them.
+| Axis | Source | Governs |
+| --- | --- | --- |
+| **Money** | stake amount | the vessel: tank size, depth, and **how many specimens you can display** |
+| **Time** | unbroken days staked | the **rarity distribution** of every roll |
+| **Attendance** | interaction charges | **when a roll happens** |
+
+The slogan, which is also the test for any new feature:
+**Attendance creates opportunity. Loyalty creates possibility. Money creates room.**
+
+### Charges
+
+- Maximum **3** charges. One regenerates every **8 hours**.
+- Empty to full is 24 hours. Somebody who opens the app once a day gets three
+  rolls; somebody who opens it every eight hours gets three rolls.
+  **Checking more often must never yield more.** That property is what makes a
+  bot worthless and the app restful.
+- A **distinct-counterparty payment** in Nimiq Pay also grants a charge, capped
+  the same way. Count distinct counterparties, never raw transactions —
+  Nimiq fees are near zero so self-sends are free and infinitely farmable.
+- **No diminishing-returns tier beyond the cap.** It was considered and
+  rejected: telling a committed player that the twentieth click is still worth
+  *something* reopens the grind through the side door.
+
+### Rarity curve
+
+Rolled at the moment a charge is spent. Compressed so it is reachable inside a
+four-week competition.
+
+| Days staked | Common | Uncommon | Rare | Legendary |
+| --- | --- | --- | --- | --- |
+| 0–1 | 92% | 8% | — | — |
+| 2–3 | 78% | 19% | 3% | — |
+| 4–7 | 62% | 26% | 10% | 2% |
+| 8+ | 50% | 30% | 16% | 4% |
+
+**Every roll produces a specimen.** There is never an empty result. See §2.
+
+### Discovery versus display
+
+Three rolls a day for thirty days is ninety fish, which is a soup, not a tank.
+
+- **The field guide records everything you have ever discovered, permanently.**
+- **The tank displays a limited number**, and the limit comes from stake size.
+- Returning a fish to the reef removes it from display, never from the guide.
+
+Discovery is unlimited, display is scarce, and curating is the best decision in
+the game. This is also what makes a whale's large tank meaningful without
+touching their odds.
 
 ---
 
-## Phase 3 — Polish and react · Tue 8 – Mon 14 Sep
+## 2. Guardrails — do not break these
 
-Goal: earn the Design points, and fix what real testers hit.
+Every one of these was a deliberate decision with a reason. Changing one is a
+product decision, not an implementation detail.
 
-- [ ] Visual pass — the grove is the product, so this gets the most calendar time
-- [ ] Webview QA on real devices: small screens, notch, slow network, dark mode
-- [ ] Performance: canvas on a mid-range phone, not a laptop
-- [ ] Act on early-access feedback
-- [ ] Daily progress posts in the Skool community
-- [ ] Sip & Ship call #3 (Wed 9 Sep)
-
-**Exit:** nothing embarrassing on a cheap Android phone.
+1. **Amount must never affect rarity odds.** Paying for better odds is a loot
+   box with a price tag — that is the competition's gambling rule, which is a
+   disqualification and not a deduction.
+2. **Nothing converts to NIM.** No trading, gifting, selling, or cashing out of
+   specimens. The moment rarity has a price this is a yield farm in a costume.
+3. **No leaderboard ranked by rarity or by stake size.** Rarity conferring
+   chaseable status recreates the prize element. Any ranking ranks *care* —
+   summed feeding streaks, share of tanks fed today.
+4. **Every roll yields a specimen.** Never an empty outcome. The difference
+   between "I opened a box and got junk" and "I found something, and today it
+   was ordinary" is framing, and the second is both safer and better writing.
+5. **Language is discovery, not opening.** "A rare angelfish has appeared,"
+   never "you won". Keeps the vocabulary clear of a casino.
+6. **No referral pyramid.** Single level and cosmetic if ever.
+7. **Growth is derived on read, never stored.** A stored growth number drifts
+   away from the chain.
+8. **Never call `getStakersByValidatorAddress`** from a request. The node source
+   marks it extremely expensive — it walks the whole staking contract. Use
+   `getStakerByAddress`, a single lookup.
+9. **Rules that matter live in database constraints**, not in application code
+   that can lose a race to a double tap. Precedent:
+   `UNIQUE (address, plot_index)`.
+10. **The renderer stays framework-free and deterministic** — no React, no DOM
+    beyond a canvas context, no `Math.random()`. That is what lets the server
+    draw a share card identical to the phone.
 
 ---
 
-## Phase 4 — Submit · Tue 15 – Fri 18 Sep
+## 3. Work, in order
 
-- [ ] Description, max 250 words: what it does, who it is for, how it uses Nimiq Pay
-- [ ] Demo video — optional, but it feeds the storytelling score
-- [ ] README with screenshots and honest limitations
-- [ ] Repo public, MIT, **scan the whole history for secrets before flipping it**
-- [ ] Submit **Thu 17 Sep**, not on deadline day
-- [ ] Sip & Ship call #4 (Wed 16 Sep)
+Each step is one commit. Do not batch them.
+
+### Step 1 — the renderer *(largest, do it first, everything is judged through it)*
+
+Replace `src/lib/grove/render.ts` drawing with an aquarium. Keep the
+`renderGrove(ctx, options)` signature and the seeded determinism.
+
+- Water gradient, brighter at the surface.
+- Light shafts from above, slowly drifting.
+- Caustics on the substrate.
+- Substrate with texture; plants rooted in it, swaying on a slow sine, out of
+  phase with each other.
+- Fish swimming continuous paths, tail motion proportional to speed, turning at
+  the glass, drifting vertically. **No teleporting and no linear tracks.**
+- Bubbles rising with wobble.
+- Depth: further back is smaller, hazier, slower.
+- Glass frame and sheen; the tank is a rect **inside** the canvas whose size
+  comes from stake amount.
+- `prefers-reduced-motion` renders a **still, composed frame**, not a broken
+  one — it is also the share card's frame, so it must look deliberate.
+
+A working reference sketch of all of the above exists; ask the user for the
+"The Tank" artifact link if you want it.
+
+**Acceptance:** `npm run build` passes; `/api/share` still returns a 1200×630
+PNG; a still frame looks composed.
+
+### Step 2 — species and progression
+
+Rewrite `src/lib/grove/species.ts` and `progression.ts`.
+
+```
+grass   Common     unlockDay 0
+guppy   Common     unlockDay 0
+angel   Uncommon   unlockDay 2
+jelly   Rare       unlockDay 4
+shark   Apex       unlockDay 7
+whale   Apex       unlockDay 12
+```
+
+**The whale is the top *time* tier, never a money tier.** A whale here means you
+stayed, not that you are rich — that subversion is the point.
+
+Appearance by tier, driven by the existing per-specimen seed:
+Common is **identical for everyone** (this is what makes rare legible as rare
+without a label); Uncommon has 2–3 colour morphs; Rare varies broadly; Apex has
+a distinctive silhouette with seeded colouring.
+
+Add `rollRarity(daysStaked, rng)` implementing the §1 table, and
+`slotsFor(stakedLuna)` — a log scale, roughly 4 slots at the 100 NIM minimum up
+to about 20 at a million.
+
+### Step 3 — schema migration `002_tank.sql`
+
+Forward-only; do not edit `001_init.sql`.
+
+```sql
+ALTER TABLE groves
+  ADD COLUMN handle VARCHAR(32) NOT NULL DEFAULT '',
+  ADD COLUMN charges_updated_at DATETIME NULL,
+  ADD COLUMN best_streak SMALLINT UNSIGNED NOT NULL DEFAULT 0;
+-- backfill handles, then:
+ALTER TABLE groves ADD UNIQUE KEY uniq_handle (handle);
+
+-- Everything ever discovered. Permanent.
+CREATE TABLE specimens (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  address      VARCHAR(44) NOT NULL,
+  species      VARCHAR(24) NOT NULL,
+  tier         ENUM('common','uncommon','rare','legendary') NOT NULL,
+  seed         INT UNSIGNED NOT NULL,
+  discovered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  -- NULL when returned to the reef; the guide entry survives either way.
+  slot         TINYINT UNSIGNED NULL,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_slot (address, slot),
+  KEY idx_addr (address),
+  CONSTRAINT fk_spec_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+);
+
+-- Charge spends, one row per roll. Also the audit trail.
+CREATE TABLE rolls (
+  id         BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  address    VARCHAR(44) NOT NULL,
+  rolled_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  source     ENUM('charge','payment') NOT NULL,
+  PRIMARY KEY (id),
+  KEY idx_addr_time (address, rolled_at),
+  CONSTRAINT fk_roll_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+);
+
+CREATE TABLE feeds (
+  address VARCHAR(44) NOT NULL,
+  day     DATE NOT NULL,
+  PRIMARY KEY (address, day),
+  CONSTRAINT fk_feed_grove FOREIGN KEY (address) REFERENCES groves (address) ON DELETE CASCADE
+);
+
+CREATE TABLE feedings (
+  id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  from_address VARCHAR(44) NOT NULL,
+  to_address   VARCHAR(44) NOT NULL,
+  day          DATE NOT NULL,
+  device_hash  CHAR(64) NOT NULL,
+  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  -- The rate limit. In the database, not in a check that can be raced.
+  UNIQUE KEY one_per_device_per_day (device_hash, day),
+  KEY idx_recipient_day (to_address, day),
+  CONSTRAINT fk_fed_from FOREIGN KEY (from_address) REFERENCES groves (address) ON DELETE CASCADE,
+  CONSTRAINT fk_fed_to   FOREIGN KEY (to_address)   REFERENCES groves (address) ON DELETE CASCADE
+);
+```
+
+`plants` stays for now; drop it in a later migration once nothing reads it.
+
+### Step 4 — charges and rolling
+
+Server-side only. The client never decides how many charges it has.
+
+- `chargesAvailable(address)` — derived from `charges_updated_at` and rolls
+  since, capped at 3, one per 8 hours. Never stored as a counter that can drift.
+- `POST /api/roll` — spend a charge, roll rarity from days staked, pick a
+  species from the unlocked set for that tier, insert a specimen with a random
+  seed, auto-assign a slot if one is free. **409 when no charges.**
+- Payments grant charges: extend the 15-minute tick to look for new distinct
+  counterparties per address since the last tick and record a `payment` charge.
+
+**Acceptance:** a script proves that 4 rolls in a row give 3 successes and a
+409, and that waiting does not grant more than 3.
+
+### Step 5 — slots, curating, field guide
+
+- `GET /api/guide` — everything discovered, grouped by species and tier.
+- `POST /api/specimen/:id/display` and `/release` — move in and out of a slot.
+  `UNIQUE (address, slot)` enforces capacity; a race loses at the constraint.
+- Releasing **never** deletes the specimen row. Only `slot` becomes NULL.
+
+### Step 6 — feeding
+
+- `POST /api/feed` — own tank, once per UTC day, builds the streak. Free, works
+  at zero stake. A missed day resets the streak but **never removes an unlocked
+  cosmetic**; keep `best_streak`.
+- Nothing ever dies from a missed feed. The tank simply does not advance.
+
+### Step 7 — feed a stranger
+
+- `GET /api/feed/candidates` — three tanks unfed today, weighted toward the
+  fewest lifetime feeds received, never your own, identified by **handle**.
+- `POST /api/feed/give` — `{ handle, deviceId }`. **Gated on
+  `requestDeviceIdentifier()`, not on wallet** — a wallet is free to create; the
+  device id is stable across reinstalls and across accounts on one phone.
+  Outside Nimiq Pay the identifier does not exist, so **disable giving there**
+  rather than falling back to something weaker.
+- Being fed does **not** advance the recipient's streak, or a popular tank farms
+  its streak while its owner never opens the app.
+
+### Step 8 — UI and copy
+
+Rework `src/app/page.tsx`, rename `Grove.tsx` → `Tank.tsx`, update all three
+languages in `src/lib/i18n/strings.ts`. Keep the signed-out community view: a
+stranger must see a living tank **before** any wallet prompt.
+
+### Step 9 — PWA
+
+`manifest.webmanifest` plus icons, so it installs from Chrome/Edge on Windows
+and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.
 
 ---
 
-## Where the 105 points come from
+## 4. Deferred — do not start these
+
+- **Validator museums.** The strongest social idea and specced in
+  `docs/SPEC-tank.md` §5, but it will not be built well before 7 Sep. After.
+- Native desktop widget — needs a paid developer account and notarisation for a
+  surface the competition does not judge.
+- Any leaderboard.
+
+## 5. Open, non-blocking
+
+- **Name.** `Reef` is proposed. Until decided, stay on `grove.nimiq.cafe`;
+  renaming needs a subdomain and a certificate, about ten minutes.
+- **Does unstaking empty the tank?** Currently forgiving: growth pauses, nothing
+  dies. Never answered explicitly.
+- **Withdrawals lowering the water level** — honest, or does it read as
+  punishment?
+- Cloudflare SSL mode → Full (strict), now that the origin certificate matches.
+- Repo goes public before submission; scan history for secrets first.
+- Nimiq Pay directory listing is optional and separate from the competition.
+
+## 6. Still owed from earlier phases
+
+- The **testnet staking test** never happened. `sendNewStakerTransaction` is
+  still unproven on a device. Long-press settings ~10s in Nimiq Pay to reveal
+  the network switch, then Get free NIM.
+- Sip & Ship calls: 2, 9, 16 Sep. Marketing is 25 of 105 points.
+
+## 7. Testing
+
+`scripts/auth-smoke.mjs` must keep passing — case 7, the impersonation attempt,
+must stay **401**. If it ever returns 200, any wallet can claim any tank.
+
+Replace `scripts/grove-smoke.mjs` with `tank-smoke.mjs` covering: charges cap at
+3, a fourth roll is 409, releasing keeps the guide entry, giving twice from one
+device in a day is 409, and giving with no session is 401.
+
+## 8. Where the points come from
 
 | Category | Pts | Earned by |
 | --- | --- | --- |
-| Design & UX | 25 | Phase 3, plus the Phase 2 onboarding flow |
-| Functionality | 25 | Phase 1's real loop, and the planting constraint |
-| Usefulness & originality | 25 | The concept — nothing ambient existed in Cycle 1 |
-| Marketing & distribution | 25 | Share image, daily Skool posts, four calls, early-access week |
+| Design & UX | 25 | Step 1, and only Step 1. Spend the time there. |
+| Functionality | 25 | Steps 4–7 — the loop, the curation decision, the social action |
+| Usefulness & originality | 25 | Nothing ambient existed among Cycle 1's 62 entries |
+| Marketing & distribution | 25 | Share card, daily posts, four calls, early-access week |
 | Bonus | 5 | NIM staking is the core mechanic |
 
-Marketing is a quarter of the score and the only category that cannot be
-back-filled in the last week. Post progress daily from Phase 1 onward.
-
-## Cut ladder
-
-If behind, drop in this order and no other:
-
-1. `getHostLanguage()` i18n
-2. Community grove read-only view
-3. Fourth species — ship three
-4. Demo video
-
-Never cut: the share image, the first-60-seconds flow, the visual pass, or the
-planting choice. Those are load-bearing for 50 of the 105 points.
-
-## Standing risks
-
-| Risk | Mitigation |
-| --- | --- |
-| HTTPS slips | Phase 0, day one. Everything else waits on it |
-| Signing encoding differs from both candidates | Phase 0 catches it while there is time to ask in the community |
-| Canvas too slow on cheap phones | Test on real hardware in Phase 3, cap plant count |
-| Solo illness or a bad week | The cut ladder exists so the answer is "ship less", not "ship late" |
-| Secrets leak when the repo goes public | Fresh repo already; scan history in Phase 4 before flipping |
+Marketing cannot be back-filled in the final week. Post progress from Step 1.

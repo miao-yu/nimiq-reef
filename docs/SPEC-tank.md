@@ -44,19 +44,32 @@ rather than restating it.
 
 ---
 
-## 2. Rarity — guaranteed tier, surprise variant
+## 2. Rarity — rolled on interaction, weighted by loyalty
 
-The anticipation problem, solved without a game of chance.
+**Superseded 25 Aug.** The earlier "guaranteed tier, seeded variant" gave
+novelty but no anticipation. The decided model:
 
-- **Rarity tier is time-gated.** At the relevant streak you unlock the ability
-  to add a rare specimen. You are guaranteed it.
-- **Which variant you get is seeded.** Colour, fin shape, pattern, size come
-  from the seed at the moment it is added.
+- **Attendance decides when a roll happens** — spending one of three charges.
+- **Loyalty decides what is possible** — days staked set the rarity weights.
+- **Every roll produces a specimen.** There is never an empty outcome.
 
-**There is no losing outcome.** You never open something and get nothing. That
-is what keeps this clear of "games of chance where outcomes are primarily
-determined by randomness" — chance decides appearance, never whether you got
-something.
+Curve and charge rules live in `docs/PLAN.md` §1, which is authoritative.
+
+### Why this stays clear of the gambling rule
+
+The risk is real but low, and three cheap precautions defuse it, none of which
+cost anything:
+
+1. **No empty results.** "I found something and today it was ordinary", not
+   "I opened a box and got junk".
+2. **Rarity can never become value.** No trading, no gifting, no leaderboard
+   ranked by rarity. The moment a legendary confers chaseable status, there is
+   a prize.
+3. **Discovery, not opening.** "A rare angelfish has appeared in your tank",
+   never "you won".
+
+Gambling needs consideration, chance and a prize of value. This has chance and
+nothing else.
 
 Variation scales with rarity, which is also how it should read:
 
