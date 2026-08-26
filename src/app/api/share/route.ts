@@ -50,10 +50,9 @@ export async function GET() {
 
 function png(body: Buffer): NextResponse {
   return new NextResponse(new Uint8Array(body), {
-    headers: {
-      'Content-Type': 'image/png',
-      // Short cache: the grove changes on every watering.
-      'Cache-Control': 'public, max-age=300',
-    },
+    headers: { 'Content-Type': 'image/png' },
   });
+  // Cache-Control comes from next.config.ts, which marks every /api response
+  // no-store. This image is per-user when signed in, so `public, max-age=300`
+  // — what used to be here — let a CDN hand one person's tank to another.
 }

@@ -15,14 +15,31 @@ const config: NextConfig = {
    * exactly why the rename to reef.nimiq.cafe kept showing the old title long
    * after the origin was correct.
    *
-   * Page shells get a short shared cache instead. Deliberately excluded:
-   * `_next/static`, which is content-hashed and should stay immutable, and
-   * `api`, where responses are per-user and must keep whatever the route sets.
+   * Page shells get a short shared cache instead. `_next/static` is excluded
+   * because it is content-hashed and should stay immutable.
    */
   async headers() {
     return [
       {
-        source: '/((?!_next/|api/).*)',
+        /**
+         * Every API response is per-user and must never be shared.
+         *
+         * Sending *no* Cache-Control is not neutral — it is an invitation for
+         * any intermediary to invent one. Cloudflare did exactly that: it
+         * cached /api/grove and served one signed-in user's tank to everyone,
+         * and cached /api/auth/session as `{"address":null}` so signed-in
+         * users were told they were signed out.
+         *
+         * This must stay ahead of the page rule below; the first match wins.
+         */
+        source: '/api/:path*',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, private, max-age=0, must-revalidate' },
+          { key: 'Vary', value: 'Cookie' },
+        ],
+      },
+      {
+        source: '/((?!_next/).*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, must-revalidate' },
         ],
