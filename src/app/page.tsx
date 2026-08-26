@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Tank } from '@/components/Tank';
 import { Discover } from '@/components/Discover';
 import { FeedPanel } from '@/components/FeedPanel';
+import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
@@ -121,6 +122,7 @@ export default function Home() {
 
           <Discover reef={reef} onChange={setReef} />
           <FeedPanel reef={reef} onChange={setReef} />
+          <FieldGuide reef={reef} onChange={setReef} />
 
           <p className={styles.hint}>
             {reef.next

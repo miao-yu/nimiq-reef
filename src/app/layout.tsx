@@ -21,6 +21,8 @@ export const metadata: Metadata = {
     type: 'website',
     images: [{ url: '/api/share', width: 1200, height: 630, alt: 'An aquarium filling as you stake' }],
   },
+  manifest: '/manifest.webmanifest',
+  appleWebApp: { capable: true, title: 'Reef', statusBarStyle: 'black-translucent' },
   twitter: {
     card: 'summary_large_image',
     title: 'Reef',
@@ -30,11 +32,13 @@ export const metadata: Metadata = {
 };
 
 // Mini Apps run in a phone webview — no zoom, respect the notch.
+/** Installable from Chrome and Edge on Windows, and Safari's Add to Dock on macOS. */
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   viewportFit: 'cover',
+  themeColor: '#0a2739',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
