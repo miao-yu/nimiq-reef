@@ -8,6 +8,7 @@ import { FeedPanel } from '@/components/FeedPanel';
 import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
+import { AccountBar } from '@/components/AccountBar';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
@@ -77,16 +78,18 @@ export default function Home() {
 
   return (
     <main className={styles.wrap}>
-      <div className={styles.head}>
-        <h1 className={styles.title}>Reef</h1>
-        <span className={styles.day}>
-          {reef
-            ? t('day', { n: reef.day })
-            : community && community.reefs > 0
+      {reef ? (
+        <AccountBar reef={reef} onSignOut={() => void signOut().then(() => setReef(null))} />
+      ) : (
+        <div className={styles.head}>
+          <h1 className={styles.title}>Reef</h1>
+          <span className={styles.day}>
+            {community && community.reefs > 0
               ? t('reefsLiving', { n: community.reefs })
               : t('communityReef')}
-        </span>
-      </div>
+          </span>
+        </div>
+      )}
 
       <div className={styles.canvasFrame}>
         <Tank
@@ -141,24 +144,6 @@ export default function Home() {
 
           <StakePanel reef={reef} onDone={load} />
 
-          <div className={styles.account}>
-            {/* The handle is how strangers see this reef; the address is how
-                you know which wallet you are signed in with. The privacy
-                argument for handles is about other people's reefs, not your
-                own — hiding your own address just leaves you guessing. */}
-            <span className={styles.identity}>
-              <b>{reef.handle}</b>
-              <code>{reef.address}</code>
-            </span>
-            <ShareButton label={t('shareYours')} />
-            <button
-              className={styles.ghost}
-              onClick={() => void signOut().then(() => setReef(null))}
-              type="button"
-            >
-              {t('signOut')}
-            </button>
-          </div>
         </>
       ) : (
         <>
