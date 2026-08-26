@@ -91,6 +91,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
       ctx,
       L: BODY_LENGTH[species] * S,
       colour: colourFor(species, inhabitant.tier, inhabitant.seed),
+      tier: inhabitant.tier,
       time,
       seed: inhabitant.seed % 100,
       rate: TAIL_RATE[species] * (moving ? 1 : 0),

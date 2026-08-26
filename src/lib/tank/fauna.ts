@@ -1,4 +1,5 @@
 import { rng } from './rng';
+import { drawBlush, drawCrest, drawEye, drawMouth, drawPattern, traitsFor } from './traits';
 import type { SpeciesKey, Tier } from './types';
 
 type Ctx = CanvasRenderingContext2D;
@@ -50,13 +51,35 @@ const UNCOMMON_MORPHS = ['#D9CE5E', '#E08A6A', '#8FD1C4'];
  * one legible as rare without printing a label on it. Variation widens as the
  * tier climbs.
  */
+/**
+ * Colour by tier, and rarity must read as *more* the further up you go.
+ *
+ * Legendary used to come out at 24–44% saturation against rare's 58–88%, so
+ * the rarest thing in the tank was also the dullest — visible the moment the
+ * four tiers were rendered side by side, and invisible for weeks before that.
+ *
+ * One in `SHINY_ODDS` specimens is shiny at any tier: the same creature in a
+ * colour it has no business being. Luck, not loyalty and not money, so it adds
+ * a reason to keep rolling without touching what rarity means.
+ */
 export function colourFor(species: SpeciesKey, tier: Tier, seed: number): string {
+  const shiny = species !== 'grass' && traitsFor(seed, tier).shiny;
   const r = rng(seed);
-  if (tier === 'common') return COMMON_COLOUR[species] ?? '#8FB4C4';
-  if (tier === 'uncommon') return UNCOMMON_MORPHS[Math.floor(r() * UNCOMMON_MORPHS.length)]!;
+
+  if (tier === 'common') {
+    const base = COMMON_COLOUR[species] ?? '#8FB4C4';
+    return shiny ? `hsl(${Math.floor(r() * 360)}, 88%, 72%)` : base;
+  }
+  if (tier === 'uncommon' && !shiny) {
+    return UNCOMMON_MORPHS[Math.floor(r() * UNCOMMON_MORPHS.length)]!;
+  }
+
   const hue = Math.floor(r() * 360);
-  if (tier === 'rare') return `hsl(${hue}, ${(58 + r() * 30).toFixed(0)}%, ${(58 + r() * 14).toFixed(0)}%)`;
-  return `hsl(${hue}, ${(24 + r() * 20).toFixed(0)}%, ${(50 + r() * 14).toFixed(0)}%)`;
+  if (shiny) return `hsl(${hue}, 95%, 74%)`;
+  if (tier === 'uncommon') return `hsl(${hue}, 52%, 62%)`;
+  if (tier === 'rare') return `hsl(${hue}, ${(66 + r() * 22).toFixed(0)}%, ${(56 + r() * 10).toFixed(0)}%)`;
+  // Legendary: luminous rather than muted.
+  return `hsl(${hue}, ${(84 + r() * 12).toFixed(0)}%, ${(64 + r() * 8).toFixed(0)}%)`;
 }
 
 /** Shared crescent/fan tail. `wag` is the vertical offset of the trailing edge. */
@@ -71,56 +94,64 @@ function tail(ctx: Ctx, len: number, spread: number, wag: number): void {
 }
 
 /**
- * One eye, and most of the character in the tank.
- *
- * Every species draws through here, so this is where "collectible" is decided
- * rather than in nine separate silhouettes. Three things do the work: it is
- * larger than anatomy would suggest, it carries a catchlight, and it blinks.
- *
- * All of it stays a pure function of `time` and `seed` — no state, no
- * Math.random() — because the server draws share cards with the same code and
- * a creature that blinked differently there would not be the same creature.
+ * Where markings sit, per species: an ellipse standing in for the body.
+ * Approximate on purpose — see drawPattern.
  */
-function eye(ctx: Ctx, x: number, y: number, r: number, time = 0, seed = 0): void {
-  // Deliberately oversized, and additively rather than proportionally: a
-  // guppy in a phone-sized tank has a two-pixel eye, which is a dot with no
-  // expression, while a whale's is already large enough. A flat boost fixes
-  // the first without inflating the second.
-  const R = Math.max(2.4, r * 1.15 + 1.6);
+const BODY: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number, number]> = {
+  guppy: [0, 0, 0.5, 0.22],
+  angel: [0, 0, 0.3, 0.52],
+  jelly: [0, -0.06, 0.44, 0.34],
+  shrimp: [0, 0, 0.4, 0.18],
+  lionfish: [0, 0, 0.42, 0.25],
+  ray: [0, 0, 0.4, 0.2],
+  shark: [0, 0, 0.46, 0.18],
+  octopus: [0.12, -0.1, 0.32, 0.36],
+  turtle: [0, 0, 0.34, 0.24],
+  whale: [0, 0, 0.5, 0.22],
+};
 
-  // Each creature blinks on its own clock, so a tank never blinks in unison.
-  const period = 4.1 + (seed % 9) * 0.53;
-  const phase = (time + seed * 0.41) % period;
-  const CLOSE = 0.16;
-  const lid = phase < CLOSE ? 1 - Math.abs(phase - CLOSE / 2) / (CLOSE / 2) : 0;
-  const open = 1 - lid * 0.9;
+/** Where the crest sits: the top of the head, and how big it should be. */
+const CREST: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number]> = {
+  guppy: [0.06, -0.2, 0.44],
+  angel: [0.0, -0.5, 0.42],
+  jelly: [0, -0.34, 0.4],
+  shrimp: [0.06, -0.16, 0.3],
+  lionfish: [0.0, -0.24, 0.4],
+  ray: [0.04, -0.18, 0.32],
+  shark: [0.02, -0.17, 0.38],
+  octopus: [0.12, -0.44, 0.42],
+  turtle: [0.28, -0.2, 0.28],
+  whale: [0.08, -0.2, 0.46],
+};
 
-  // Looking around: a slow drift, far too small to notice directly and very
-  // noticeable by its absence.
-  const gaze = Math.sin(time * 0.47 + seed) * R * 0.16;
+/**
+ * The face: markings, eye, mouth, blush.
+ *
+ * Called by each painter once its body is down, so every species picks up the
+ * same expressions from its own seed while keeping its own silhouette. The
+ * mouth is placed forward of and below the eye by default; a species overrides
+ * that only where the default lands off the body.
+ */
+function face(
+  ctx: Ctx,
+  species: Exclude<SpeciesKey, 'grass'>,
+  L: number,
+  x: number,
+  y: number,
+  r: number,
+  time: number,
+  seed: number,
+  tier: Tier,
+  mouthAt?: [number, number],
+): void {
+  const t = traitsFor(seed, tier);
+  const [bx, by, brx, bry] = BODY[species];
+  drawPattern(ctx, bx * L, by * L, brx * L, bry * L, t.pattern);
 
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(1, Math.max(0.06, open));
-
-  ctx.fillStyle = 'rgba(255,255,255,.95)';
-  ctx.beginPath();
-  ctx.arc(0, 0, R, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = 'rgba(9,20,28,.92)';
-  ctx.beginPath();
-  ctx.arc(gaze + R * 0.16, 0, Math.max(0.9, R * 0.52), 0, Math.PI * 2);
-  ctx.fill();
-
-  // The catchlight. Up and to the left, matching the surface light everything
-  // else in the tank is lit by.
-  ctx.fillStyle = 'rgba(255,255,255,.85)';
-  ctx.beginPath();
-  ctx.arc(gaze - R * 0.18, -R * 0.3, Math.max(0.5, R * 0.24), 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.restore();
+  const [mx, my] = mouthAt ?? [x + r * 3.4, y + r * 2.2];
+  if (t.blush) drawBlush(ctx, mx - r * 1.6, my - r * 0.2, r * 1.5);
+  drawEye(ctx, x, y, r, t.eyes, time, seed);
+  drawMouth(ctx, mx, my, r * 1.5, t.mouth, time);
 }
 
 interface Args {
@@ -132,9 +163,10 @@ interface Args {
   time: number;
   seed: number;
   rate: number;
+  tier: Tier;
 }
 
-function guppy({ ctx, L, colour, time, rate, seed }: Args): void {
+function guppy({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const H = L * 0.44;
   const wag = Math.sin(time * rate + seed) * L * 0.14;
   ctx.fillStyle = colour;
@@ -151,10 +183,10 @@ function guppy({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.lineTo(-L * 0.2, -H * 0.38);
   ctx.closePath();
   ctx.fill();
-  eye(ctx, L * 0.3, -H * 0.12, L * 0.055, time, seed);
+  face(ctx, 'guppy', L, L * 0.3, -H * 0.12, L * 0.055, time, seed, tier);
 }
 
-function angel({ ctx, L, colour, time, rate, seed }: Args): void {
+function angel({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const H = L * 1.05;
   const wag = Math.sin(time * rate + seed) * L * 0.07;
   ctx.fillStyle = colour;
@@ -199,10 +231,10 @@ function angel({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.fill();
   });
   ctx.globalAlpha = 1;
-  eye(ctx, L * 0.2, -H * 0.14, L * 0.05, time, seed);
+  face(ctx, 'angel', L, L * 0.2, -H * 0.14, L * 0.05, time, seed, tier);
 }
 
-function jelly({ ctx, L, colour, time, rate, seed }: Args): void {
+function jelly({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const pulse = 1 + Math.sin(time * rate + seed) * 0.14;
   ctx.globalAlpha = 0.8;
   ctx.fillStyle = colour;
@@ -226,7 +258,7 @@ function jelly({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.globalAlpha = 1;
 }
 
-function shrimp({ ctx, L, colour, time, rate, seed }: Args): void {
+function shrimp({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const curl = Math.sin(time * rate + seed) * 0.18;
   ctx.fillStyle = colour;
   // Segments along an arc. A shrimp is a stack of plates, not a tube.
@@ -271,10 +303,10 @@ function shrimp({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.quadraticCurveTo(L * 0.7, -L * a, L * 1.0, -L * (a * 0.4) + i * L * 0.1);
     ctx.stroke();
   });
-  eye(ctx, L * 0.32, -L * 0.09, L * 0.055, time, seed);
+  face(ctx, 'shrimp', L, L * 0.32, -L * 0.09, L * 0.055, time, seed, tier);
 }
 
-function sleek({ ctx, L, colour, time, rate, seed }: Args, dorsal: number, snout: number): void {
+function sleek({ ctx, L, colour, time, rate, seed, tier }: Args, dorsal: number, snout: number): void {
   const H = L * 0.36;
   const wag = Math.sin(time * rate + seed) * L * 0.09;
   ctx.fillStyle = colour;
@@ -324,11 +356,11 @@ function sleek({ ctx, L, colour, time, rate, seed }: Args, dorsal: number, snout
     ctx.quadraticCurveTo(gx - L * 0.02, 0, gx, H * 0.2);
     ctx.stroke();
   }
-  eye(ctx, L * 0.36, -H * 0.18, L * 0.042, time, seed);
+  face(ctx, 'shrimp', L, L * 0.36, -H * 0.18, L * 0.042, time, seed, tier);
 }
 
 function lionfish(a: Args): void {
-  const { ctx, L, colour, time, rate, seed } = a;
+  const { ctx, L, colour, time, rate, seed, tier } = a;
   const H = L * 0.5;
   // Spines first, so the body sits over their roots.
   ctx.strokeStyle = colour;
@@ -353,10 +385,10 @@ function lionfish(a: Args): void {
   ctx.beginPath();
   ctx.ellipse(0, 0, L * 0.4, H * 0.5, 0, 0, Math.PI * 2);
   ctx.fill();
-  eye(ctx, L * 0.24, -H * 0.14, L * 0.05, time, seed);
+  face(ctx, 'lionfish', L, L * 0.24, -H * 0.14, L * 0.05, time, seed, tier);
 }
 
-function ray({ ctx, L, colour, time, rate, seed }: Args): void {
+function ray({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const flap = Math.sin(time * rate + seed);
   const span = L * 0.56;
   ctx.fillStyle = colour;
@@ -386,10 +418,10 @@ function ray({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.moveTo(-L * 0.78, flap * span * 0.19);
   ctx.quadraticCurveTo(-L * 0.95, flap * span * 0.24, -L * 1.06, flap * span * 0.3);
   ctx.stroke();
-  eye(ctx, L * 0.3, -span * 0.16, L * 0.04, time, seed);
+  face(ctx, 'ray', L, L * 0.3, -span * 0.16, L * 0.04, time, seed, tier);
 }
 
-function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
+function octopus({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   ctx.fillStyle = colour;
   ctx.beginPath();
   ctx.ellipse(L * 0.12, -L * 0.1, L * 0.32, L * 0.36, 0, 0, Math.PI * 2);
@@ -405,10 +437,10 @@ function octopus({ ctx, L, colour, time, rate, seed }: Args): void {
     ctx.quadraticCurveTo(spread - L * 0.1 + curl, L * 0.48, spread - L * 0.34 + curl, L * 0.66);
     ctx.stroke();
   }
-  eye(ctx, L * 0.26, -L * 0.16, L * 0.06, time, seed);
+  face(ctx, 'octopus', L, L * 0.26, -L * 0.16, L * 0.06, time, seed, tier);
 }
 
-function turtle({ ctx, L, colour, time, rate, seed }: Args): void {
+function turtle({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const paddle = Math.sin(time * rate + seed);
   ctx.fillStyle = colour;
 
@@ -471,10 +503,10 @@ function turtle({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.lineTo(L * 0.5, -L * 0.01);
   ctx.closePath();
   ctx.fill();
-  eye(ctx, L * 0.47, -L * 0.12, L * 0.035, time, seed);
+  face(ctx, 'turtle', L, L * 0.47, -L * 0.12, L * 0.035, time, seed, tier);
 }
 
-function whale({ ctx, L, colour, time, rate, seed }: Args): void {
+function whale({ ctx, L, colour, time, rate, seed, tier }: Args): void {
   const H = L * 0.44;
   const wag = Math.sin(time * rate + seed) * L * 0.05;
   ctx.fillStyle = colour;
@@ -534,7 +566,7 @@ function whale({ ctx, L, colour, time, rate, seed }: Args): void {
   ctx.quadraticCurveTo(L * 0.3, H * 0.26, L * 0.08, H * 0.28);
   ctx.stroke();
 
-  eye(ctx, L * 0.33, -H * 0.06, L * 0.026, time, seed);
+  face(ctx, 'whale', L, L * 0.33, -H * 0.06, L * 0.026, time, seed, tier);
 }
 
 type Painter = (a: Args) => void;
@@ -554,6 +586,16 @@ const PAINTERS: Record<Exclude<SpeciesKey, 'grass'>, Painter> = {
 
 /** Draws centred at the origin, facing +x. The caller flips and scales. */
 export function drawFauna(species: Exclude<SpeciesKey, 'grass'>, args: Args): void {
+  // Crest first: drawn behind the body, so spikes and plumes rise out of the
+  // silhouette instead of sitting on top of it like a sticker.
+  const { crest } = traitsFor(args.seed, args.tier);
+  if (crest > 0) {
+    const [cx, cy, cs] = CREST[species];
+    args.ctx.save();
+    args.ctx.translate(cx * args.L, cy * args.L);
+    drawCrest(args.ctx, cs * args.L, crest, args.time, args.colour);
+    args.ctx.restore();
+  }
   PAINTERS[species](args);
 }
 
