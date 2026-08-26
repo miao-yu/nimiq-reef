@@ -13,7 +13,6 @@ export interface GuideEntry {
 export interface ReefState {
   address: string;
   /** Never a wallet in a payload a stranger can read. */
-  handle: string;
   day: number;
   plants: Plant[];
 

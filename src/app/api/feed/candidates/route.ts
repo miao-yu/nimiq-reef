@@ -9,9 +9,12 @@ export const dynamic = 'force-dynamic';
 /**
  * Three reefs nobody has fed today, weighted toward the quiet ones.
  *
- * Identified by handle. **No addresses in this payload** — a stranger has no
- * business learning whose wallet they are looking at, and nobody consented to
- * that when they signed in.
+ * Identified by address, which is what draws the identicon. That discloses
+ * nothing new: stake and staking history are already readable from any Nimiq
+ * node for anybody who has the address.
+ *
+ * The candidate list still needs a device — it is the one place Reef hands out
+ * strangers to feed, so it is the one place worth rate limiting hard.
  */
 export async function GET(request: Request) {
   const address = await currentAddress();

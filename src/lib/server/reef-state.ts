@@ -65,7 +65,6 @@ export async function getReefState(address: string): Promise<ReefState> {
 
   return {
     address,
-    handle: reef.handle,
     day: reefDay(reef.firstDay),
     plants,
     daysStaked: streak,

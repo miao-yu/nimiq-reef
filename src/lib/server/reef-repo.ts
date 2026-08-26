@@ -2,14 +2,12 @@ import 'server-only';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
 import { addDays, utcDay } from '@/lib/reef/day';
-import { handleFor } from '@/lib/reef/handle';
 import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey } from '@/lib/reef';
 
 interface ReefRow extends RowDataPacket {
   address: string;
   first_day: Date | string;
-  handle: string | null;
   best_streak: number;
   charges_updated_at: Date | null;
 }
@@ -36,7 +34,6 @@ function asDay(value: Date | string): string {
 export interface ReefRecord {
   address: string;
   firstDay: string;
-  handle: string;
   bestStreak: number;
   chargesUpdatedAt: Date | null;
 }
@@ -50,39 +47,18 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     [address, today],
   );
   const [rows] = await db().query<ReefRow[]>(
-    'SELECT address, first_day, handle, best_streak, charges_updated_at FROM reefs WHERE address = ?',
+    'SELECT address, first_day, best_streak, charges_updated_at FROM reefs WHERE address = ?',
     [address],
   );
   const row = rows[0];
   if (!row) throw new Error(`Reef missing immediately after insert: ${address}`);
 
-  // Handles are assigned on first read rather than backfilled, so a reef made
-  // before they existed simply picks one up next time it is looked at.
-  let handle = row.handle ?? '';
-  if (!handle) handle = await assignHandle(address);
-
   return {
     address: row.address,
     firstDay: asDay(row.first_day),
-    handle,
     bestStreak: Number(row.best_streak ?? 0),
     chargesUpdatedAt: row.charges_updated_at ? new Date(row.charges_updated_at) : null,
   };
-}
-
-/** Retries on the unique key; the name space is large enough that it rarely does. */
-async function assignHandle(address: string): Promise<string> {
-  for (let attempt = 0; attempt < 12; attempt++) {
-    const candidate = handleFor(address, attempt);
-    try {
-      await db().execute('UPDATE reefs SET handle = ? WHERE address = ?', [candidate, address]);
-      return candidate;
-    } catch (error) {
-      const code = (error as { code?: string }).code;
-      if (code !== 'ER_DUP_ENTRY') throw error;
-    }
-  }
-  throw new Error(`Could not assign a handle for ${address}`);
 }
 
 export async function listPlants(address: string): Promise<Plant[]> {
@@ -440,7 +416,7 @@ export async function rememberBestStreak(address: string, streak: number): Promi
 /* ---------------- feeding somebody else ---------------- */
 
 export interface FeedCandidate {
-  handle: string;
+  address: string;
   species: SpeciesKey[];
 }
 
@@ -448,8 +424,12 @@ export interface FeedCandidate {
  * Reefs nobody has fed today, weighted toward the quiet ones.
  *
  * Ordered by lifetime feeds received so newcomers get attention rather than
- * the same few reefs collecting everything. Identified by handle — the payload
- * never carries an address.
+ * the same few reefs collecting everything.
+ *
+ * The payload carries addresses. That is deliberate: stake, delegation and
+ * staking history are readable from any Nimiq node for any address, so a reef
+ * discloses nothing a block explorer does not already show — and the address is
+ * what draws the identicon people actually recognise.
  */
 export async function feedCandidates(
   exclude: string,
@@ -457,11 +437,11 @@ export async function feedCandidates(
   limit = 3,
 ): Promise<FeedCandidate[]> {
   const [rows] = await db().query<RowDataPacket[]>(
-    `SELECT r.address, r.handle,
+    `SELECT r.address,
             (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS received
      FROM reefs r
      WHERE r.address <> ?
-       AND r.handle IS NOT NULL
+       AND r.hidden = 0
        AND NOT EXISTS (
          SELECT 1 FROM feedings f
          WHERE f.to_address = r.address AND f.day = ? AND f.device_hash = ?
@@ -478,7 +458,7 @@ export async function feedCandidates(
       [row.address],
     );
     out.push({
-      handle: row.handle as string,
+      address: row.address as string,
       species: species.map((s) => s.species as SpeciesKey),
     });
   }
@@ -496,12 +476,12 @@ export type FeedOutcome = 'fed' | 'already-fed-today' | 'unknown-reef' | 'own-re
  */
 export async function feedOther(
   fromAddress: string,
-  handle: string,
+  toAddress: string,
   deviceHash: string,
 ): Promise<FeedOutcome> {
   const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT address FROM reefs WHERE handle = ?',
-    [handle],
+    'SELECT address FROM reefs WHERE address = ?',
+    [toAddress],
   );
   const to = rows[0]?.address as string | undefined;
   if (!to) return 'unknown-reef';

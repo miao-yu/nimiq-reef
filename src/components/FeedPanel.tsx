@@ -4,11 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocale } from '@/lib/i18n';
 import { report } from '@/lib/client-log';
 import { getProvider } from '@/lib/nimiq/provider';
+import { normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
+import { Avatar } from './Avatar';
 import type { ReefState } from '@/lib/reef/state';
 import styles from './FeedPanel.module.css';
 
 interface Candidate {
-  handle: string;
+  address: string;
   species: string[];
 }
 
@@ -16,8 +18,14 @@ interface Candidate {
  * Feeding: your own reef, and somebody else's.
  *
  * Feeding a stranger needs no social graph, which matters because we have no
- * way to build one — wallet addresses are all we have. It is also the only
- * place in the app where two people touch.
+ * way to build one. The address is the identity: it draws the identicon, it is
+ * what you paste to feed a friend, and it discloses nothing a Nimiq node would
+ * not tell anybody who asked.
+ *
+ * Two doors, deliberately unequal. Nimiq Pay can vouch for a device, so it gets
+ * suggestions — strangers picked by us. A browser cannot, so it may only feed a
+ * reef whose address the user brought with them, rate limited to one a day on
+ * the signed-in wallet.
  */
 function hhmm(ms: number): string {
   const total = Math.max(0, Math.round(ms / 1000));
@@ -33,10 +41,11 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [gave, setGave] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [typed, setTyped] = useState('');
 
-  // Only Nimiq Pay can supply this. Outside it, giving is disabled rather than
-  // falling back to a wallet check — a wallet costs nothing to create, so the
-  // fallback would be the farm we are trying to stop.
+  // Only Nimiq Pay can supply this. Its absence no longer disables giving, it
+  // just closes the suggestion list — the part that would actually be worth
+  // farming, since it is where Reef hands out reefs the user did not choose.
   useEffect(() => {
     void getProvider()
       .then((p) => (p.kind === 'nimiq-pay' ? p.deviceId() : null))
@@ -76,19 +85,18 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
     }
   }
 
-  async function give(handle: string) {
-    if (!deviceId) return;
+  async function give(address: string) {
     setBusy(true);
     setError(null);
     try {
       const res = await fetch('/api/feed/give', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ handle, device: deviceId }),
+        body: JSON.stringify({ address, device: deviceId }),
       });
       const data = (await res.json()) as { reef?: ReefState; error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not feed that reef.');
-      setGave(handle);
+      setGave(truncateAddress(address));
       setCandidates([]);
       if (data.reef) onChange(data.reef);
     } catch (cause) {
@@ -140,26 +148,55 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
       <div className={styles.divider} />
 
       <h3 className={styles.title}>{t('feedStranger')}</h3>
-      {!deviceId ? (
-        <p className={styles.note}>{t('feedNeedsApp')}</p>
-      ) : gave !== null ? (
-        <p className={styles.note}>{gave ? t('feedGiven', { handle: gave }) : t('feedStrangerNote')}</p>
-      ) : (
+      {gave !== null ? (
+        <p className={styles.note}>{gave ? t('feedGiven', { who: gave }) : t('feedStrangerNote')}</p>
+      ) : deviceId ? (
         <>
           <p className={styles.note}>{t('feedStrangerNote')}</p>
           <div className={styles.candidates}>
             {candidates.map((c) => (
               <button
-                key={c.handle}
+                key={c.address}
                 className={styles.candidate}
-                onClick={() => void give(c.handle)}
+                onClick={() => void give(c.address)}
                 disabled={busy}
                 type="button"
               >
-                {c.handle}
+                <Avatar address={c.address} size={28} />
+                <span>{truncateAddress(c.address)}</span>
               </button>
             ))}
           </div>
+        </>
+      ) : (
+        <>
+          <p className={styles.note}>{t('feedNeedsApp')}</p>
+          <form
+            className={styles.form}
+            onSubmit={(e) => {
+              e.preventDefault();
+              const target = normalizeAddress(typed);
+              if (!target) {
+                setError(t('feedAddressInvalid'));
+                return;
+              }
+              void give(target);
+            }}
+          >
+            <input
+              className={styles.input}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              placeholder={t('feedAddressPlaceholder')}
+              aria-label={t('feedByAddress')}
+              autoComplete="off"
+              spellCheck={false}
+              disabled={busy}
+            />
+            <button className={styles.go} disabled={busy || typed.length === 0} type="submit">
+              {t('feed')}
+            </button>
+          </form>
         </>
       )}
 

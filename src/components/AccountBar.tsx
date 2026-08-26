@@ -4,18 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { Avatar } from './Avatar';
 import { useLocale } from '@/lib/i18n';
 import { report } from '@/lib/client-log';
+import { truncateAddress } from '@/lib/nimiq/address';
 import type { ReefState } from '@/lib/reef/state';
 import styles from './AccountBar.module.css';
-
-/** First two groups and last two: the ends are what people actually check. */
-function truncate(address: string): string {
-  const groups = address.split(' ');
-  return groups.length > 4
-    // U+22EF, the midline ellipsis. The usual U+2026 sits on the baseline and
-    // reads as dropped between two lines of capitals and digits.
-    ? `${groups.slice(0, 2).join(' ')} ⋯ ${groups.slice(-2).join(' ')}`
-    : address;
-}
 
 /**
  * The header: the app on the left, where you are in the middle, who you are on
@@ -87,7 +78,7 @@ export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: ()
           onClick={() => setOpen(!open)}
           aria-expanded={open}
           aria-haspopup="menu"
-          aria-label={reef.handle}
+          aria-label={truncateAddress(reef.address)}
           type="button"
         >
           <Avatar address={reef.address} size={34} />
@@ -104,7 +95,7 @@ export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: ()
               role="menuitem"
               type="button"
             >
-              <code>{truncate(reef.address)}</code>
+              <code>{truncateAddress(reef.address)}</code>
               <small>{addressCopied ? t('linkCopied') : t('copyAddress')}</small>
             </button>
             <button className={styles.item} onClick={() => void share()} role="menuitem" type="button">

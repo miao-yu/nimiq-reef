@@ -211,7 +211,9 @@ identical to the phone.
 `UNIQUE (address, day)` for own feeding, `UNIQUE (device_hash, day)` for given.
 `plants` → `specimens`, with `species` widened and a `tier` column.
 
-`reefs` gains `handle`, `best_streak`, and keeps `first_day`.
+`reefs` gains `best_streak` and `hidden`, and keeps `first_day`. It briefly had
+a random `handle`; that was dropped on 26 Aug — the address is the identity,
+since the chain already discloses everything a reef page would.
 
 The rules that matter still live in database constraints rather than in
 application code that can lose a race to a double tap.

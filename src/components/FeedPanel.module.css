@@ -25,7 +25,7 @@
 .cta:disabled { opacity: 0.5; cursor: default; border-color: var(--line); }
 .cta:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
 
-.candidates { display: flex; flex-wrap: wrap; gap: 8px; }
+.candidates { display: flex; flex-direction: column; gap: 8px; }
 .candidate {
   font-family: ui-monospace, Menlo, monospace;
   font-size: 0.82rem;
@@ -33,8 +33,12 @@
   color: var(--ink);
   border: 1px solid var(--line-strong, var(--line));
   border-radius: 9px;
-  padding: 9px 13px;
+  padding: 8px 12px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
 }
 .candidate:hover:not(:disabled) { border-color: var(--leaf); }
 .candidate:disabled { opacity: 0.5; cursor: default; }
@@ -46,3 +50,30 @@
 
 .day { height: 3px; border-radius: 2px; background: var(--surface-2, #e1eaef); overflow: hidden; }
 .day span { display: block; height: 100%; background: var(--leaf); opacity: 0.55; }
+
+/* Feeding by address: the browser's door, where no device can vouch. */
+.form { display: flex; gap: 8px; }
+.input {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.82rem;
+  background: var(--ground);
+  color: var(--ink);
+  border: 1px solid var(--line-strong, var(--line));
+  border-radius: 9px;
+  padding: 9px 12px;
+}
+.input:focus-visible { outline: 2px solid var(--leaf); outline-offset: 1px; }
+.go {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: var(--leaf);
+  color: var(--ground);
+  border: 1px solid var(--leaf);
+  border-radius: 9px;
+  padding: 9px 16px;
+  cursor: pointer;
+}
+.go:disabled { opacity: 0.45; cursor: default; }
+.go:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }

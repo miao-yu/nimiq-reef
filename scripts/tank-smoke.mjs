@@ -67,11 +67,27 @@ check('feeding own reef works', fed.status === 200 && fed.body.reef.fedToday ===
 const fedTwice = await post('/api/feed', {}, cookie);
 check('feeding twice is idempotent, not an error', fedTwice.status === 200);
 
-// --- feeding a stranger is device gated ---
-const noDevice = await post('/api/feed/give', { handle: 'someone' }, cookie);
-check('giving without a device id is refused', noDevice.status === 400 && noDevice.body.reason === 'no-device');
-const anon = await post('/api/feed/give', { handle: 'someone', device: 'a'.repeat(64) });
+// --- feeding a stranger ---
+// A device is no longer required to give; it is required to be *handed*
+// somebody to give to. What still must hold is that the address is real and
+// that a session is present.
+const VALID = 'NQ64 8DF3 301V 1BAJ GV0Q SU9D CLJG CKR5 7JJM';
+
+const junk = await post('/api/feed/give', { address: 'not-an-address' }, cookie);
+check('giving to a malformed address is refused', junk.status === 400, `HTTP ${junk.status}`);
+
+const typo = await post('/api/feed/give', { address: VALID.slice(0, -1) + 'N' }, cookie);
+check('giving to a checksum typo is refused', typo.status === 400, `HTTP ${typo.status}`);
+
+const anon = await post('/api/feed/give', { address: VALID, device: 'a'.repeat(64) });
 check('giving with no session is refused', anon.status === 401, `HTTP ${anon.status}`);
+
+const noDeviceCandidates = await call('/api/feed/candidates', { headers: { cookie } });
+check(
+  'candidates still need a device — that is the farmable surface',
+  noDeviceCandidates.status === 400 && noDeviceCandidates.body.reason === 'no-device',
+  `HTTP ${noDeviceCandidates.status}`,
+);
 
 // --- nothing is reachable without a session ---
 for (const [p, m] of [['/api/reef', 'GET'], ['/api/guide', 'GET'], ['/api/roll', 'POST']]) {
