@@ -15,9 +15,12 @@ export const runtime = 'nodejs';
  * nothing new. A reef whose owner opted out 404s exactly like one that does
  * not exist.
  *
- * Cacheable, unlike /api/share — that one is keyed on the session cookie and
- * caching it once leaked one player's reef to everybody. This is keyed on the
- * address in the path and carries no session at all.
+ * It lives under /r rather than /api on purpose. Every /api response is forced
+ * to `no-store, private` by next.config, and that blanket rule stays blanket —
+ * it is there because an uncached /api/grove once served one player's reef to
+ * anonymous callers. This route is keyed on the address in the path, reads no
+ * session, and so belongs with the pages instead, where a short shared cache
+ * is correct.
  */
 export async function GET(_: Request, ctx: { params: Promise<{ address: string }> }) {
   const { address } = await ctx.params;
@@ -33,11 +36,11 @@ export async function GET(_: Request, ctx: { params: Promise<{ address: string }
     reef.receivedToday,
   );
 
+  // Cache-Control is not set here: next.config's page rule applies to
+  // everything outside /api and would override it anyway. Verified against the
+  // live response rather than assumed — the earlier version of this file
+  // claimed a policy the server never sent.
   return new NextResponse(new Uint8Array(png), {
-    headers: {
-      'Content-Type': 'image/png',
-      // Public, but short: a reef changes when its owner rolls or is fed.
-      'Cache-Control': 'public, max-age=60, s-maxage=300',
-    },
+    headers: { 'Content-Type': 'image/png' },
   });
 }

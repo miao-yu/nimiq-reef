@@ -37,7 +37,7 @@ export async function generateMetadata(
   const description =
     `Day ${reef.day}. ${reef.plants.length} ${reef.plants.length === 1 ? 'species' : 'species'} ` +
     `on display, ${reef.daysStaked} ${reef.daysStaked === 1 ? 'day' : 'days'} staked.`;
-  const card = `/api/reef/${encodeURIComponent(reef.address.replace(/\s/g, ''))}/card`;
+  const card = `/r/${encodeURIComponent(reef.address.replace(/\s/g, ''))}/card`;
 
   return {
     title,
@@ -69,7 +69,7 @@ export default async function ReefPage({ params }: { params: Promise<{ address: 
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         className={styles.tank}
-        src={`/api/reef/${encodeURIComponent(compact)}/card`}
+        src={`/r/${encodeURIComponent(compact)}/card`}
         alt={`A reef with ${reef.plants.length} species on display`}
         width={480}
         height={300}

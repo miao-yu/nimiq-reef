@@ -176,7 +176,7 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   className={styles.card}
-                  src={`/api/reef/${encodeURIComponent(c.address.replace(/\s/g, ''))}/card`}
+                  src={`/r/${encodeURIComponent(c.address.replace(/\s/g, ''))}/card`}
                   alt=""
                   width={96}
                   height={60}
