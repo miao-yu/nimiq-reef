@@ -51,18 +51,27 @@
 .who {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
+  background: none;
+  border-left: 0;
+  border-right: 0;
+  border-top: 0;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
 }
-.who b { font-size: 0.9rem; font-weight: 600; }
+.who:hover { background: var(--ground); }
+.who:focus-visible { outline: 2px solid var(--leaf); outline-offset: -2px; }
 .who code {
   font-family: ui-monospace, Menlo, monospace;
-  font-size: 0.66rem;
-  color: var(--muted);
-  word-break: break-all;
-  user-select: all;
+  font-size: 0.82rem;
+  color: var(--ink);
+  letter-spacing: 0.02em;
 }
+.who small { font-size: 0.7rem; color: var(--muted); }
 
 .item {
   background: none;

@@ -7,6 +7,14 @@ import { report } from '@/lib/client-log';
 import type { ReefState } from '@/lib/reef/state';
 import styles from './AccountBar.module.css';
 
+/** First two groups and last two: the ends are what people actually check. */
+function truncate(address: string): string {
+  const groups = address.split(' ');
+  return groups.length > 4
+    ? `${groups.slice(0, 2).join(' ')} … ${groups.slice(-2).join(' ')}`
+    : address;
+}
+
 /**
  * The header: the app on the left, where you are in the middle, who you are on
  * the right.
@@ -19,6 +27,7 @@ export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: ()
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [addressCopied, setAddressCopied] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
 
   // A menu that survives a click elsewhere is a menu people fight with.
@@ -37,6 +46,16 @@ export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: ()
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);
+
+  async function copyAddress() {
+    try {
+      await navigator.clipboard.writeText(reef.address);
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 1800);
+    } catch (cause) {
+      report('copy:address', cause);
+    }
+  }
 
   async function share() {
     const url = window.location.origin;
@@ -74,10 +93,18 @@ export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: ()
 
         {open ? (
           <div className={styles.menu} role="menu">
-            <div className={styles.who}>
-              <b>{reef.handle}</b>
-              <code>{reef.address}</code>
-            </div>
+            {/* Truncated, because 44 characters is not something anybody
+                reads — but tapping copies the whole thing, so shortening it
+                does not also make it useless. */}
+            <button
+              className={styles.who}
+              onClick={() => void copyAddress()}
+              role="menuitem"
+              type="button"
+            >
+              <code>{truncate(reef.address)}</code>
+              <small>{addressCopied ? t('linkCopied') : t('copyAddress')}</small>
+            </button>
             <button className={styles.item} onClick={() => void share()} role="menuitem" type="button">
               {copied ? t('linkCopied') : t('shareYours')}
             </button>

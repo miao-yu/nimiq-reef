@@ -90,7 +90,8 @@ export const STRINGS = {
     backToReef: 'Back to the reef',
     shareYours: 'Share your reef',
     shareThis: 'Share this reef',
-    linkCopied: 'Link copied',
+    linkCopied: 'Copied',
+    copyAddress: 'Tap to copy the full address',
     chainOffline: "Can't reach the chain right now, so this is from what we last saw. Nothing is lost.",
   },
 
@@ -166,7 +167,8 @@ export const STRINGS = {
     backToReef: 'Zurück zum Riff',
     shareYours: 'Riff teilen',
     shareThis: 'Dieses Riff teilen',
-    linkCopied: 'Link kopiert',
+    linkCopied: 'Kopiert',
+    copyAddress: 'Tippen, um die ganze Adresse zu kopieren',
     chainOffline:
       'Die Chain ist gerade nicht erreichbar, das hier ist der letzte bekannte Stand. Nichts ist verloren.',
   },
@@ -243,7 +245,8 @@ export const STRINGS = {
     backToReef: 'Volver al arrecife',
     shareYours: 'Comparte tu arrecife',
     shareThis: 'Compartir este arrecife',
-    linkCopied: 'Enlace copiado',
+    linkCopied: 'Copiado',
+    copyAddress: 'Toca para copiar la dirección completa',
     chainOffline:
       'Ahora mismo no llegamos a la cadena, esto es lo último que vimos. No se ha perdido nada.',
   },
