@@ -157,9 +157,21 @@ export default function Home() {
           {grove.freePlots.length > 0 ? (
             <div className={styles.planter}>
               <h2 className={styles.planterTitle}>
-                {t('plantInPlot', { n: grove.freePlots[0]! + 1 })}
+                {/* An empty plot after you already planted means you *earned* one.
+                    Saying "plant in plot 2" makes a reward read as the same
+                    question asked twice. */}
+                {grove.plants.length > 0
+                  ? t('newPlotOpened', { n: grove.freePlots[0]! + 1 })
+                  : t('plantInPlot', { n: grove.freePlots[0]! + 1 })}
                 <span> {t('permanent')}</span>
               </h2>
+              {grove.plants.length > 0 && grove.daysStaked > 0 ? (
+                <p className={styles.hint}>
+                  {t('unlockedByStaking', {
+                    species: SPECIES[grove.speciesUnlocked[grove.speciesUnlocked.length - 1]!].label,
+                  })}
+                </p>
+              ) : null}
               <div className={styles.speciesRow}>
                 {grove.speciesUnlocked.map((key) => (
                   <button
