@@ -6,11 +6,30 @@
  * forward-only, which is the right trade for a four-week build.
  */
 import { readdir, readFile } from 'node:fs/promises';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import mysql from 'mysql2/promise';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+
+/**
+ * Load .env.local the way `next dev` does.
+ *
+ * Without this the script fails on a missing DB_USER while the app beside it
+ * runs fine, which reads as a broken database rather than a missing variable —
+ * it sent me chasing the wrong bug once already. Real environment variables
+ * still win, so the deploy script's `env $(...)` is unaffected.
+ */
+const dotenv = join(root, '.env.local');
+if (existsSync(dotenv)) {
+  for (const line of readFileSync(dotenv, 'utf8').split('\n')) {
+    const match = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
+    if (match && process.env[match[1]] === undefined) {
+      process.env[match[1]] = match[2].replace(/^["']|["']$/g, '');
+    }
+  }
+}
 
 function env(name, fallback) {
   const value = process.env[name] ?? fallback;
