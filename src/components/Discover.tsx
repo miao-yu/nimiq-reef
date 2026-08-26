@@ -87,6 +87,15 @@ export function Discover({ reef, onChange }: { reef: ReefState; onChange: (r: Re
       ) : null}
 
       {reef.charges < 1 && !found ? <p className={styles.note}>{t('noCharges')}</p> : null}
+
+      {/* Where charges come from was invisible, and the omission fooled the
+          person who specified the rule. If the author can be surprised by it,
+          nobody else stands a chance. */}
+      <details className={styles.how}>
+        <summary>{t('chargeSource')}</summary>
+        <p>{t('chargeIncoming')}</p>
+      </details>
+
       {error ? <p className={styles.error}>{error}</p> : null}
     </div>
   );

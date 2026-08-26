@@ -41,3 +41,21 @@
 }
 .note { margin: 0; font-size: 0.87rem; color: var(--muted); }
 .error { margin: 0; font-size: 0.87rem; color: #b0453a; }
+
+.how {
+  font-size: 0.8rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.how summary {
+  cursor: pointer;
+  list-style: none;
+}
+.how summary::-webkit-details-marker { display: none; }
+.how summary::after {
+  content: ' ⌄';
+  opacity: 0.6;
+}
+.how[open] summary::after { content: ' ⌃'; }
+.how summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; border-radius: 4px; }
+.how p { margin: 7px 0 0; }

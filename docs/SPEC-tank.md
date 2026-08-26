@@ -224,3 +224,39 @@ application code that can lose a race to a double tap.
 - Any purchase of any kind
 - Rarity odds influenced by anything at all
 - Referral trees. Single level and cosmetic if ever, never a pyramid
+
+
+---
+
+## Settled 26 Aug — bonus charges are outgoing-only
+
+A charge is earned for an epoch in which the wallet was **spent from**. Money
+arriving never earns one.
+
+This is not a preference, it is the only precise option available. We cannot
+identify who sent a transaction — `getTransactionsByAddress` needs a history
+index the validator does not run — so the app sees a balance move and nothing
+more. A validator payout and a friend paying you are the same event to us.
+
+Direction is the one thing that *is* reliable: a payout is always an increase.
+Counting only decreases excludes every payout by construction rather than by
+heuristic.
+
+It is also the truer reading of the rule. The bonus rewards *using Nimiq Pay*;
+receiving money is somebody else using it.
+
+Rejected, with reasons, so this is not relitigated:
+
+- **Count any change.** A pool staker on a fifteen-minute payout cycle would
+  earn a bonus every epoch automatically, which makes the bonus a signal of
+  nothing.
+- **A size threshold on incoming.** Fragile — it depends on payout sizes set by
+  validators we do not control, and it would still have missed the 10 NIM
+  transfer that prompted the question.
+- **Run a history index.** The only way to do this properly, and a full resync
+  of chain history on a box running a live validator. After the competition, if
+  ever.
+
+The app now says all of this in the discovery panel. The rule fooled the person
+who wrote it, which is a reliable sign that leaving it unexplained was the real
+defect.
