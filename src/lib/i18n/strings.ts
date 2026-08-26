@@ -37,6 +37,8 @@ export const STRINGS = {
     noPreference: 'Every elected validator, sorted by address. Reef has no preference.',
     amountNim: 'Amount in NIM',
     minimumNim: 'Minimum {n} NIM. You can unstake whenever you like.',
+    stakeElsewhere:
+      'Staking from the browser is not built yet. Stake in the Nimiq Wallet or Nimiq Pay and this tank picks it up within fifteen minutes — Reef reads the chain, so it does not need to be the app that made the transaction.',
     delegate: 'Delegate',
     addStakeCta: 'Add stake',
     stakeSent: 'Stake sent',
@@ -73,6 +75,8 @@ export const STRINGS = {
     noPreference: 'Alle gewählten Validatoren, nach Adresse sortiert. Reef bevorzugt keinen.',
     amountNim: 'Betrag in NIM',
     minimumNim: 'Mindestens {n} NIM. Du kannst jederzeit wieder abheben.',
+    stakeElsewhere:
+      'Staking im Browser ist noch nicht gebaut. Stake in der Nimiq Wallet oder in Nimiq Pay — dieses Becken übernimmt es innerhalb von fünfzehn Minuten, denn Reef liest die Chain und muss die Transaktion nicht selbst gesendet haben.',
     delegate: 'Delegieren',
     addStakeCta: 'Stake erhöhen',
     stakeSent: 'Stake gesendet',
@@ -110,6 +114,8 @@ export const STRINGS = {
     noPreference: 'Todos los validadores electos, ordenados por dirección. Reef no prefiere ninguno.',
     amountNim: 'Cantidad en NIM',
     minimumNim: 'Mínimo {n} NIM. Puedes retirarlo cuando quieras.',
+    stakeElsewhere:
+      'Hacer staking desde el navegador aún no está implementado. Hazlo en Nimiq Wallet o Nimiq Pay y este acuario lo recogerá en quince minutos: Reef lee la cadena, no necesita haber enviado la transacción.',
     delegate: 'Delegar',
     addStakeCta: 'Añadir',
     stakeSent: 'Staking enviado',

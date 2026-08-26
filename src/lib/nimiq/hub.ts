@@ -64,11 +64,19 @@ export function createHubProvider(): GroveProvider {
     async isConsensusEstablished() {
       return true;
     },
+    // The Hub *can* stake — signStaking() exists — but it takes a pre-built
+    // serialised transaction and returns a signed one for us to broadcast,
+    // where Nimiq Pay does all of that itself. Building it here would mean
+    // shipping @nimiq/core's WASM to a mobile-first bundle plus a broadcast
+    // endpoint, so it is deferred rather than impossible.
+    //
+    // It is also not needed: Reef reads the chain, so a delegation made in the
+    // Nimiq Wallet lands in the tank on the next tick regardless.
     async sendNewStakerTransaction() {
-      throw new Error('Staking runs inside Nimiq Pay. Open the Mini App there.');
+      throw new Error('BROWSER_STAKING_UNAVAILABLE');
     },
     async sendStakeTransaction() {
-      throw new Error('Staking runs inside Nimiq Pay. Open the Mini App there.');
+      throw new Error('BROWSER_STAKING_UNAVAILABLE');
     },
   };
 }

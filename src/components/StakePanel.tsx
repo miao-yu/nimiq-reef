@@ -70,8 +70,15 @@ export function StakePanel({ grove, onDone }: Props) {
       // grove — so refresh rather than pretending the stake is already counted.
       await onDone();
     } catch (cause) {
-      report('stake', cause);
-      setError(cause instanceof Error ? cause.message : 'The wallet declined that.');
+      const browserLimit = cause instanceof Error && cause.message === 'BROWSER_STAKING_UNAVAILABLE';
+      if (!browserLimit) report('stake', cause);
+      setError(
+        browserLimit
+          ? t('stakeElsewhere')
+          : cause instanceof Error
+            ? cause.message
+            : 'The wallet declined that.',
+      );
     } finally {
       setBusy(false);
     }
