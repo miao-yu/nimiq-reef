@@ -79,7 +79,7 @@ export default function Home() {
   return (
     <main className={styles.wrap}>
       {reef ? (
-        <AccountBar reef={reef} onChange={setReef} onSignOut={() => void signOut().then(() => setReef(null))} />
+        <AccountBar reef={reef} onSignOut={() => void signOut().then(() => setReef(null))} />
       ) : (
         <div className={styles.head}>
           <h1 className={styles.title}>Reef</h1>

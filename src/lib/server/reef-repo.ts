@@ -485,7 +485,12 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
   };
 }
 
-/** Whether this reef is hidden from public pages. */
+/**
+ * Hide or show a reef on its public page.
+ *
+ * Reachable only through /api/reef/visibility, which no UI currently calls —
+ * see the note there. Every reef is visible by default and none are hidden.
+ */
 export async function setHidden(address: string, hidden: boolean): Promise<void> {
   await db().execute('UPDATE reefs SET hidden = ? WHERE address = ?', [hidden ? 1 : 0, address]);
 }

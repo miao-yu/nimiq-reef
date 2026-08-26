@@ -16,35 +16,12 @@ import styles from './AccountBar.module.css';
  * and nobody reads it — but it is one tap away, because "which wallet is this"
  * has to be answerable.
  */
-export function AccountBar({
-  reef,
-  onSignOut,
-  onChange,
-}: {
-  reef: ReefState;
-  onSignOut: () => void;
-  onChange?: (reef: ReefState) => void;
-}) {
+export function AccountBar({ reef, onSignOut }: { reef: ReefState; onSignOut: () => void }) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [addressCopied, setAddressCopied] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
-
-  async function setVisibility(hidden: boolean) {
-    try {
-      const res = await fetch('/api/reef/visibility', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hidden }),
-      });
-      if (!res.ok) return;
-      const data = (await res.json()) as { reef: ReefState };
-      onChange?.(data.reef);
-    } catch (cause) {
-      report('visibility', cause);
-    }
-  }
 
   // A menu that survives a click elsewhere is a menu people fight with.
   useEffect(() => {
@@ -123,23 +100,6 @@ export function AccountBar({
             </button>
             <button className={styles.item} onClick={() => void share()} role="menuitem" type="button">
               {copied ? t('linkCopied') : t('shareYours')}
-            </button>
-            <a
-              className={styles.item}
-              href={`/r/${reef.address.replace(/\s/g, '')}`}
-              role="menuitem"
-            >
-              {t('viewPublic')}
-            </a>
-            {/* The chain already shows the stake behind a reef. What it does
-                not show is who fed whom, or when somebody opens the app. */}
-            <button
-              className={styles.item}
-              onClick={() => void setVisibility(!reef.hidden)}
-              role="menuitem"
-              type="button"
-            >
-              {reef.hidden ? t('showReef') : t('hideReef')}
             </button>
             <button
               className={styles.item}
