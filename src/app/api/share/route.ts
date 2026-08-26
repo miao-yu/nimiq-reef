@@ -3,7 +3,9 @@ import { currentAddress } from '@/lib/server/session';
 import { getGroveState } from '@/lib/server/grove-state';
 import { communitySnapshot } from '@/lib/server/grove-repo';
 import { renderShareImage } from '@/lib/server/share-image';
-import { COMMUNITY_DAY, SEEDED_COMMUNITY, layoutCommunity } from '@/lib/grove';
+import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/grove';
+import { adaptPlants } from '@/lib/tank/adapt';
+import { fillForStake } from '@/lib/tank/geometry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -26,15 +28,24 @@ export async function GET() {
         : grove.daysStaked > 0
           ? `Day ${grove.day} — ${grove.daysStaked} ${grove.daysStaked === 1 ? 'day' : 'days'} staked`
           : `Day ${grove.day} in my grove`;
-    return png(renderShareImage({ plants: grove.plants, day: grove.day, caption }));
+    return png(
+      renderShareImage({
+        inhabitants: adaptPlants(grove.plants),
+        tankFill: fillForStake(grove.stakedLuna),
+        caption,
+      }),
+    );
   }
 
   const snapshot = await communitySnapshot();
   const plants = layoutCommunity(snapshot.plants.length ? snapshot.plants : SEEDED_COMMUNITY);
-  const caption = snapshot.totalPlants > 0
-    ? `${snapshot.totalPlants} ${snapshot.totalPlants === 1 ? 'plant' : 'plants'} growing`
-    : 'A garden that grows from staking';
-  return png(renderShareImage({ plants, day: COMMUNITY_DAY, caption }));
+  const caption =
+    snapshot.totalPlants > 0
+      ? `${snapshot.totalPlants} living in the reef`
+      : 'A tank that fills as you stake';
+  return png(
+    renderShareImage({ inhabitants: adaptPlants(plants), tankFill: 0.86, caption }),
+  );
 }
 
 function png(body: Buffer): NextResponse {

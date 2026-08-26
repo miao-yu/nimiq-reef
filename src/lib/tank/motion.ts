@@ -1,4 +1,5 @@
 import { rng } from './rng';
+import { BODY_LENGTH } from './fauna';
 import type { Inhabitant, SpeciesKey, TankRect } from './types';
 
 type Style = 'swim' | 'drift' | 'crawl' | 'glide';
@@ -74,8 +75,9 @@ export function placeAt(
   if (style === 'crawl') {
     // Along the floor, slow, barely leaving the substrate.
     const u = 0.5 + 0.5 * Math.sin(time * speed * Math.PI * 2 + phase);
+    const crawlInset = Math.min(0.3, 0.05 + BODY_LENGTH[inhabitant.species] * 0.19);
     return {
-      x: tank.x + tank.w * (0.06 + u * 0.88),
+      x: tank.x + tank.w * (crawlInset + u * (1 - crawlInset * 2)),
       y: tank.groundY - swimmable * (0.03 + r() * 0.05),
       dir: Math.cos(time * speed * Math.PI * 2 + phase) >= 0 ? 1 : -1,
       depth,
@@ -95,11 +97,15 @@ export function placeAt(
 
   const angle = time * speed * Math.PI * 2 + phase;
   const u = 0.5 + 0.5 * Math.sin(angle);
+  // Keep a body's whole length inside the glass. Without this a whale swims
+  // half out of frame, which is most obvious on the share card — and a whale
+  // cannot put its nose through the side of a tank anyway.
+  const inset = Math.min(0.34, 0.04 + BODY_LENGTH[inhabitant.species] * 0.19);
   const band = style === 'glide' ? 0.16 + r() * 0.5 : 0.1 + r() * 0.66;
   const bob = Math.sin(time * (style === 'glide' ? 0.3 : 0.75) + phase) * (style === 'glide' ? 0.05 : 0.035);
 
   return {
-    x: tank.x + tank.w * (0.05 + u * 0.9),
+    x: tank.x + tank.w * (inset + u * (1 - inset * 2)),
     y: tank.surfaceY + swimmable * Math.min(0.92, Math.max(0.06, band + bob)),
     dir: Math.cos(angle) >= 0 ? 1 : -1,
     depth,

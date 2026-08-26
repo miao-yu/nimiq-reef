@@ -32,3 +32,18 @@ export function tankRect(options: RenderOptions): TankRect {
 
   return { x, y, w, h, surfaceY, groundY };
 }
+
+/**
+ * How much of the canvas the tank fills, from the stake.
+ *
+ * Log scale from the 100 NIM protocol minimum up to a million, because the
+ * difference between 100 and 1,000 NIM should be as visible as the difference
+ * between 100,000 and a million. A zero stake still gets a real tank — the free
+ * tier is a tank, not a locked door.
+ */
+export function fillForStake(stakedLuna: number): number {
+  const nim = stakedLuna / 1e5;
+  if (nim <= 0) return 0.34;
+  const t = (Math.log10(Math.max(100, Math.min(1e6, nim))) - 2) / 4;
+  return 0.4 + t * 0.57;
+}

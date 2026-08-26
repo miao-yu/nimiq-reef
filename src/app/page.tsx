@@ -1,14 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Grove } from '@/components/Grove';
+import { Tank } from '@/components/Tank';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
 import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import {
   SPECIES,
-  COMMUNITY_DAY,
   SEEDED_COMMUNITY,
   layoutCommunity,
   type CommunityPlant,
@@ -19,6 +18,8 @@ import {
 import { formatNim } from '@/lib/nimiq/policy';
 import type { ProviderKind } from '@/lib/nimiq/types';
 import { installErrorReporting, report } from '@/lib/client-log';
+import { adaptPlants } from '@/lib/tank/adapt';
+import { fillForStake } from '@/lib/tank/geometry';
 import { useLocale } from '@/lib/i18n';
 import styles from './page.module.css';
 
@@ -106,7 +107,6 @@ export default function Home() {
   // seeded one so the very first visitor never meets bare soil.
   const communityPlants = community?.plants.length ? community.plants : SEEDED_COMMUNITY;
   const plants: Plant[] = grove ? grove.plants : layoutCommunity(communityPlants);
-  const day = grove ? grove.day : COMMUNITY_DAY;
 
   return (
     <main className={styles.wrap}>
@@ -122,7 +122,11 @@ export default function Home() {
       </div>
 
       <div className={styles.canvasFrame}>
-        <Grove plants={plants} day={day} className={styles.canvas} />
+        <Tank
+          inhabitants={adaptPlants(plants)}
+          tankFill={grove ? fillForStake(grove.stakedLuna) : 0.62}
+          className={styles.canvas}
+        />
       </div>
 
       {grove ? (

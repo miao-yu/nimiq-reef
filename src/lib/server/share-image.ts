@@ -1,8 +1,9 @@
 import 'server-only';
 import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas';
-import { renderGrove } from '@/lib/grove/render';
-import { LIGHT_PALETTE } from '@/lib/grove/palette';
-import type { Plant } from '@/lib/grove';
+import { renderTank } from '@/lib/tank/render';
+import { TANK_PALETTE } from '@/lib/tank/palette';
+import { STILL_TIME } from '@/lib/tank/motion';
+import type { Inhabitant } from '@/lib/tank/types';
 
 /**
  * Draw a grove to a PNG, server-side.
@@ -13,16 +14,19 @@ import type { Plant } from '@/lib/grove';
  * pixel-identical to the grove they were looking at.
  */
 export interface ShareOptions {
-  plants: readonly Plant[];
-  day: number;
+  inhabitants: readonly Inhabitant[];
+  /** 0..1, from stake amount. */
+  tankFill: number;
+  waterLevel?: number;
   caption: string;
   width?: number;
   height?: number;
 }
 
 export function renderShareImage({
-  plants,
-  day,
+  inhabitants,
+  tankFill,
+  waterLevel = 1,
   caption,
   width = 1200,
   height = 630,
@@ -30,17 +34,17 @@ export function renderShareImage({
   const canvas = createCanvas(width, height);
   const ctx = canvas.getContext('2d');
 
-  // The scene is authored for a phone canvas. On a 1200x630 card the default
-  // horizon leaves the plants stranded in a field of sky, so drop the horizon
-  // and push the scale up until the garden actually fills the frame.
-  renderGrove(ctx as unknown as CanvasRenderingContext2D, {
+  // motion:false draws a single composed frame at a fixed moment, so the card
+  // is a deliberate picture rather than an arbitrary pause.
+  renderTank(ctx as unknown as CanvasRenderingContext2D, {
     width,
     height,
-    day,
-    plants,
-    palette: LIGHT_PALETTE,
-    scale: width / 430,
-    groundRatio: 0.74,
+    time: STILL_TIME,
+    inhabitants,
+    palette: TANK_PALETTE,
+    tankFill,
+    waterLevel,
+    motion: false,
   });
 
   drawCaption(ctx, caption, width, height);
