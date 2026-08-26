@@ -9,11 +9,12 @@ import {
   feedingCounts,
   rememberBestStreak,
   chargeEvents,
+  lastKnownEpoch,
 } from './reef-repo';
 import { reefDay } from '@/lib/reef/day';
 import { speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
 import { slotsFor } from '@/lib/reef/vessel';
-import { chargesFrom, FULL_AFTER_MS, MAX_CHARGES } from '@/lib/reef/charges';
+import { chargesFrom, MAX_CHARGES } from '@/lib/reef/charges';
 export type { ReefState };
 import type { ReefState } from '@/lib/reef/state';
 
@@ -23,6 +24,10 @@ export async function getReefState(address: string): Promise<ReefState> {
   let stakedLuna = 0;
   let delegation: string | null = null;
   let chainOffline = false;
+  // Charges arrive when the epoch turns, so the clock must come from the
+  // chain. If it cannot be read we fall back to the last epoch we recorded and
+  // report no countdown rather than inventing one.
+  let clock = { epoch: 0, msToNext: 0, epochMs: 0 };
 
   try {
     const staker = await rpc.getStakerByAddress(address);
@@ -30,11 +35,13 @@ export async function getReefState(address: string): Promise<ReefState> {
       stakedLuna = Number(staker.balance);
       delegation = staker.delegation;
     }
+    clock = await rpc.epochClock();
   } catch (error) {
     // A node outage must not look like "you unstaked". Show what we know from
     // recorded history and say the chain is unreachable.
     if (!(error instanceof RpcUnavailableError)) throw error;
     chainOffline = true;
+    clock = { epoch: await lastKnownEpoch(address), msToNext: 0, epochMs: 0 };
   }
 
   const [plants, streak, fedToday, feeding, counts, spent] = await Promise.all([
@@ -43,9 +50,9 @@ export async function getReefState(address: string): Promise<ReefState> {
     fedTodayQuery(address),
     feedStreak(address),
     feedingCounts(address),
-    chargeEvents(address, FULL_AFTER_MS),
+    chargeEvents(address, clock.epoch - MAX_CHARGES),
   ]);
-  const charges = chargesFrom(spent);
+  const charges = chargesFrom(spent, clock.epoch, clock.msToNext, clock.epochMs);
   if (feeding > reef.bestStreak) await rememberBestStreak(address, feeding);
 
   // Money creates room. If a withdrawal shrinks the tank below what is already
@@ -72,6 +79,8 @@ export async function getReefState(address: string): Promise<ReefState> {
     charges: charges.available,
     maxCharges: MAX_CHARGES,
     nextChargeInMs: charges.nextInMs,
+    epoch: charges.epoch,
+    epochProgress: charges.epochProgress,
 
     fedToday,
     feedStreak: feeding,

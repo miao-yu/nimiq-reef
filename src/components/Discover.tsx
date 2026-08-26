@@ -59,7 +59,22 @@ export function Discover({ reef, onChange }: { reef: ReefState; onChange: (r: Re
         </span>
         {reef.nextChargeInMs !== null ? (
           <span className={styles.next}>{t('nextCharge', { time: hhmm(reef.nextChargeInMs) })}</span>
-        ) : null}
+        ) : (
+          <span className={styles.next}>{t('epochLabel', { n: reef.epoch })}</span>
+        )}
+      </div>
+
+      {/* Real chain progress, not a private timer. Everybody's bar sits at the
+          same place at the same moment, which is the point of using the epoch. */}
+      <div
+        className={styles.epoch}
+        role="progressbar"
+        aria-valuenow={Math.round(reef.epochProgress * 100)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`Epoch ${reef.epoch} progress`}
+      >
+        <span style={{ width: `${Math.round(reef.epochProgress * 100)}%` }} />
       </div>
 
       <div className={styles.pips} aria-hidden="true">

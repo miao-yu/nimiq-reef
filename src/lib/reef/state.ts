@@ -25,7 +25,11 @@ export interface ReefState {
   /** Attendance. */
   charges: number;
   maxCharges: number;
+  /** ms until the epoch turns, which is when the next charge arrives. */
   nextChargeInMs: number | null;
+  epoch: number;
+  /** 0..1 through the current epoch, straight from the chain. */
+  epochProgress: number;
 
   /** Money. The only thing stake size governs. */
   plotsUnlocked: number;

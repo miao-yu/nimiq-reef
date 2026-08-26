@@ -84,6 +84,25 @@ export const rpc = {
     }
   },
   getEpochNumber: () => call<number>('getEpochNumber'),
+
+  /**
+   * Where the chain is in the current epoch, from the chain itself.
+   *
+   * Charges arrive when the epoch turns, so the countdown has to be the real
+   * boundary rather than a timer that happens to be epoch-length. Policy does
+   * the block arithmetic; we only convert blocks to milliseconds.
+   */
+  async epochClock(): Promise<{ epoch: number; msToNext: number; epochMs: number }> {
+    const { Policy } = await import('@nimiq/core');
+    const block = await call<number>('getBlockNumber');
+    const boundary = Policy.electionBlockAfter(block);
+    const blockMs = Number(Policy.BLOCK_SEPARATION_TIME);
+    return {
+      epoch: Policy.epochAt(block),
+      msToNext: Math.max(0, (boundary - block) * blockMs),
+      epochMs: Policy.BLOCKS_PER_EPOCH * blockMs,
+    };
+  },
   isConsensusEstablished: () => call<boolean>('isConsensusEstablished'),
 
   /**

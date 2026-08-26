@@ -40,7 +40,7 @@ export async function POST() {
   // and the owner decides what to swap out. Discovery is never blocked by a
   // full tank.
   const slot = state.freePlots.length > 0 ? state.freePlots[0]! : null;
-  const id = await recordRoll(address, species, tier, randomInt(1, 2 ** 31), slot);
+  const id = await recordRoll(address, species, tier, randomInt(1, 2 ** 31), slot, state.epoch);
 
   return NextResponse.json({
     discovered: { id, species, tier, label: SPECIES[species].label, slot },

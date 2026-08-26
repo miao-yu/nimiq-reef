@@ -262,19 +262,18 @@ export async function listSpecimens(address: string): Promise<Specimen[]> {
  * Only the window in which the bucket could still be short matters; anything
  * older has certainly regenerated.
  */
-export async function chargeEvents(address: string, windowMs: number): Promise<ChargeEvent[]> {
-  const seconds = Math.ceil(windowMs / 1000);
+export async function chargeEvents(address: string, sinceEpoch: number): Promise<ChargeEvent[]> {
   const [spends] = await db().query<RowDataPacket[]>(
-    'SELECT rolled_at AS at FROM rolls WHERE address = ? AND rolled_at > (NOW() - INTERVAL ? SECOND)',
-    [address, seconds],
+    'SELECT epoch FROM rolls WHERE address = ? AND epoch > ?',
+    [address, sinceEpoch],
   );
   const [grants] = await db().query<RowDataPacket[]>(
-    'SELECT granted_at AS at FROM bonus_charges WHERE address = ? AND granted_at > (NOW() - INTERVAL ? SECOND)',
-    [address, seconds],
+    'SELECT epoch FROM bonus_charges WHERE address = ? AND epoch > ?',
+    [address, sinceEpoch],
   );
   return [
-    ...spends.map((r) => ({ at: new Date(r.at as string | Date), delta: -1 })),
-    ...grants.map((r) => ({ at: new Date(r.at as string | Date), delta: 1 })),
+    ...spends.map((r) => ({ epoch: Number(r.epoch), delta: -1 })),
+    ...grants.map((r) => ({ epoch: Number(r.epoch), delta: 1 })),
   ];
 }
 
@@ -338,12 +337,17 @@ export async function recordRoll(
   tier: Specimen['tier'],
   seed: number,
   slot: number | null,
+  epoch: number,
   source: 'charge' | 'payment' = 'charge',
 ): Promise<number> {
   const conn = await db().getConnection();
   try {
     await conn.beginTransaction();
-    await conn.execute('INSERT INTO rolls (address, source) VALUES (?, ?)', [address, source]);
+    await conn.execute('INSERT INTO rolls (address, source, epoch) VALUES (?, ?, ?)', [
+      address,
+      source,
+      epoch,
+    ]);
     const [res] = await conn.execute<ResultSetHeader>(
       'INSERT INTO specimens (address, species, tier, seed, slot) VALUES (?, ?, ?, ?, ?)',
       [address, species, tier, seed, slot],
@@ -543,4 +547,14 @@ export async function gaveToday(deviceHash: string): Promise<boolean> {
     [deviceHash, utcDay()],
   );
   return rows.length > 0;
+}
+
+
+/** The last epoch we saw for a reef, for when the chain cannot be reached. */
+export async function lastKnownEpoch(address: string): Promise<number> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT MAX(epoch) AS epoch FROM epoch_activity WHERE address = ?',
+    [address],
+  );
+  return Number(rows[0]?.epoch ?? 0);
 }

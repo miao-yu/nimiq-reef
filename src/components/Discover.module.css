@@ -59,3 +59,16 @@
 .how[open] summary::after { content: ' ⌃'; }
 .how summary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; border-radius: 4px; }
 .how p { margin: 7px 0 0; }
+
+.epoch {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-2, #e1eaef);
+  overflow: hidden;
+}
+.epoch span {
+  display: block;
+  height: 100%;
+  background: var(--leaf);
+  opacity: 0.55;
+}
