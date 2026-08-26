@@ -1,0 +1,14 @@
+-- Only outgoing activity should earn a bonus charge.
+--
+-- We cannot identify a validator payout by its sender — getTransactionsByAddress
+-- needs a history index the node does not run. We do not have to: a payout is
+-- always an *increase*. Spending, or staking, is a decrease. Counting only
+-- decreases excludes every payout by construction.
+--
+-- It is also the better signal. Receiving money is not you using Nimiq Pay; it
+-- is somebody else using it. Sending is the deliberate act worth rewarding.
+--
+-- Sampled every tick rather than once per epoch, so a send followed by a
+-- receive fifteen minutes later is still caught — where comparing only
+-- epoch-end balances would net them out to nothing.
+ALTER TABLE reefs ADD COLUMN last_balance_luna BIGINT UNSIGNED NULL;

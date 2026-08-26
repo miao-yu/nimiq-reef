@@ -3,7 +3,7 @@ import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
 import {
   allReefAddresses,
   recordDay,
-  recordEpochActivity,
+  recordWalletActivity,
   recordTick,
 } from '@/lib/server/reef-repo';
 import { EPOCH_MS } from '@/lib/reef/charges';
@@ -64,9 +64,9 @@ export async function POST(request: Request) {
           await recordDay(address, stakedLuna, staker?.delegation ?? null);
 
           // A wallet used during an epoch earns one extra charge for it.
-          // Balance change is the proxy — see recordEpochActivity.
+          // Balance change is the proxy — see recordWalletActivity.
           const wallet = await rpc.getBalance(address);
-          if (await recordEpochActivity(address, epoch, wallet)) bonuses++;
+          if (await recordWalletActivity(address, epoch, wallet)) bonuses++;
         } catch (error) {
           // One address failing must not abandon the rest of the run.
           if (error instanceof RpcUnavailableError) failures++;

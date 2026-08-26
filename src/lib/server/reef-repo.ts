@@ -279,33 +279,45 @@ export async function chargeEvents(address: string, windowMs: number): Promise<C
 }
 
 /**
- * Record what the chain says about an address this epoch, and grant a bonus
- * charge if the balance moved since the previous one.
+ * Record the wallet balance and grant a bonus charge if it *fell*.
  *
- * Balance change is a proxy for activity: getTransactionsByAddress needs a
- * history index the validator does not run. It catches payments in and out,
- * and also a staking reward landing — an approximation, and a documented one.
+ * Only decreases count. A validator payout is always an increase, so excluding
+ * increases excludes every payout without needing to know who sent what — which
+ * we cannot know anyway, since getTransactionsByAddress needs a history index
+ * the node does not run.
  *
- * The primary key on bonus_charges is the cap. However many transactions
- * somebody makes in an epoch, they earn exactly one.
+ * It is also the truer signal: receiving money is somebody else using Nimiq
+ * Pay. Sending, or staking, is the deliberate act worth a charge.
+ *
+ * Compared against the previous *tick* rather than the previous epoch, so a
+ * send followed by a receive fifteen minutes later still counts. Both inside a
+ * single fifteen-minute window would net out and be missed — a known limit, and
+ * a narrow one.
+ *
+ * The primary key on bonus_charges is the cap: however many times a balance
+ * falls in an epoch, exactly one charge is earned.
  */
-export async function recordEpochActivity(
+export async function recordWalletActivity(
   address: string,
   epoch: number,
   balanceLuna: number,
 ): Promise<boolean> {
-  const [prev] = await db().query<RowDataPacket[]>(
-    'SELECT balance_luna FROM epoch_activity WHERE address = ? AND epoch < ? ORDER BY epoch DESC LIMIT 1',
-    [address, epoch],
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT last_balance_luna FROM reefs WHERE address = ?',
+    [address],
   );
+  const previous = rows[0]?.last_balance_luna;
+  const before = previous === null || previous === undefined ? null : Number(previous);
+
+  await db().execute('UPDATE reefs SET last_balance_luna = ? WHERE address = ?', [balanceLuna, address]);
   await db().execute(
     `INSERT INTO epoch_activity (address, epoch, balance_luna) VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE balance_luna = VALUES(balance_luna), observed_at = CURRENT_TIMESTAMP`,
     [address, epoch, balanceLuna],
   );
 
-  const before = prev[0] ? Number(prev[0].balance_luna) : null;
-  if (before === null || before === balanceLuna) return false;
+  // First sighting establishes a baseline; it is not evidence of anything.
+  if (before === null || balanceLuna >= before) return false;
 
   const [res] = await db().execute<ResultSetHeader>(
     'INSERT IGNORE INTO bonus_charges (address, epoch) VALUES (?, ?)',

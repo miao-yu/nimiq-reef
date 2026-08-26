@@ -6,10 +6,13 @@
  * an invented timer means "your reef refills each epoch" is a true, publicly
  * verifiable statement about the chain instead of a decorative one.
  *
- * A wallet used during an epoch earns one extra charge for it — capped at one
- * however many transactions were made. With a hard ceiling of three there is
- * nothing for a spammer to gain, which is why the simple rule is safe and the
- * distinct-counterparty machinery an earlier draft called for is unnecessary.
+ * A wallet *spent from* during an epoch earns one extra charge — capped at one
+ * however many transactions were made. Only outgoing counts: a validator
+ * payout is always an increase, so ignoring increases excludes payouts by
+ * construction, and receiving money is somebody else using Nimiq Pay rather
+ * than you. With a hard ceiling of three there is nothing for a spammer to
+ * gain, which is why the simple rule is safe and the distinct-counterparty
+ * machinery an earlier draft called for is unnecessary.
  *
  * **Checking more often must never yield more.** That property is what makes a
  * bot worthless here and keeps the app restful. There is deliberately no
