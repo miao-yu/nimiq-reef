@@ -142,7 +142,14 @@ export default function Home() {
           <StakePanel reef={reef} onDone={load} />
 
           <div className={styles.account}>
-            <span className={styles.addr}>{reef.handle}</span>
+            {/* The handle is how strangers see this reef; the address is how
+                you know which wallet you are signed in with. The privacy
+                argument for handles is about other people's reefs, not your
+                own — hiding your own address just leaves you guessing. */}
+            <span className={styles.identity}>
+              <b>{reef.handle}</b>
+              <code>{reef.address}</code>
+            </span>
             <ShareButton label={t('shareYours')} />
             <button
               className={styles.ghost}

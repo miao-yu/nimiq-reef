@@ -163,3 +163,20 @@
 }
 .previewLink:hover { background: var(--surface); }
 .previewLink:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+
+.identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.identity b {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.identity code {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.68rem;
+  color: var(--muted);
+  word-break: break-all;
+}
