@@ -65,6 +65,36 @@
   --bloom-b: #f3d07e;
 }
 
+
+/* Tank tokens. Deliberately theme-independent apart from --tank-room: an
+   aquarium in a bright room still has deep water in it, so only the room
+   behind the glass follows the theme. */
+:root {
+  --tank-water-top: #1e7089;
+  --tank-water-mid: #124760;
+  --tank-water-deep: #0a2739;
+  --tank-sand: #2c4150;
+  --tank-sand-dark: #1d2d3a;
+  --tank-shaft: #96e1f5;
+  --tank-caustic: #a6e8fa;
+  --tank-glass: #b4e1f0;
+  --tank-bubble: #c8f0ff;
+  --tank-plant-a: #3e8f63;
+  --tank-plant-b: #2f7350;
+  --tank-plant-c: #63b183;
+  --tank-room: #dce7ed;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --tank-room: #050f16;
+  }
+}
+
+:root[data-theme='dark'] {
+  --tank-room: #050f16;
+}
+
 *,
 *::before,
 *::after {
