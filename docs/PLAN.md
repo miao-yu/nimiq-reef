@@ -214,14 +214,9 @@ PNG; a still frame looks composed.
 
 Rewrite `src/lib/reef/species.ts` and `progression.ts`.
 
-```
-grass   Common     unlockDay 0
-guppy   Common     unlockDay 0
-angel   Uncommon   unlockDay 2
-jelly   Rare       unlockDay 4
-shark   Apex       unlockDay 7
-whale   Apex       unlockDay 12
-```
+**The ladder and the rarity curve live in §1 and §1 only.** An earlier copy of
+the ladder sat here and went stale the moment §1 was stretched to years — do
+not paste it back.
 
 **The whale is the top *time* tier, never a money tier.** A whale here means you
 stayed, not that you are rich — that subversion is the point.
