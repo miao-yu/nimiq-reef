@@ -48,7 +48,7 @@ export function issueChallenge(address: string): Challenge {
   // approving, and binding the address and app name stops the signature being
   // replayed against a different app.
   const message = [
-    'Sign in to Nimiq Grove',
+    'Sign in to Reef',
     `Address: ${address}`,
     `Code: ${code}`,
     'Valid for 5 minutes. Signing costs nothing and moves no NIM.',

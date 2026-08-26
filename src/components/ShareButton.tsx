@@ -6,10 +6,10 @@ import { useLocale } from '@/lib/i18n';
 import styles from './ShareButton.module.css';
 
 /**
- * Share the grove.
+ * Share the tank.
  *
  * Shares the page URL rather than the image file: a link unfurls into the card
- * via OpenGraph and stays live, so the picture keeps growing after it is
+ * via OpenGraph and stays live, so the picture keeps changing after it is
  * posted. A downloaded PNG would freeze on the day it was taken.
  */
 export function ShareButton({ label }: { label?: string }) {
@@ -20,7 +20,7 @@ export function ShareButton({ label }: { label?: string }) {
     const url = window.location.origin;
     try {
       if (navigator.share) {
-        await navigator.share({ title: 'Nimiq Grove', text: 'My grove is growing.', url });
+        await navigator.share({ title: 'Reef', text: 'My tank is filling up.', url });
         return;
       }
       await navigator.clipboard.writeText(url);

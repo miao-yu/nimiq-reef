@@ -111,7 +111,7 @@ export default function Home() {
   return (
     <main className={styles.wrap}>
       <div className={styles.head}>
-        <h1 className={styles.title}>Nimiq Grove</h1>
+        <h1 className={styles.title}>Reef</h1>
         <span className={styles.day}>
           {grove
             ? t('day', { n: grove.day })

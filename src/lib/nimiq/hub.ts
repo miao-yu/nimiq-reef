@@ -17,12 +17,12 @@ import type { GroveProvider, SignatureResult } from './types';
  * on-device sign-in settles that. See docs/RESEARCH.md.
  */
 
-const APP_NAME = 'Nimiq Grove';
+const APP_NAME = 'Reef';
 
 /**
  * Pin the endpoint. HubApi picks a default from the page's hostname and falls
  * back to http://localhost:8080 for anything it does not recognise as a Nimiq
- * domain — which grove.nimiq.cafe is not, so sign-in silently pointed at a dev
+ * domain — which reef.nimiq.cafe is not, so sign-in silently pointed at a dev
  * server that is not there.
  */
 const HUB_ENDPOINT = 'https://hub.nimiq.com';
