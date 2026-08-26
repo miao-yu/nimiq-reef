@@ -68,17 +68,7 @@ in `~/Projects` are out of date.
 
 ## Open
 
-- **Can we test inside Nimiq Pay?** Needs the app installed with a wallet. A
-  mock provider is being built regardless — developing against a phone for every
-  change is not workable — but the real thing has to be verified before submission.
-- **Testnet or mainnet for development?** `core-rs-albatross` is already cloned
-  at v1.7.2; a testnet node avoids risking real NIM during the build.
-- **Which message encoding Nimiq Pay signs.** Blocks pinning the verifier down
-  to one candidate — see `docs/RESEARCH.md`.
-- **Domain and TLS certificate.** Mini Apps must be served over HTTPS, so
-  this blocks on-device testing, not just launch.
-- **Does unstaking kill the reef?** Brutal drives retention; forgiving avoids
-  punishing someone who simply needs their money back. Leaning forgiving —
-  growth pauses, nothing dies.
-- **What the plants actually are.** Botanical is the obvious read. A reef or a
-  night sky would work too. Pick whatever renders beautifully with no illustrator.
+Everything that was listed here has since been settled — Nimiq Pay testing,
+mainnet, the signing encoding, the domain, forgiving unstaking, and what the
+inhabitants are. Live design questions now live in `docs/DISCUSSION.md`:
+onboarding for users who are not yet in Nimiq, and what feeding actually does.
