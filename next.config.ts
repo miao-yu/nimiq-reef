@@ -30,7 +30,10 @@ const config: NextConfig = {
          * and cached /api/auth/session as `{"address":null}` so signed-in
          * users were told they were signed out.
          *
-         * This must stay ahead of the page rule below; the first match wins.
+         * Note: Next applies *every* matching rule and the later one wins, so
+         * ordering does not protect this — the page rule below must keep
+         * excluding `api/` explicitly. Verified by observation: without the
+         * exclusion, /api/grove came back `public, s-maxage=60`.
          */
         source: '/api/:path*',
         headers: [
@@ -39,7 +42,7 @@ const config: NextConfig = {
         ],
       },
       {
-        source: '/((?!_next/).*)',
+        source: '/((?!_next/|api/).*)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, must-revalidate' },
         ],
