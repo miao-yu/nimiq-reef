@@ -68,19 +68,70 @@ The slogan, which is also the test for any new feature:
   rejected: telling a committed player that the twentieth click is still worth
   *something* reopens the grind through the side door.
 
-### Rarity curve
+### Rarity curve — asymptotic, never topping out
 
-Rolled at the moment a charge is spent. Compressed so it is reachable inside a
-four-week competition.
+Rolled at the moment a charge is spent.
 
-| Days staked | Common | Uncommon | Rare | Legendary |
+Nimiq proof-of-stake has been live over eighteen months and staking is measured
+in years, so the curve has to last years. **There must be no "maxed out"
+moment** — that is what kills collection games.
+
+Anchors, with **linear interpolation between them** and the last row held
+beyond 730 days:
+
+| Days in Reef | Common | Uncommon | Rare | Legendary |
 | --- | --- | --- | --- | --- |
-| 0–1 | 92% | 8% | — | — |
-| 2–3 | 78% | 19% | 3% | — |
-| 4–7 | 62% | 26% | 10% | 2% |
-| 8+ | 50% | 30% | 16% | 4% |
+| 0 | 92% | 8% | — | — |
+| 7 | 80% | 17% | 3% | — |
+| 30 | 66% | 24% | 9% | 1% |
+| 90 | 55% | 28% | 14% | 3% |
+| 365 | 44% | 30% | 20% | 6% |
+| 730 | 38% | 30% | 23% | 9% |
+
+It approaches a ceiling it never reaches, so a two-year staker is meaningfully
+luckier than a three-month staker **forever**.
 
 **Every roll produces a specimen.** There is never an empty result. See §2.
+
+### Days are counted in Reef, and the app says so
+
+We cannot read anyone's real staking history. Verified 25 Aug on the production
+node: `getTransactionsByAddress` returns *"Method requires a history index"*,
+and the `Staker` struct carries no "staking since" field — only current
+balances and `inactiveFrom`. Enabling a history index means a full resync of
+the entire chain history, which is not something to do to a live validator.
+
+So **day 1 is the day you join Reef**, uniformly, and the copy states it plainly
+rather than implying we know more than we do. A long-standing staker is not
+disadvantaged in any real sense: they are already staking, so they never break
+their streak and they climb without effort.
+
+### Species ladder — years, not weeks
+
+| Species | Unlocks at | Tier |
+| --- | --- | --- |
+| water grass, guppy | day 0 | Common |
+| angelfish | 2 | Uncommon |
+| jellyfish | 5 | Rare |
+| cleaner shrimp | 10 | Uncommon |
+| **shark** | **14** | Apex |
+| lionfish | 30 | Rare |
+| ray | 60 | Rare |
+| octopus | 120 | Apex |
+| turtle | 240 | Apex |
+| **whale** | **365** | Legendary |
+| abyssal species | 730 | Legendary |
+
+Two deliberate choices. The **shark stays reachable inside the competition**, so
+the app can be seen near its best during judging. The **whale moves to a full
+year** — which makes it a far better trophy than a twelve-day unlock. Someone
+swimming a whale has genuinely been here a year, and that is what people
+screenshot.
+
+**Ship only as far down this ladder as you can build well.** Everything below
+the last shipped species still appears in the field guide as a locked
+silhouette with its unlock day, which is how a collection game creates
+anticipation without spending the content.
 
 ### Discovery versus display
 
@@ -294,7 +345,33 @@ Rework `src/app/page.tsx`, rename `Grove.tsx` → `Tank.tsx`, update all three
 languages in `src/lib/i18n/strings.ts`. Keep the signed-out community view: a
 stranger must see a living tank **before** any wallet prompt.
 
-### Step 9 — PWA
+### Step 9 — the simulator, in the app
+
+Drag days and NIM, see what the tank becomes. Cheap, because the renderer is
+already fully parametric — the sliders just drive `renderGrove` directly.
+
+It does three jobs at once, which is why it is a numbered step and not a nice
+to have:
+
+- A judge sees the whole arc in ten seconds, which is what lets the real curve
+  be years long without the app looking empty to somebody evaluating it.
+- A new user sees what they are working toward — aspiration rather than a
+  locked door.
+- It is honest: labelled a preview, never dressed up as your own tank.
+
+**Cap the day slider at the last species actually shipped.** Do not reveal
+content that is not built or is months from release. At the cap, say
+"and more, over the years" rather than stopping silently.
+
+Locked species still appear in the field guide as **silhouettes** with their
+unlock day. That tells somebody a whale exists at 365 days without spending
+the reveal — the Pokédex device, and it is the whole reason the ladder can be
+long without feeling empty.
+
+**Acceptance:** the slider cannot be dragged past the last implemented species;
+the whale is not visible in the simulator unless the whale is built.
+
+### Step 10 — PWA
 
 `manifest.webmanifest` plus icons, so it installs from Chrome/Edge on Windows
 and Safari's *Add to Dock* on macOS. About an hour. No signing, no store.

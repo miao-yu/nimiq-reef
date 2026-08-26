@@ -1,14 +1,12 @@
 import type { SpeciesDef, SpeciesKey } from './types';
 
 /**
- * Timescale is set for the competition, not for a hypothetical forever-game.
- * The cycle runs 24 Aug – 18 Sep; a council member signing in on the 20th with
- * thresholds of 7/21/60 would see day one — one plot, one sprout — and nothing
- * else, which is the worst version of the app that exists. At 1/3/7 someone who
- * stakes during early-access week has the whole grove before judging closes.
+ * SUPERSEDED — this file is rewritten in Step 2 of docs/PLAN.md.
  *
- * `matures` is compressed to match: a plant that takes 45 days to fill out is
- * a plant nobody in this competition ever sees grown.
+ * These thresholds were compressed for the competition window. That was a
+ * mistake: it optimised the game for a two-week judging period when the asset
+ * it sits on is staked for years. The in-app simulator solves the judging
+ * problem instead, and the real ladder now spans days to years.
  *
  * Guardrail: unlockDay is measured in *unbroken days staked*, never in NIM.
  * Growth must not scale with stake size or the grove becomes pay-to-win and a
