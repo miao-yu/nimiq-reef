@@ -99,7 +99,7 @@ export function StakePanel({ reef, onDone }: Props) {
     <div className={styles.panel}>
       <h2 className={styles.title}>
         {alreadyStaking ? t('addStake') : t('startStaking')}
-        <span> {t('whatGrows')}</span>
+        <span> {t('whatFills')}</span>
       </h2>
 
       {alreadyStaking ? (

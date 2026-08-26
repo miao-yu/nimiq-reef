@@ -101,7 +101,7 @@
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 10px;
   margin: 0;
 }
@@ -119,35 +119,18 @@
 }
 .stats dd {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
-.planter {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 15px 16px;
-  background: var(--surface);
-}
-.planterTitle { margin: 0; font-size: 0.95rem; font-weight: 600; }
-.planterTitle span { font-weight: 400; color: var(--muted); }
-.speciesRow { display: flex; flex-wrap: wrap; gap: 8px; }
-.species {
-  font-size: 0.9rem;
-  font-weight: 500;
-  background: var(--ground);
-  color: var(--ink);
-  border: 1.5px solid var(--line-strong, var(--line));
-  border-radius: 9px;
-  padding: 9px 15px;
-  cursor: pointer;
-}
-.species:hover:not(:disabled) { border-color: var(--leaf); }
-.species:disabled { opacity: 0.5; cursor: default; }
+
+
+
+
+
+
+
 
 .ghost {
   font-size: 0.8rem;

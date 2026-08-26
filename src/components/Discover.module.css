@@ -1,0 +1,43 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 17px;
+  background: var(--surface);
+}
+.head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.charges { font-size: 0.92rem; font-weight: 600; }
+.next { font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.pips { display: flex; gap: 6px; }
+.pip, .pipOn {
+  height: 5px;
+  flex: 1;
+  border-radius: 3px;
+  background: var(--surface-2, #e1eaef);
+}
+.pipOn { background: var(--leaf); }
+
+.cta {
+  font-size: 1rem;
+  font-weight: 600;
+  background: var(--leaf);
+  color: var(--ground);
+  border: 1px solid var(--leaf);
+  border-radius: 10px;
+  padding: 13px 18px;
+  cursor: pointer;
+}
+.cta:disabled { opacity: 0.45; cursor: default; }
+.cta:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+
+.found {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.note { margin: 0; font-size: 0.87rem; color: var(--muted); }
+.error { margin: 0; font-size: 0.87rem; color: #b0453a; }

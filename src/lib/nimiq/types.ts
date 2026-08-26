@@ -21,5 +21,13 @@ export interface ReefProvider {
   sendNewStakerTransaction(tx: { delegation: string; value: number }): Promise<string>;
   /** Add to an existing position. */
   sendStakeTransaction(tx: { value: number }): Promise<string>;
+  /**
+   * A pseudonymous, per-origin device identifier, or null outside Nimiq Pay.
+   *
+   * Stable across reinstalls *and across different accounts on the same
+   * phone*, which is what makes it a usable rate limit where a wallet is not:
+   * a wallet costs nothing to create.
+   */
+  deviceId(): Promise<string | null>;
   readonly kind: ProviderKind;
 }

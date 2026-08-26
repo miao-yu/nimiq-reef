@@ -26,6 +26,8 @@ export function createMockProvider(): ReefProvider {
 
   return {
     kind: 'mock',
+    // Only the Mini App host can vouch for a device.
+    deviceId: async () => null,
     async listAccounts() {
       return [await address()];
     },
