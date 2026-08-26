@@ -1,88 +1,83 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { drawFauna, BODY_LENGTH } from '@/lib/tank/fauna';
-import { rng } from '@/lib/tank/rng';
-import { TANK_PALETTE } from '@/lib/tank/palette';
-import type { SpeciesKey } from '@/lib/tank/types';
+import { useEffect, useMemo, useState } from 'react';
+import { identiconFor } from '@/lib/nimiq/identicon';
 
 /**
- * A reef's avatar: a miniature of its own water, with one inhabitant.
+ * The Nimiq identicon for an address — the same face the Nimiq Wallet shows.
  *
- * Not the Nimiq identicon. That package ships 88KB to a phone for a picture,
- * and its hashToIndices returns null for background and accent — a precision
- * bug on large integers. This reuses the renderer that is already here, costs
- * nothing, and looks like this app rather than like a generic hash blob.
- *
- * Deterministic from the address, so a reef always wears the same face.
+ * The artwork lives in public/identicons.svg, fetched once and cached by the
+ * browser, rather than bundled into the JavaScript a phone parses on every
+ * load. Parts come from our own static file, never from user input, so
+ * inlining their markup is safe.
  */
-type Face = Exclude<SpeciesKey, 'grass'>;
-const FACES: Face[] = ['guppy', 'angel', 'jelly', 'shrimp', 'shark', 'lionfish', 'turtle'];
+const HEXAGON =
+  'M251.6 17.34l63.53 110.03c5.72 9.9 5.72 22.1 0 32L251.6 269.4c-5.7 9.9-16.27 16-27.7 16H96.83' +
+  'c-11.43 0-22-6.1-27.7-16L5.6 159.37c-5.7-9.9-5.7-22.1 0-32L69.14 17.34c5.72-9.9 16.28-16 27.7-16' +
+  'H223.9c11.43 0 22 6.1 27.7 16z';
 
-function seedFrom(address: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < address.length; i++) {
-    h ^= address.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
+const SHADOW =
+  'M119.21,80a39.46,39.46,0,0,1-67.13,28.13c10.36,2.33,36,3,49.82-14.28,10.39-12.47,8.31-33.23,' +
+  '4.16-43.26A39.35,39.35,0,0,1,119.21,80Z';
+
+let spritePromise: Promise<Document | null> | undefined;
+
+/** One fetch per page, shared by every avatar on it. */
+function sprite(): Promise<Document | null> {
+  spritePromise ??= fetch('/identicons.svg')
+    .then((r) => (r.ok ? r.text() : null))
+    .then((text) => (text ? new DOMParser().parseFromString(text, 'image/svg+xml') : null))
+    .catch(() => null);
+  return spritePromise;
 }
 
 export function Avatar({ address, size = 40 }: { address: string; size?: number }) {
-  const ref = useRef<HTMLCanvasElement>(null);
+  const icon = useMemo(() => identiconFor(address), [address]);
+  const [parts, setParts] = useState<string | null>(null);
 
   useEffect(() => {
-    const canvas = ref.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
-
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, size, size);
-
-    const seed = seedFrom(address);
-    const r = rng(seed);
-    const species = FACES[Math.floor(r() * FACES.length)]!;
-    const hue = Math.floor(r() * 360);
-
-    // Water, tinted per address so two reefs are told apart at a glance even
-    // when they happen to share an inhabitant.
-    const water = ctx.createLinearGradient(0, 0, 0, size);
-    water.addColorStop(0, `hsl(${(hue + 190) % 360}, 42%, 34%)`);
-    water.addColorStop(1, TANK_PALETTE.waterDeep);
-    ctx.fillStyle = water;
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
-    ctx.clip();
-    ctx.translate(size * 0.5, size * 0.52);
-    // Normalised so a whale and a guppy fill the circle about equally; at this
-    // size the silhouette is the whole signal.
-    const scale = (size * 0.62) / (BODY_LENGTH[species] * 100);
-    ctx.scale(scale * 100, scale * 100);
-    drawFauna(species, {
-      ctx,
-      L: BODY_LENGTH[species],
-      colour: `hsl(${hue}, 62%, 62%)`,
-      time: 11.4,
-      seed: seed % 100,
-      rate: 0,
+    let alive = true;
+    void sprite().then((doc) => {
+      if (!alive || !doc) return;
+      // Order matters: top and side sit behind the face, bottom in front.
+      const html = (['top', 'side', 'face', 'bottom'] as const)
+        .map((part) => doc.getElementById(icon.parts[part])?.innerHTML ?? '')
+        .join('');
+      setParts(html);
     });
-    ctx.restore();
-  }, [address, size]);
+    return () => {
+      alive = false;
+    };
+  }, [icon]);
+
+  // A plain coloured hexagon until the sprite lands — the right colours from
+  // the first paint, so nothing shifts hue when the artwork arrives.
+  const clipId = `hex-${icon.parts.face}-${icon.parts.top}`;
 
   return (
-    <canvas
-      ref={ref}
-      style={{ width: size, height: size, borderRadius: '50%', flex: 'none', display: 'block' }}
+    <svg
+      viewBox="0 0 160 160"
+      width={size}
+      height={size}
+      style={{ flex: 'none', display: 'block' }}
       role="img"
-      aria-label="Your reef's mark"
-    />
+      aria-label={`Identicon for ${address}`}
+    >
+      <defs>
+        <clipPath id={clipId}>
+          <path d={HEXAGON} transform="scale(0.5) translate(0, 16)" />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${clipId})`}>
+        <g color={icon.main} fill={icon.accent}>
+          <rect fill={icon.background} x="0" y="0" width="160" height="160" />
+          <circle cx="80" cy="80" r="40" fill={icon.main} />
+          <g opacity=".1" fill="#010101">
+            <path d={SHADOW} />
+          </g>
+          {parts ? <g dangerouslySetInnerHTML={{ __html: parts }} /> : null}
+        </g>
+      </g>
+    </svg>
   );
 }
