@@ -1,4 +1,5 @@
 import { SPECIES } from './species';
+import { resolveSpecies } from '@/lib/tank/adapt';
 import type { Plant, SpeciesKey } from './types';
 
 /** A fixed "today" for the community view; ages are measured back from it. */
@@ -24,7 +25,10 @@ export function layoutCommunity(plants: readonly CommunityPlant[]): Plant[] {
     slot: i,
     x: (i + 0.5) / n,
     species: p.species,
-    tier: SPECIES[p.species].tier,
+    // Through resolveSpecies, because the community table still holds garden
+    // rows — 'fern', 'sprout' — that are not in SPECIES. Indexing it directly
+    // returned undefined and took the whole page down with it.
+    tier: SPECIES[resolveSpecies(p.species)].tier,
     plantedDay: COMMUNITY_DAY - p.ageDays,
     ageDays: p.ageDays,
     seed: p.seed,

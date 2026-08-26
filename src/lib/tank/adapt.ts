@@ -16,7 +16,7 @@ const LEGACY: Record<string, SpeciesKey> = {
   elder: 'shark',
 };
 
-function resolve(species: string): SpeciesKey {
+export function resolveSpecies(species: string): SpeciesKey {
   if (species in SPECIES) return species as SpeciesKey;
   return LEGACY[species] ?? 'guppy';
 }
@@ -25,7 +25,7 @@ export function adaptPlants(
   plants: readonly { species: string; seed: number; tier?: Tier; ageDays?: number }[],
 ): Inhabitant[] {
   return plants.map((p) => {
-    const species = resolve(p.species);
+    const species = resolveSpecies(p.species);
     return {
       species,
       // The specimen's own tier. Falling back to the species default is only
