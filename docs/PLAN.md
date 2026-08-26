@@ -1,7 +1,7 @@
-# Implementation plan — the Tank
+# Implementation plan — Reef
 
 **This document is the handoff.** It assumes no memory of the conversation that
-produced it. Read it, then `docs/SPEC-tank.md`, then start at Step 1.
+produced it. Read it, then `docs/SPEC-tank.md` (the aquarium spec), then start at Step 1.
 
 Deadline: **Fri 18 Sep 2026, 23:59 UTC**. The date that actually matters is
 **Mon 7 Sep**, when all entries go public for early-access testing — that is
