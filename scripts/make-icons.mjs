@@ -14,18 +14,31 @@ const LIFE = [
   ['angel', 'uncommon', 8], ['jelly', 'rare', 63],
 ];
 
-for (const size of [192, 512]) {
+// 192/512 for the manifest, 180 for iOS home screens, 32 for the browser tab.
+const TARGETS = [
+  [192, 'public/icon-192.png'],
+  [512, 'public/icon-512.png'],
+  [180, 'src/app/apple-icon.png'],
+  [64, 'src/app/icon.png'],
+];
+
+for (const [size, out] of TARGETS) {
   const c = createCanvas(size, size);
   renderTank(c.getContext('2d'), {
     width: size,
     height: size,
     time: 11.4,
-    inhabitants: LIFE.map(([species, tier, seed]) => ({ species, tier, seed })),
+    // At 64px a crowded tank is mush; drop to two shapes for the small ones.
+    inhabitants: (size <= 64 ? LIFE.slice(2, 5) : LIFE).map(([species, tier, seed]) => ({
+      species,
+      tier,
+      seed,
+    })),
     palette: TANK_PALETTE,
     waterLevel: 1,
     motion: false,
     scale: size * 0.42,
   });
-  writeFileSync(`public/icon-${size}.png`, c.toBuffer('image/png'));
-  console.log(`  public/icon-${size}.png`);
+  writeFileSync(out, c.toBuffer('image/png'));
+  console.log(`  ${out} (${size}px)`);
 }

@@ -11,7 +11,9 @@ import styles from './AccountBar.module.css';
 function truncate(address: string): string {
   const groups = address.split(' ');
   return groups.length > 4
-    ? `${groups.slice(0, 2).join(' ')} … ${groups.slice(-2).join(' ')}`
+    // U+22EF, the midline ellipsis. The usual U+2026 sits on the baseline and
+    // reads as dropped between two lines of capitals and digits.
+    ? `${groups.slice(0, 2).join(' ')} ⋯ ${groups.slice(-2).join(' ')}`
     : address;
 }
 
