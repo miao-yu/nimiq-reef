@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useLocale } from '@/lib/i18n';
 import { report } from '@/lib/client-log';
 import { getProvider } from '@/lib/nimiq/provider';
-import { normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
+import { formatAddress, normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
 import { Avatar } from './Avatar';
 import type { ReefState } from '@/lib/reef/state';
 import styles from './FeedPanel.module.css';
@@ -42,6 +42,15 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
   const [gave, setGave] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [typed, setTyped] = useState('');
+
+  // Arriving from somebody's reef page: /?feed=<address>. Prefilled rather
+  // than fed automatically — feeding is somebody else's tank, and a link
+  // should never spend your one a day without being asked.
+  useEffect(() => {
+    const wanted = new URLSearchParams(window.location.search).get('feed');
+    const parsed = wanted ? normalizeAddress(wanted) : null;
+    if (parsed) setTyped(formatAddress(parsed));
+  }, []);
 
   // Only Nimiq Pay can supply this. Its absence no longer disables giving, it
   // just closes the suggestion list — the part that would actually be worth
@@ -162,8 +171,21 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
                 disabled={busy}
                 type="button"
               >
-                <Avatar address={c.address} size={28} />
-                <span>{truncateAddress(c.address)}</span>
+                {/* The reef itself, from the same renderer its owner sees.
+                    Three names told you nothing about what you were feeding. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  className={styles.card}
+                  src={`/api/reef/${encodeURIComponent(c.address.replace(/\s/g, ''))}/card`}
+                  alt=""
+                  width={96}
+                  height={60}
+                  loading="lazy"
+                />
+                <span className={styles.who}>
+                  <Avatar address={c.address} size={22} />
+                  {truncateAddress(c.address)}
+                </span>
               </button>
             ))}
           </div>

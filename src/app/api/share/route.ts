@@ -32,6 +32,7 @@ export async function GET() {
       renderShareImage({
         inhabitants: adaptPlants(reef.plants),
         waterLevel: depthForStake(reef.stakedLuna),
+        feedings: reef.receivedToday,
         caption,
       }),
     );

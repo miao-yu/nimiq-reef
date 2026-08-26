@@ -77,3 +77,14 @@
 }
 .go:disabled { opacity: 0.45; cursor: default; }
 .go:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+
+/* A candidate is a picture of a reef with a name under it, not a name. */
+.card {
+  width: 96px;
+  height: 60px;
+  border-radius: 7px;
+  display: block;
+  flex: none;
+  background: var(--surface-2, #e1eaef);
+}
+.who { display: flex; align-items: center; gap: 7px; min-width: 0; }

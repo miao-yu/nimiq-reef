@@ -17,6 +17,7 @@ export interface ShareOptions {
   inhabitants: readonly Inhabitant[];
   /** 0..1, from stake amount. */
   waterLevel: number;
+  feedings?: number;
   caption: string;
   width?: number;
   height?: number;
@@ -25,6 +26,7 @@ export interface ShareOptions {
 export function renderShareImage({
   inhabitants,
   waterLevel,
+  feedings,
   caption,
   width = 1200,
   height = 630,
@@ -41,10 +43,38 @@ export function renderShareImage({
     inhabitants,
     palette: TANK_PALETTE,
     waterLevel,
+    feedings,
     motion: false,
   });
 
   drawCaption(ctx, caption, width, height);
+  return canvas.toBuffer('image/png');
+}
+
+/**
+ * A small, captionless tank — for a candidate you might feed, or a reef page.
+ *
+ * Deliberately not the share card: no caption band, no wordmark, and small
+ * enough to sit in a list. Same renderer, so it is the same reef.
+ */
+export function renderReefCard(
+  inhabitants: readonly Inhabitant[],
+  waterLevel: number,
+  feedings = 0,
+  width = 480,
+  height = 300,
+): Buffer {
+  const canvas = createCanvas(width, height);
+  renderTank(canvas.getContext('2d') as unknown as CanvasRenderingContext2D, {
+    width,
+    height,
+    time: STILL_TIME,
+    inhabitants,
+    palette: TANK_PALETTE,
+    waterLevel,
+    feedings,
+    motion: false,
+  });
   return canvas.toBuffer('image/png');
 }
 

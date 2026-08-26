@@ -7,11 +7,13 @@ interface TankProps {
   inhabitants: readonly Inhabitant[];
   /** 0..1 of the glass that holds water. From stake amount only. */
   waterLevel: number;
+  /** Feedings received today — draws the flakes somebody else dropped in. */
+  feedings?: number;
   className?: string;
   label?: string;
 }
 
-export function Tank({ inhabitants, waterLevel, className, label }: TankProps) {
+export function Tank({ inhabitants, waterLevel, feedings, className, label }: TankProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const size = useRef({ w: 0, h: 0 });
   const frame = useRef<number | null>(null);
@@ -51,6 +53,7 @@ export function Tank({ inhabitants, waterLevel, className, label }: TankProps) {
         inhabitants,
         palette: paletteFromCss(),
         waterLevel: shown.current,
+        feedings,
         motion,
       });
     },

@@ -12,8 +12,9 @@ export interface GuideEntry {
 /** What the client knows about a reef. Shared shape, no server imports. */
 export interface ReefState {
   address: string;
-  /** Never a wallet in a payload a stranger can read. */
   day: number;
+  /** Opted out of a public reef page at /r/<address>. */
+  hidden: boolean;
   plants: Plant[];
 
   /** Loyalty. Everything about rarity keys off this, never off amount. */

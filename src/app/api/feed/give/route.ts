@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
-import { feedOther } from '@/lib/server/reef-repo';
+import { feedOther, grantFedCharge } from '@/lib/server/reef-repo';
+import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
 import { getReefState } from '@/lib/server/reef-state';
 import { deviceHash, isDeviceId } from '@/lib/server/device';
 import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
@@ -46,6 +47,16 @@ export async function POST(request: Request) {
       { error: 'You have already fed a reef today. One a day.' },
       { status: 409 },
     );
+  }
+
+  // The charge is the recipient's, not the giver's. Best effort: if the node
+  // is unreachable we cannot say which epoch this is, and a feeding that
+  // happened is not worth failing over a bonus that did not.
+  try {
+    const { epoch } = await rpc.epochClock();
+    await grantFedCharge(formatAddress(target), epoch);
+  } catch (cause) {
+    if (!(cause instanceof RpcUnavailableError)) throw cause;
   }
 
   return NextResponse.json({ fed: formatAddress(target), reef: await getReefState(address) });

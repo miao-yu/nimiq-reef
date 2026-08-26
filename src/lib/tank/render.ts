@@ -14,10 +14,17 @@ import {
   drawWater,
   drawAir,
   makeBubbles,
+  makeFlakes,
+  drawFlakes,
 } from './scene';
 import type { Inhabitant, RenderOptions } from './types';
 
 const BUBBLES = makeBubbles();
+
+// Precomputed per feeding, capped: past a few handfuls more flakes stop
+// reading as generosity and start reading as a dirty tank.
+const MAX_FEEDINGS_SHOWN = 4;
+const FLAKES = Array.from({ length: MAX_FEEDINGS_SHOWN }, (_, i) => makeFlakes(i));
 
 /**
  * Draw the whole tank.
@@ -83,6 +90,8 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   });
 
   ctx.globalAlpha = 1;
+  const fed = Math.min(MAX_FEEDINGS_SHOWN, Math.max(0, Math.floor(options.feedings ?? 0)));
+  for (let i = 0; i < fed; i++) drawFlakes(ctx, tank, p, FLAKES[i]!, time + i * 3.1);
   drawBubbles(ctx, tank, p, BUBBLES, time);
   drawSurface(ctx, tank, p, time);
 

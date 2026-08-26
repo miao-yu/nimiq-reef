@@ -152,6 +152,69 @@ export function drawBubbles(
   });
 }
 
+export interface Flake {
+  x: number;
+  y0: number;
+  r: number;
+  speed: number;
+  phase: number;
+  spin: number;
+}
+
+/**
+ * One handful of food. Seeded per feeding index so two feedings scatter
+ * differently and neither one moves when the page re-renders.
+ */
+export function makeFlakes(index: number, count = 18): Flake[] {
+  const r = rng(4400 + index * 977);
+  return Array.from({ length: count }, () => ({
+    // Clustered rather than spread: food gets dropped in one place and
+    // disperses, and a tank evenly dusted from wall to wall reads as dirt.
+    x: 0.18 + (0.1 + r() * 0.8) * 0.64 + index * 0.06,
+    y0: r(),
+    r: 1.6 + r() * 2.2,
+    speed: 0.014 + r() * 0.022,
+    phase: r() * Math.PI * 2,
+    spin: 0.6 + r() * 1.8,
+  }));
+}
+
+/**
+ * Flakes sinking from the surface, swaying as they go.
+ *
+ * They fall rather than rise, which is the whole point — bubbles come from the
+ * tank, food comes from outside it. Slower than the bubbles too, so the two
+ * never read as the same particle drifting the wrong way.
+ */
+export function drawFlakes(
+  ctx: Ctx,
+  t: TankRect,
+  p: TankPalette,
+  flakes: readonly Flake[],
+  time: number,
+): void {
+  const column = t.groundY - t.surfaceY;
+  // Not from the palette. Every colour in there belongs to the tank itself,
+  // and food is the one thing that came from outside it — against blue water
+  // and grey bubbles, warmth is what says so. At this size shape cannot.
+  void p;
+  ctx.fillStyle = '#e8a94b';
+  flakes.forEach((f) => {
+    const fall = (f.y0 + time * f.speed) % 1;
+    const y = t.surfaceY + fall * column;
+    const x = t.x + f.x * t.w + Math.sin(time * f.spin + f.phase) * 7;
+    // Fade in below the surface and settle out above the sand, so nothing
+    // pops into existence at a hard edge.
+    ctx.globalAlpha =
+      0.85 * Math.min(1, fall / 0.06) * (fall > 0.86 ? Math.max(0, 1 - fall) / 0.14 : 1);
+    ctx.beginPath();
+    // Flat and tumbling: a flake, not a bubble.
+    ctx.ellipse(x, y, f.r, f.r * 0.38, time * f.spin + f.phase, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+}
+
 export function drawGlass(ctx: Ctx, t: TankRect, p: TankPalette): void {
   const sheen = ctx.createLinearGradient(t.x, t.y, t.x + t.w * 0.55, t.y + t.h);
   sheen.addColorStop(0, 'rgba(255,255,255,.085)');

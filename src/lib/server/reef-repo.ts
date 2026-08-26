@@ -1,13 +1,14 @@
 import 'server-only';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
-import { addDays, utcDay } from '@/lib/reef/day';
+import { addDays, reefDay, utcDay } from '@/lib/reef/day';
 import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey } from '@/lib/reef';
 
 interface ReefRow extends RowDataPacket {
   address: string;
   first_day: Date | string;
+  hidden: number;
   best_streak: number;
   charges_updated_at: Date | null;
 }
@@ -34,6 +35,8 @@ function asDay(value: Date | string): string {
 export interface ReefRecord {
   address: string;
   firstDay: string;
+  /** Opted out of a public reef page. */
+  hidden: boolean;
   bestStreak: number;
   chargesUpdatedAt: Date | null;
 }
@@ -47,7 +50,7 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     [address, today],
   );
   const [rows] = await db().query<ReefRow[]>(
-    'SELECT address, first_day, best_streak, charges_updated_at FROM reefs WHERE address = ?',
+    'SELECT address, first_day, hidden, best_streak, charges_updated_at FROM reefs WHERE address = ?',
     [address],
   );
   const row = rows[0];
@@ -56,6 +59,7 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
   return {
     address: row.address,
     firstDay: asDay(row.first_day),
+    hidden: Number(row.hidden) === 1,
     bestStreak: Number(row.best_streak ?? 0),
     chargesUpdatedAt: row.charges_updated_at ? new Date(row.charges_updated_at) : null,
   };
@@ -295,8 +299,27 @@ export async function recordWalletActivity(
   if (before === null || balanceLuna >= before) return false;
 
   const [res] = await db().execute<ResultSetHeader>(
-    'INSERT IGNORE INTO bonus_charges (address, epoch) VALUES (?, ?)',
-    [address, epoch],
+    'INSERT IGNORE INTO bonus_charges (address, epoch, reason, day) VALUES (?, ?, ?, ?)',
+    [address, epoch, 'outgoing', utcDay()],
+  );
+  return res.affectedRows === 1;
+}
+
+/**
+ * Being fed grants a charge, at most one a day.
+ *
+ * The only place somebody else's attendance becomes yours. It stays a nudge
+ * rather than a supply: the epoch is still where charges come from, and the
+ * unique key on (address, day, reason) is what holds that — a check in
+ * application code would lose a race to two people feeding you at once.
+ *
+ * INSERT IGNORE, so a second feeding is simply not a grant. It is never an
+ * error; the feeding itself still counts and still shows in the tank.
+ */
+export async function grantFedCharge(address: string, epoch: number): Promise<boolean> {
+  const [res] = await db().execute<ResultSetHeader>(
+    'INSERT IGNORE INTO bonus_charges (address, epoch, reason, day) VALUES (?, ?, ?, ?)',
+    [address, epoch, 'fed', utcDay()],
   );
   return res.affectedRows === 1;
 }
@@ -411,6 +434,60 @@ export async function rememberBestStreak(address: string, streak: number): Promi
     'UPDATE reefs SET best_streak = GREATEST(best_streak, ?) WHERE address = ?',
     [streak, address],
   );
+}
+
+export interface PublicReef {
+  address: string;
+  day: number;
+  plants: Plant[];
+  stakedLuna: number;
+  daysStaked: number;
+  receivedToday: number;
+  receivedLifetime: number;
+}
+
+/**
+ * What anybody may see about a reef.
+ *
+ * Reads only what is already stored — no RPC. A card should not cost a chain
+ * lookup, and the last observed stake is accurate to within one tick, which is
+ * far better than the page needs.
+ *
+ * Returns null for a reef that does not exist *and* for one whose owner opted
+ * out, so a hidden reef is indistinguishable from an absent one.
+ */
+export async function publicReef(address: string): Promise<PublicReef | null> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT address, first_day, hidden FROM reefs WHERE address = ?',
+    [address],
+  );
+  const row = rows[0];
+  if (!row || Number(row.hidden) === 1) return null;
+
+  const [stakeRows] = await db().query<RowDataPacket[]>(
+    'SELECT staked_luna FROM reef_days WHERE address = ? ORDER BY day DESC LIMIT 1',
+    [address],
+  );
+  const [plants, streak, counts] = await Promise.all([
+    listPlants(address),
+    daysStaked(address),
+    feedingCounts(address),
+  ]);
+
+  return {
+    address: row.address as string,
+    day: reefDay(asDay(row.first_day)),
+    plants,
+    stakedLuna: Number(stakeRows[0]?.staked_luna ?? 0),
+    daysStaked: streak,
+    receivedToday: counts.receivedToday,
+    receivedLifetime: counts.receivedLifetime,
+  };
+}
+
+/** Whether this reef is hidden from public pages. */
+export async function setHidden(address: string, hidden: boolean): Promise<void> {
+  await db().execute('UPDATE reefs SET hidden = ? WHERE address = ?', [hidden ? 1 : 0, address]);
 }
 
 /* ---------------- feeding somebody else ---------------- */

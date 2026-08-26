@@ -56,6 +56,12 @@ export interface RenderOptions {
   waterLevel?: number;
   scale?: number;
   /**
+   * Feedings received today. Draws sinking flakes — the one thing in the tank
+   * that another person put there, and the only reason to open the app and
+   * find it different from how you left it.
+   */
+  feedings?: number;
+  /**
    * false renders a single composed frame with no implied movement. Used for
    * prefers-reduced-motion and for the share card, so it has to look
    * deliberate rather than paused.
