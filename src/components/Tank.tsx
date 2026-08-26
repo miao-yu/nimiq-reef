@@ -16,6 +16,15 @@ export function Tank({ inhabitants, waterLevel, className, label }: TankProps) {
   const size = useRef({ w: 0, h: 0 });
   const frame = useRef<number | null>(null);
   const started = useRef<number>(0);
+  /**
+   * The level actually drawn, easing toward the real one.
+   *
+   * Depth is log-scaled, so doubling a stake from 1,000 to 2,000 NIM moves the
+   * waterline about eleven pixels — invisible if it simply appears at the new
+   * height, and unmissable if you watch it rise. The easing is the whole point:
+   * it turns a change too small to see into a moment you notice.
+   */
+  const shown = useRef<number>(waterLevel);
 
   const paint = useCallback(
     (time: number, motion: boolean) => {
@@ -24,13 +33,24 @@ export function Tank({ inhabitants, waterLevel, className, label }: TankProps) {
       if (!canvas || !ctx) return;
       const { w, h } = size.current;
       if (w === 0 || h === 0) return;
+
+      if (motion) {
+        // Exponential ease. Settles in a couple of seconds and never
+        // overshoots, so a falling level reads as draining rather than sloshing.
+        const gap = waterLevel - shown.current;
+        shown.current += gap * 0.035;
+        if (Math.abs(gap) < 0.0004) shown.current = waterLevel;
+      } else {
+        shown.current = waterLevel;
+      }
+
       renderTank(ctx, {
         width: w,
         height: h,
         time,
         inhabitants,
         palette: paletteFromCss(),
-        waterLevel,
+        waterLevel: shown.current,
         motion,
       });
     },
