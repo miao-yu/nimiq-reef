@@ -17,7 +17,8 @@ const check = (name, ok, detail = '') => {
 };
 
 // --- sign in with the dev wallet ---
-const { body: w } = await call('/api/dev/wallet');
+// A fresh wallet each run, so a rerun is not poisoned by the previous one.
+const { body: w } = await call('/api/dev/wallet?fresh=1');
 const { body: ch } = await post('/api/auth/challenge', { address: w.address });
 const { body: sig } = await post('/api/dev/wallet', { message: ch.message });
 const verify = await post('/api/auth/verify', { code: ch.code, address: w.address, publicKey: sig.publicKey, signature: sig.signature });

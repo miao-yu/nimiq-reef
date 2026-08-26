@@ -183,7 +183,10 @@ product decision, not an implementation detail.
 
 ## 3. Work, in order
 
-Each step is one commit. Do not batch them.
+**All ten steps are done, deployed and pushed as of 26 Aug 2026.** The sections
+below are kept as the record of what each one was for and why it was built the
+way it was; the acceptance criteria are now regression tests in
+`docs/TESTING.md`.
 
 ### Step 1 — the renderer *(largest, do it first, everything is judged through it)*
 

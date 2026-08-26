@@ -28,9 +28,13 @@ function guard(): NextResponse | null {
   return null;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   const blocked = guard();
   if (blocked) return blocked;
+  // `?fresh=1` rotates the key. Without it the smoke test inherits the charges
+  // and specimens of whatever ran before it in the same process, and a rerun
+  // fails for reasons that have nothing to do with the code under test.
+  if (new URL(request.url).searchParams.get('fresh') === '1') keys = undefined;
   const { pub } = wallet();
   return NextResponse.json({ address: pub.toAddress().toUserFriendlyAddress() });
 }
