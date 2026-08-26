@@ -2,6 +2,7 @@ import { clamp, lerp, tankRect } from './geometry';
 import { drawFauna, BODY_LENGTH, TAIL_RATE, colourFor } from './fauna';
 import { drawGrass, grassPositions } from './flora';
 import { placeAt, STILL_TIME } from './motion';
+import { faunaScale, grassScale } from './growth';
 import {
   clipToTank,
   drawBubbles,
@@ -66,7 +67,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
 
   grassPositions(tank, flora.length).forEach((x, i) => {
     const plant = flora[i]!;
-    const height = (tank.groundY - tank.surfaceY) * 0.3;
+    const height = (tank.groundY - tank.surfaceY) * 0.3 * grassScale(plant.ageDays);
     drawGrass(ctx, x, tank.groundY + 4, height, p, time, plant.seed, moving ? 1 : 0.35);
   });
 
@@ -85,7 +86,9 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
     ctx.translate(at.x, at.y);
     // Haze with distance. Cheap depth, and it stops a crowded tank reading flat.
     ctx.globalAlpha = lerp(0.42, 1, at.depth);
-    const scale = lerp(0.52, 1, at.depth);
+    // Depth for perspective, age for growth. Both are plain multipliers on
+    // the same transform, so a young fish far away is small twice over.
+    const scale = lerp(0.52, 1, at.depth) * faunaScale(inhabitant.ageDays);
     ctx.scale(at.dir * scale, scale);
     drawFauna(species, {
       ctx,

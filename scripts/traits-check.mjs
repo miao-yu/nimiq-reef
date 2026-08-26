@@ -9,6 +9,7 @@
  * Run with tsx so it reads the real source rather than a build artefact.
  */
 import { traitsFor, SHINY_ODDS, CREST_COUNT } from '../src/lib/tank/traits.ts';
+import { faunaScale, grassScale, maturity, MATURE_DAYS } from '../src/lib/tank/growth.ts';
 
 const NAMES = ['bare', 'tuft', 'spikes', 'sail', 'plume', 'horn', 'antennae', 'crown'];
 const CEILING = { common: 2, uncommon: 4, rare: 7, legendary: 8 };
@@ -62,6 +63,27 @@ check('traits are deterministic', JSON.stringify(a) === JSON.stringify(b));
 const eyes = new Set();
 for (let s = 1000; s < 1032; s++) eyes.add(traitsFor(s, 'legendary').eyes);
 check('neighbouring seeds spread across the eye set', eyes.size >= 6, `${eyes.size} of 8 in 32 seeds`);
+
+// --- growth ---
+
+check('nothing is full size on arrival', maturity(0) === 0);
+check(`everything is full size by day ${MATURE_DAYS}`, maturity(MATURE_DAYS) === 1);
+
+let monotonic = true;
+let bounded = true;
+for (let d = -5; d <= 400; d++) {
+  if (maturity(d) < maturity(d - 1)) monotonic = false;
+  const f = faunaScale(d);
+  const g = grassScale(d);
+  if (f < 0.58 || f > 1 || g < 0.22 || g > 1) bounded = false;
+}
+// A clock skew or a row written in the future must not invert a fish.
+check('growth never runs backwards, including for negative ages', monotonic);
+check('scales stay inside their bounds', bounded, `fauna 0.58..1, grass 0.22..1`);
+
+// Most of the change has to land in the first week or it is invisible day to
+// day, which is the same as not growing at all.
+check('over half the growth happens in the first week', maturity(7) > 0.5, maturity(7).toFixed(2));
 
 console.log(fail === 0 ? '\nPASS — traits hold' : `\nFAIL (${fail})`);
 process.exit(fail ? 1 : 0);
