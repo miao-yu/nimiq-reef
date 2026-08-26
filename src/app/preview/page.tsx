@@ -22,8 +22,21 @@ import styles from './page.module.css';
  * Labelled a preview throughout — never dressed up as somebody's own reef.
  */
 
-/** Caps at the last species actually built. Nothing unshipped is revealed. */
-const MAX_DAY = Math.max(...SPECIES_ORDER.map((k) => SPECIES[k].unlockDay));
+/**
+ * How far the preview will go.
+ *
+ * Two reasons, and the tighter one wins. Never reveal a species that is not
+ * built; and beyond that, do not spend the long-haul reveals here — the
+ * octopus, the turtle and the whale are the reasons to still be staking in six
+ * months, and a slider that shows them for free is a slider that spends them.
+ *
+ * The field guide still lists them as silhouettes with their unlock day, so
+ * people know a whale exists at 365. Knowing it exists without having seen it
+ * is the stronger version.
+ */
+const PREVIEW_CAP_DAYS = 90;
+const LAST_BUILT = Math.max(...SPECIES_ORDER.map((k) => SPECIES[k].unlockDay));
+const MAX_DAY = Math.min(PREVIEW_CAP_DAYS, LAST_BUILT);
 
 /** A plausible tank for a given day, not a real one. Deterministic per day. */
 function populate(days: number, seed: number): Inhabitant[] {
@@ -42,6 +55,17 @@ function populate(days: number, seed: number): Inhabitant[] {
   });
   void n;
   return out;
+}
+
+/**
+ * Names the next species only while it is inside the cap. Past that it stays
+ * unnamed — otherwise the line under the slider announces the octopus long
+ * before the slider itself would ever show one.
+ */
+function nextLine(days: number): string {
+  const next = SPECIES_ORDER.find((k) => SPECIES[k].unlockDay > days);
+  if (!next || SPECIES[next].unlockDay > MAX_DAY) return 'And more, over the years.';
+  return `${SPECIES[next].label} arrives on day ${SPECIES[next].unlockDay}.`;
 }
 
 export default function Preview() {
@@ -112,11 +136,7 @@ export default function Preview() {
         ))}
       </div>
 
-      <p className={styles.note}>
-        {days >= MAX_DAY
-          ? 'And more, over the years.'
-          : `${SPECIES[SPECIES_ORDER.find((k) => SPECIES[k].unlockDay > days)!].label} arrives on day ${SPECIES_ORDER.map((k) => SPECIES[k].unlockDay).find((d) => d > days)}.`}
-      </p>
+      <p className={styles.note}>{nextLine(days)}</p>
 
       <button className={styles.reseed} onClick={() => setSeed(Math.floor(Math.random() * 1e9))} type="button">
         New seed
