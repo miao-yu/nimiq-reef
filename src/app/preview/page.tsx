@@ -49,7 +49,14 @@ function populate(days: number, seed: number): Inhabitant[] {
     const count =
       def.tier === 'common' ? 3 : def.tier === 'uncommon' ? 2 : def.tier === 'rare' ? 2 : 1;
     for (let k = 0; k < count; k++) {
-      out.push({ species, tier: def.tier, seed: seed + i * 7919 + k * 104729 });
+      // Assume it was found near its unlock day, so dragging the year forward
+      // also ages what is already in the tank rather than only adding to it.
+      out.push({
+        species,
+        tier: def.tier,
+        ageDays: Math.max(0, days - def.unlockDay),
+        seed: seed + i * 7919 + k * 104729,
+      });
       n++;
     }
   });

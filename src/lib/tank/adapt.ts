@@ -22,10 +22,18 @@ function resolve(species: string): SpeciesKey {
 }
 
 export function adaptPlants(
-  plants: readonly { species: string; seed: number }[],
+  plants: readonly { species: string; seed: number; tier?: Tier; ageDays?: number }[],
 ): Inhabitant[] {
   return plants.map((p) => {
     const species = resolve(p.species);
-    return { species, tier: SPECIES[species].tier as Tier, seed: p.seed };
+    return {
+      species,
+      // The specimen's own tier. Falling back to the species default is only
+      // for legacy rows that predate the column — for anything current it
+      // would hide earned crowns and hand out unearned ones.
+      tier: p.tier ?? (SPECIES[species].tier as Tier),
+      ageDays: p.ageDays ?? 0,
+      seed: p.seed,
+    };
   });
 }

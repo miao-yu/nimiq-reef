@@ -1,3 +1,4 @@
+import { SPECIES } from './species';
 import type { Plant, SpeciesKey } from './types';
 
 /** A fixed "today" for the community view; ages are measured back from it. */
@@ -23,7 +24,9 @@ export function layoutCommunity(plants: readonly CommunityPlant[]): Plant[] {
     slot: i,
     x: (i + 0.5) / n,
     species: p.species,
+    tier: SPECIES[p.species].tier,
     plantedDay: COMMUNITY_DAY - p.ageDays,
+    ageDays: p.ageDays,
     seed: p.seed,
   }));
 }

@@ -19,8 +19,18 @@ export interface Plant {
   /** Horizontal position across the tank, 0..1. Assigned on read. */
   x: number;
   species: SpeciesKey;
+  /**
+   * The tier it was actually rolled at — not the species' nominal tier.
+   *
+   * These differ: rollSpecies can hand you a legendary guppy or a common
+   * shark. Substituting the species default (which is what happened before
+   * this field existed) both hid earned crowns and handed out unearned ones.
+   */
+  tier: Tier;
   /** Day index, relative to the reef's first day, when it arrived. */
   plantedDay: number;
+  /** Whole days since discovery. Drives growth; 0 on the day it arrived. */
+  ageDays: number;
   /** Stable per-specimen seed: colour, size, phase. Never Math.random(). */
   seed: number;
 }

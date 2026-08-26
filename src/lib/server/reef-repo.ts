@@ -27,6 +27,11 @@ interface DayRow extends RowDataPacket {
   staked_luna: number | string;
 }
 
+/** Midnight UTC of the day a specimen was discovered. */
+function discoveredDay(at: Date | string): number {
+  return Date.parse(`${asDay(at)}T00:00:00Z`);
+}
+
 /** MySQL DATE comes back as a Date or a string depending on driver settings. */
 function asDay(value: Date | string): string {
   return typeof value === 'string' ? value.slice(0, 10) : value.toISOString().slice(0, 10);
@@ -71,13 +76,18 @@ export async function listPlants(address: string): Promise<Plant[]> {
      FROM specimens WHERE address = ? AND slot IS NOT NULL ORDER BY slot`,
     [address],
   );
+  const today = Date.parse(`${utcDay()}T00:00:00Z`);
   return rows.map((r, i) => ({
     slot: r.slot!,
     // Spread evenly across the tank rather than storing a position, so a reef
     // stays composed however many specimens are on display.
     x: (i + 0.5) / Math.max(1, rows.length),
     species: r.species,
+    // The rolled tier, not the species default. Dropping it here is what let
+    // a common shark wear a legendary's crown.
+    tier: r.tier,
     plantedDay: 1,
+    ageDays: Math.max(0, Math.round((today - discoveredDay(r.discovered_at)) / 86_400_000)),
     seed: r.seed,
   }));
 }

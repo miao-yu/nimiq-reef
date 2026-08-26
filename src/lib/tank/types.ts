@@ -19,6 +19,8 @@ export interface Inhabitant {
   /** Stable per-specimen seed: colour, size, lean, phase. Never Math.random(). */
   seed: number;
   tier: Tier;
+  /** Whole days since discovery. 0 on arrival. */
+  ageDays: number;
 }
 
 export interface TankPalette {
