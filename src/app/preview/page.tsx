@@ -1,12 +1,14 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Tank } from '@/components/Tank';
 import { fillForStake } from '@/lib/tank/geometry';
 import { SPECIES, SPECIES_ORDER, speciesUnlocked } from '@/lib/reef/species';
 import { tierWeights, slotsFor } from '@/lib/reef/progression';
 import { rng } from '@/lib/tank/rng';
 import type { Inhabitant } from '@/lib/tank/types';
+import { useLocale } from '@/lib/i18n';
 import styles from './page.module.css';
 
 /**
@@ -43,6 +45,7 @@ function populate(days: number, seed: number): Inhabitant[] {
 }
 
 export default function Preview() {
+  const { t } = useLocale();
   const [days, setDays] = useState(1);
   const [nimSlider, setNimSlider] = useState(0);
   const [seed, setSeed] = useState(20260826);
@@ -57,6 +60,9 @@ export default function Preview() {
         <h1 className={styles.title}>Preview</h1>
         <span className={styles.sub}>Not your reef — a simulation</span>
       </div>
+      <Link className={styles.back} href="/">
+        ← {t('backToReef')}
+      </Link>
 
       <div className={styles.canvasFrame}>
         <Tank

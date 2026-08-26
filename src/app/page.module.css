@@ -150,3 +150,16 @@
   border-radius: 9px;
   padding: 10px 13px;
 }
+
+.previewLink {
+  align-self: flex-start;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--leaf);
+  text-decoration: none;
+  border: 1px solid var(--leaf);
+  border-radius: 9px;
+  padding: 10px 15px;
+}
+.previewLink:hover { background: var(--surface); }
+.previewLink:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }

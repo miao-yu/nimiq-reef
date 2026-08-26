@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Tank } from '@/components/Tank';
 import { Discover } from '@/components/Discover';
 import { FeedPanel } from '@/components/FeedPanel';
@@ -134,6 +135,10 @@ export default function Home() {
               : t('everythingUnlocked')}
           </p>
 
+          <Link className={styles.previewLink} href="/preview">
+            {t('seePreview')} →
+          </Link>
+
           <StakePanel reef={reef} onDone={load} />
 
           <div className={styles.account}>
@@ -151,6 +156,10 @@ export default function Home() {
       ) : (
         <>
           <p className={styles.hint}>{t('claimPrompt')}</p>
+          <Link className={styles.previewLink} href="/preview">
+            {t('seePreview')} →
+          </Link>
+          <p className={styles.hint}>{t('previewNote')}</p>
           <div className={styles.account}>
             <button
               className={styles.button}

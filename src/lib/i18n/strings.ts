@@ -80,6 +80,9 @@ export const STRINGS = {
       'Staking from the browser is not built yet. Stake in the Nimiq Wallet or Nimiq Pay and this reef picks it up within fifteen minutes — Reef reads the chain, so it does not need to be the app that made the transaction.',
 
     // misc
+    seePreview: 'See how it fills',
+    previewNote: 'Drag a year of staking into ten seconds. A simulation, not your reef.',
+    backToReef: 'Back to the reef',
     shareYours: 'Share your reef',
     shareThis: 'Share this reef',
     linkCopied: 'Link copied',
@@ -148,6 +151,9 @@ export const STRINGS = {
     stakeElsewhere:
       'Staking im Browser ist noch nicht gebaut. Stake in der Nimiq Wallet oder in Nimiq Pay — dieses Riff übernimmt es innerhalb von fünfzehn Minuten, denn Reef liest die Chain.',
 
+    seePreview: 'Sieh, wie es sich füllt',
+    previewNote: 'Ein Jahr Staking in zehn Sekunden. Eine Simulation, nicht dein Riff.',
+    backToReef: 'Zurück zum Riff',
     shareYours: 'Riff teilen',
     shareThis: 'Dieses Riff teilen',
     linkCopied: 'Link kopiert',
@@ -217,6 +223,9 @@ export const STRINGS = {
     stakeElsewhere:
       'Hacer staking desde el navegador aún no está implementado. Hazlo en Nimiq Wallet o Nimiq Pay y este arrecife lo recogerá en quince minutos: Reef lee la cadena.',
 
+    seePreview: 'Mira cómo se llena',
+    previewNote: 'Un año de staking en diez segundos. Una simulación, no tu arrecife.',
+    backToReef: 'Volver al arrecife',
     shareYours: 'Comparte tu arrecife',
     shareThis: 'Compartir este arrecife',
     linkCopied: 'Enlace copiado',

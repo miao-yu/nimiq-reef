@@ -41,3 +41,12 @@
   cursor: pointer;
 }
 .reseed:hover { color: var(--ink); border-color: var(--leaf); }
+
+.back {
+  align-self: flex-start;
+  font-size: 0.85rem;
+  color: var(--muted);
+  text-decoration: none;
+}
+.back:hover { color: var(--ink); }
+.back:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
