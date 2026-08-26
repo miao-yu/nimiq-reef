@@ -12,7 +12,7 @@ import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
-import { depthForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/reef/vessel';
 import { SPECIES } from '@/lib/reef/species';
 import { SEEDED_COMMUNITY, layoutCommunity, type CommunityPlant } from '@/lib/reef/community';
 import { formatNim } from '@/lib/nimiq/policy';

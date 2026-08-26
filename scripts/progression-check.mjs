@@ -5,7 +5,8 @@
  * The properties that matter: every roll yields something, odds rise with days
  * and never top out, and nothing anywhere reads the stake amount.
  */
-import { rollSpecies, tierWeights, slotsFor } from '../.progression/reef/progression.js';
+import { rollSpecies, tierWeights } from '../.progression/reef/progression.js';
+import { slotsFor, depthForStake, vessel } from '../.progression/reef/vessel.js';
 import { SPECIES } from '../.progression/reef/species.js';
 
 let fail = 0;
@@ -35,7 +36,22 @@ check('common falls but never vanishes', tierWeights(100000).common > 0);
 check('slots rise with stake', slotsFor(100e5) < slotsFor(10000e5) && slotsFor(10000e5) < slotsFor(1e6 * 1e5));
 check('zero stake still gets room', slotsFor(0) >= 3, `${slotsFor(0)} slots`);
 check('slots at the 100 NIM minimum', slotsFor(100 * 1e5) === 4, `${slotsFor(100 * 1e5)}`);
-check('slots at a million NIM', slotsFor(1e6 * 1e5) === 20, `${slotsFor(1e6 * 1e5)}`);
+check('slots top out at the 10M ceiling', slotsFor(1e7 * 1e5) === 20, `${slotsFor(1e7 * 1e5)}`);
+
+// The curve exists to favour where stakers actually are. If a future edit
+// flattens it back to a uniform log, these are what notice.
+const px = (a, b) => (depthForStake(b * 1e5) - depthForStake(a * 1e5)) * 323;
+const mid = px(10_000, 20_000);
+const whale = px(1_000_000, 2_000_000);
+check('a doubling mid-range is clearly visible', mid > 11, `${mid.toFixed(0)}px`);
+check('the whale end is compressed, as intended', whale < mid * 0.6, `${whale.toFixed(0)}px`);
+check(
+  '5k-500k gets about half the range',
+  vessel(500_000 * 1e5) - vessel(5_000 * 1e5) > 0.4,
+  `${((vessel(500_000 * 1e5) - vessel(5_000 * 1e5)) * 100).toFixed(0)}%`,
+);
+check('depth rises monotonically', [100, 1e3, 5e3, 5e4, 5e5, 1e7].every((n, i, a) => i === 0 || depthForStake(n * 1e5) > depthForStake(a[i - 1] * 1e5)));
+check('a zero stake still gets water', depthForStake(0) > 0.3 && slotsFor(0) >= 3);
 
 // 4. The guardrail: stake must not change what you can roll.
 const at = (days) => JSON.stringify(tierWeights(days));

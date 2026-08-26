@@ -10,7 +10,7 @@ rm -rf .progression
 # sed below rewrites that import to a real relative path. Type correctness is
 # `npm run typecheck`'s job; this step only needs runnable output.
 npx tsc --ignoreConfig \
-  src/lib/reef/progression.ts src/lib/reef/species.ts src/lib/reef/types.ts src/lib/tank/types.ts \
+  src/lib/reef/progression.ts src/lib/reef/species.ts src/lib/reef/types.ts src/lib/reef/vessel.ts src/lib/tank/types.ts \
   --outDir .progression --module esnext --target es2022 --moduleResolution bundler --skipLibCheck \
   > /dev/null 2>&1 || true
 find .progression -name '*.js' -print0 | xargs -0 sed -i '' -E \

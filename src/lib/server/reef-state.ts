@@ -11,7 +11,8 @@ import {
   chargeEvents,
 } from './reef-repo';
 import { reefDay } from '@/lib/reef/day';
-import { slotsFor, speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
+import { speciesUnlocked, nextMilestone } from '@/lib/reef/progression';
+import { slotsFor } from '@/lib/reef/vessel';
 import { chargesFrom, FULL_AFTER_MS, MAX_CHARGES } from '@/lib/reef/charges';
 export type { ReefState };
 import type { ReefState } from '@/lib/reef/state';

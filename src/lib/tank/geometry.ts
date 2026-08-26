@@ -35,24 +35,3 @@ export function tankRect(options: RenderOptions): TankRect {
 
   return { x, y, w, h, surfaceY, groundY };
 }
-
-/**
- * How deep the water sits, from the stake. The one thing amount governs
- * visually — the glass is the same size for everyone.
- *
- * Log scale from the 100 NIM protocol minimum up to a million, because the
- * step from 100 to 1,000 NIM should read as clearly as the step from 100,000
- * to a million. A zero stake still gets real water: the free tier is a tank,
- * not a locked door.
- *
- * Depth is deliberately **not** a gate on which species can live there. "A
- * whale needs deep water" is intuitive and wrong for us — it would stop a
- * year-long small staker from displaying the whale they earned, which is
- * punishing loyalty for poverty.
- */
-export function depthForStake(stakedLuna: number): number {
-  const nim = stakedLuna / 1e5;
-  if (nim <= 0) return 0.42;
-  const t = (Math.log10(Math.max(100, Math.min(1e6, nim))) - 2) / 4;
-  return 0.55 + t * 0.45;
-}

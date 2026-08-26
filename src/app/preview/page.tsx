@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Tank } from '@/components/Tank';
-import { depthForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/reef/vessel';
 import { SPECIES, SPECIES_ORDER, speciesUnlocked } from '@/lib/reef/species';
 import { tierWeights, slotsFor } from '@/lib/reef/progression';
 import { rng } from '@/lib/tank/rng';

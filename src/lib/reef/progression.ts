@@ -93,29 +93,8 @@ export function rollSpecies(daysStaked: number, random: () => number): Roll {
   return { species: last.species[0]!, tier: last.tier };
 }
 
-const LUNA_PER_NIM = 1e5;
-const MIN_STAKE_NIM = 100;
-const MAX_SCALE_NIM = 1e6;
 
-/**
- * How many specimens you can display. **The one thing stake amount governs.**
- *
- * Log scale, because the step from 100 to 1,000 NIM should feel like the step
- * from 100,000 to a million. A zero stake still gets room — the free tier is a
- * tank, not a locked door.
- *
- * Discoveries outrun slots quickly, and that is the point: the field guide
- * keeps everything forever, so curating what is on display becomes the real
- * decision.
- */
-export function slotsFor(stakedLuna: number): number {
-  const nim = stakedLuna / LUNA_PER_NIM;
-  if (nim <= 0) return 3;
-  const clamped = Math.min(MAX_SCALE_NIM, Math.max(MIN_STAKE_NIM, nim));
-  const t = (Math.log10(clamped) - Math.log10(MIN_STAKE_NIM)) / (Math.log10(MAX_SCALE_NIM) - Math.log10(MIN_STAKE_NIM));
-  return Math.round(4 + t * 16);
-}
-
+export { depthForStake, slotsFor, vessel } from './vessel';
 export { speciesUnlocked, speciesInTier };
 export { SPECIES, SPECIES_ORDER, TIER_ORDER } from './species';
 export { nextMilestone } from './species';

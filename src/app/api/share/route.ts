@@ -5,7 +5,7 @@ import { communitySnapshot } from '@/lib/server/reef-repo';
 import { renderShareImage } from '@/lib/server/share-image';
 import { SEEDED_COMMUNITY, layoutCommunity } from '@/lib/reef';
 import { adaptPlants } from '@/lib/tank/adapt';
-import { depthForStake } from '@/lib/tank/geometry';
+import { depthForStake } from '@/lib/reef/vessel';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
