@@ -340,6 +340,37 @@ export async function grantFedCharge(address: string, epoch: number): Promise<bo
  * `charges_updated_at` is stamped on every spend so the derived balance always
  * has a fresh anchor — a stored counter would drift; a timestamp cannot.
  */
+/**
+ * A cast that got away.
+ *
+ * The row in `rolls` is the point: that table is the charge ledger, and
+ * chargesFrom replays it. No row means no charge spent, which means a miss
+ * costs nothing and the strike window has no stakes.
+ */
+export async function recordMiss(address: string, epoch: number, pond: string | null): Promise<void> {
+  await db().execute('INSERT INTO rolls (address, source, epoch, pond) VALUES (?, ?, ?, ?)', [
+    address,
+    'miss',
+    epoch,
+    pond,
+  ]);
+}
+
+/**
+ * Claim the day's free miss, if it is still there.
+ *
+ * Returns true when this miss was forgiven. The INSERT is the check: the
+ * primary key on (address, day) decides it, so two casts landing at once
+ * cannot both be forgiven.
+ */
+export async function claimForgivenMiss(address: string): Promise<boolean> {
+  const [res] = await db().execute<ResultSetHeader>(
+    'INSERT IGNORE INTO forgiven_misses (address, day) VALUES (?, ?)',
+    [address, utcDay()],
+  );
+  return res.affectedRows === 1;
+}
+
 export async function recordRoll(
   address: string,
   species: SpeciesKey,
@@ -348,18 +379,20 @@ export async function recordRoll(
   slot: number | null,
   epoch: number,
   source: 'charge' | 'payment' = 'charge',
+  pond: string | null = null,
 ): Promise<number> {
   const conn = await db().getConnection();
   try {
     await conn.beginTransaction();
-    await conn.execute('INSERT INTO rolls (address, source, epoch) VALUES (?, ?, ?)', [
+    await conn.execute('INSERT INTO rolls (address, source, epoch, pond) VALUES (?, ?, ?, ?)', [
       address,
       source,
       epoch,
+      pond,
     ]);
     const [res] = await conn.execute<ResultSetHeader>(
-      'INSERT INTO specimens (address, species, tier, seed, slot) VALUES (?, ?, ?, ?, ?)',
-      [address, species, tier, seed, slot],
+      'INSERT INTO specimens (address, species, tier, seed, slot, pond) VALUES (?, ?, ?, ?, ?, ?)',
+      [address, species, tier, seed, slot, pond],
     );
     await conn.commit();
     return res.insertId;

@@ -15,7 +15,7 @@ export default function robots(): MetadataRoute.Robots {
     // pages with distinct content. Everything under /api stays out: it is
     // per-user JSON that 401s anonymously, except the reef cards, which the
     // pages already reference as images.
-    rules: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/open'] }],
+    rules: [{ userAgent: '*', allow: '/', disallow: ['/api/', '/open', '/fish'] }],
     sitemap: `${ORIGIN}/sitemap.xml`,
     host: ORIGIN,
   };

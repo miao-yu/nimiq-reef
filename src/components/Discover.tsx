@@ -1,51 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useLocale } from '@/lib/i18n';
-import { report } from '@/lib/client-log';
 import type { ReefState } from '@/lib/reef/state';
 import styles from './Discover.module.css';
 
-interface Found {
-  label: string;
-  tier: string;
-  slot: number | null;
-}
-
 /**
- * Spend a charge, find something.
+ * Charges, and the way out to the water.
  *
- * The language is discovery, never opening: "a lionfish has appeared", not
+ * This used to spend a charge in place: press a button, something appears.
+ * That is a slot machine with better manners, and it is why the tank only ever
+ * changed when you pressed it. The charge meter still lives here — it belongs
+ * with the epoch clock — but the act of finding something happens at /fish.
+ *
+ * The language stays discovery, never opening: "a lionfish has appeared", not
  * "you won". An aquarium finds things; a casino pays out, and the difference
  * matters both for how it reads and for which rules it falls under.
  */
-export function Discover({ reef, onChange }: { reef: ReefState; onChange: (r: ReefState) => void }) {
+export function Discover({ reef }: { reef: ReefState }) {
   const { t } = useLocale();
-  const [busy, setBusy] = useState(false);
-  const [found, setFound] = useState<Found | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function roll() {
-    setBusy(true);
-    setError(null);
-    setFound(null);
-    try {
-      const res = await fetch('/api/roll', { method: 'POST' });
-      const data = (await res.json()) as {
-        discovered?: { label: string; tier: string; slot: number | null };
-        reef?: ReefState;
-        error?: string;
-      };
-      if (!res.ok) throw new Error(data.error ?? 'Nothing found.');
-      if (data.discovered) setFound(data.discovered);
-      if (data.reef) onChange(data.reef);
-    } catch (cause) {
-      report('roll', cause);
-      setError(cause instanceof Error ? cause.message : 'Nothing found.');
-    } finally {
-      setBusy(false);
-    }
-  }
 
   const full = reef.charges >= reef.maxCharges;
 
@@ -83,25 +56,19 @@ export function Discover({ reef, onChange }: { reef: ReefState; onChange: (r: Re
         ))}
       </div>
 
-      <button
+      <Link
         className={styles.cta}
-        onClick={() => void roll()}
-        disabled={busy || reef.charges < 1}
-        type="button"
+        href="/fish"
+        aria-disabled={reef.charges < 1}
+        onClick={(e) => {
+          if (reef.charges < 1) e.preventDefault();
+        }}
       >
-        {busy ? t('discovering') : t('discover')}
-      </button>
+        {t('goFishing')}
+      </Link>
 
-      {found ? (
-        <p className={styles.found}>
-          {found.tier === 'common' || found.tier === 'uncommon'
-            ? t('found', { label: found.label })
-            : t('foundRare', { label: found.label, tier: found.tier })}
-          {found.slot === null ? ` ${t('tankFull')}` : ''}
-        </p>
-      ) : null}
 
-      {reef.charges < 1 && !found ? <p className={styles.note}>{t('noCharges')}</p> : null}
+      {reef.charges < 1 ? <p className={styles.note}>{t('noCharges')}</p> : null}
 
       {/* Where charges come from was invisible, and the omission fooled the
           person who specified the rule. If the author can be surprised by it,
@@ -111,7 +78,6 @@ export function Discover({ reef, onChange }: { reef: ReefState; onChange: (r: Re
         <p>{t('chargeIncoming')}</p>
       </details>
 
-      {error ? <p className={styles.error}>{error}</p> : null}
     </div>
   );
 }

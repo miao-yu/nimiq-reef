@@ -7,6 +7,14 @@ export interface SpeciesDef {
   tier: Tier;
   /** Unbroken days staked before this species can appear. Never NIM. */
   unlockDay: number;
+  /**
+   * One line, shown the moment it is landed.
+   *
+   * Written the way a collectible game writes, not the way a field guide does.
+   * This reef was never meant to be realistic, and a paragraph of taxonomy at
+   * the exact moment somebody is pleased with themselves is a way to waste it.
+   */
+  blurb: string;
 }
 
 /**
@@ -25,17 +33,72 @@ export interface SpeciesDef {
  * Guardrail: every number below is days staked. Nothing here reads the amount.
  */
 export const SPECIES: Record<SpeciesKey, SpeciesDef> = {
-  grass: { label: 'Water grass', tier: 'common', unlockDay: 0 },
-  guppy: { label: 'Guppy', tier: 'common', unlockDay: 0 },
-  angel: { label: 'Angelfish', tier: 'uncommon', unlockDay: 2 },
-  shrimp: { label: 'Cleaner shrimp', tier: 'uncommon', unlockDay: 10 },
-  jelly: { label: 'Jellyfish', tier: 'rare', unlockDay: 5 },
-  lionfish: { label: 'Lionfish', tier: 'rare', unlockDay: 30 },
-  ray: { label: 'Ray', tier: 'rare', unlockDay: 60 },
-  shark: { label: 'Shark', tier: 'legendary', unlockDay: 14 },
-  octopus: { label: 'Octopus', tier: 'legendary', unlockDay: 120 },
-  turtle: { label: 'Sea turtle', tier: 'legendary', unlockDay: 240 },
-  whale: { label: 'Whale', tier: 'legendary', unlockDay: 365 },
+  grass: {
+    label: 'Water grass',
+    tier: 'common',
+    unlockDay: 0,
+    blurb: 'Grows quietly and asks for nothing. Everything else builds its life around it.',
+  },
+  guppy: {
+    label: 'Guppy',
+    tier: 'common',
+    unlockDay: 0,
+    blurb: 'Small, bright, and completely unbothered. The first friend a reef makes.',
+  },
+  angel: {
+    label: 'Angelfish',
+    tier: 'uncommon',
+    unlockDay: 2,
+    blurb: 'Swims like it knows you are watching. It does.',
+  },
+  shrimp: {
+    label: 'Cleaner shrimp',
+    tier: 'uncommon',
+    unlockDay: 10,
+    blurb: 'Employed. Cleans up after everyone and never once mentions it.',
+  },
+  jelly: {
+    label: 'Jellyfish',
+    tier: 'rare',
+    unlockDay: 5,
+    blurb: 'No brain, no bones, no plans. Has outlasted almost everything that had all three.',
+  },
+  lionfish: {
+    label: 'Lionfish',
+    tier: 'rare',
+    unlockDay: 30,
+    blurb: 'All spines and confidence. Moves slowly because nothing makes it hurry.',
+  },
+  ray: {
+    label: 'Ray',
+    tier: 'rare',
+    unlockDay: 60,
+    blurb: 'Flies more than it swims. Leaves the sand exactly as it found it.',
+  },
+  shark: {
+    label: 'Shark',
+    tier: 'legendary',
+    unlockDay: 14,
+    blurb: 'Older than trees and entirely uninterested in the fact.',
+  },
+  octopus: {
+    label: 'Octopus',
+    tier: 'legendary',
+    unlockDay: 120,
+    blurb: 'Solves problems it was never given. Escapes tanks it was never in.',
+  },
+  turtle: {
+    label: 'Sea turtle',
+    tier: 'legendary',
+    unlockDay: 240,
+    blurb: 'Has been going the same direction for decades and intends to continue.',
+  },
+  whale: {
+    label: 'Whale',
+    tier: 'legendary',
+    unlockDay: 365,
+    blurb: 'A year of staking, swimming. The reef arranges itself around it.',
+  },
 };
 
 /** Shallowest first, so listings read as a progression. */

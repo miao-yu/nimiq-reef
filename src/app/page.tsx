@@ -126,7 +126,7 @@ export default function Home() {
 
           {reef.chainOffline ? <p className={styles.warn}>{t('chainOffline')}</p> : null}
 
-          <Discover reef={reef} onChange={setReef} />
+          <Discover reef={reef} />
           <FeedPanel reef={reef} onChange={setReef} />
           <FieldGuide reef={reef} onChange={setReef} />
 

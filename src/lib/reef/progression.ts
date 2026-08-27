@@ -65,7 +65,39 @@ export interface Roll {
  * empty outcome, which is both the kinder design and what keeps this clear of
  * "games of chance where outcomes are primarily determined by randomness".
  */
-export function rollSpecies(daysStaked: number, random: () => number): Roll {
+/**
+ * Which species, given a tier — biased by the pond, if there is one.
+ *
+ * **The bias lives here and only here.** Tier is chosen above by days staked
+ * alone; this picks between the species already inside that tier. A trench
+ * makes a whale the likelier legendary, it does not make a legendary likelier.
+ *
+ * The moment a pond can move tier odds, choosing the right pond replaces
+ * loyalty as the source of rarity and one pond becomes correct.
+ */
+function pickSpecies(
+  species: readonly SpeciesKey[],
+  random: () => number,
+  favours?: Partial<Record<SpeciesKey, number>>,
+): SpeciesKey {
+  if (!favours || species.length < 2) {
+    return species[Math.floor(random() * species.length)]!;
+  }
+  const weights = species.map((key) => Math.max(0.0001, favours[key] ?? 1));
+  const total = weights.reduce((sum, w) => sum + w, 0);
+  let cursor = random() * total;
+  for (let i = 0; i < species.length; i++) {
+    cursor -= weights[i]!;
+    if (cursor <= 0) return species[i]!;
+  }
+  return species[species.length - 1]!;
+}
+
+export function rollSpecies(
+  daysStaked: number,
+  random: () => number,
+  favours?: Partial<Record<SpeciesKey, number>>,
+): Roll {
   const weights = tierWeights(daysStaked);
   const available = TIER_ORDER.map((tier) => ({
     tier,
@@ -85,12 +117,11 @@ export function rollSpecies(daysStaked: number, random: () => number): Roll {
   for (const entry of available) {
     cursor -= entry.weight;
     if (cursor <= 0) {
-      const species = entry.species[Math.floor(random() * entry.species.length)]!;
-      return { species, tier: entry.tier };
+      return { species: pickSpecies(entry.species, random, favours), tier: entry.tier };
     }
   }
   const last = available[available.length - 1]!;
-  return { species: last.species[0]!, tier: last.tier };
+  return { species: pickSpecies(last.species, random, favours), tier: last.tier };
 }
 
 
