@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { Avatar } from '@/components/Avatar';
+import { ValidatorMark } from '@/components/ValidatorMark';
 import { drawFishing, type Phase } from '@/lib/fishing/scene';
 import { WATERS, WATER_ORDER, type WaterKey } from '@/lib/reef/ponds';
 import { truncateAddress } from '@/lib/nimiq/address';
@@ -12,6 +12,9 @@ import styles from './page.module.css';
 interface Pond {
   address: string;
   name: string;
+  /** The operator's registered name, where they have one. */
+  validator: string | null;
+  logo: boolean;
   water: WaterKey;
   label: string;
   blurb: string;
@@ -237,13 +240,17 @@ export default function Fish() {
               {group.map((p) => (
                 <li key={p.address}>
                   <button className={styles.pond} onClick={() => setPond(p)} type="button">
-                    <Avatar address={p.address} size={32} />
+                    <ValidatorMark address={p.address} hasLogo={p.logo} size={32} />
                     <span className={styles.pondText}>
-                      <strong>{p.name}</strong>
-                      <code>{truncateAddress(p.address)}</code>
+                      {/* The operator's own name where they registered one,
+                          and the pond's name where they did not — the water is
+                          already named by the heading above. */}
+                      <strong>{p.validator ?? p.name}</strong>
                       <small>
+                        {p.validator ? `${p.name} · ` : ''}
                         {p.stakers} {p.stakers === 1 ? 'staker' : 'stakers'}
                       </small>
+                      <code>{truncateAddress(p.address)}</code>
                     </span>
                     {p.yours ? <span className={styles.yours}>yours</span> : null}
                   </button>
@@ -267,9 +274,9 @@ export default function Fish() {
       </header>
 
       <div className={styles.pondName}>
-        <Avatar address={pond.address} size={26} />
-        <strong>{pond.name}</strong>
-        <small>{pond.label}</small>
+        <ValidatorMark address={pond.address} hasLogo={pond.logo} size={26} />
+        <strong>{pond.validator ?? pond.name}</strong>
+        <small>{pond.validator ? `${pond.name} · ${pond.label}` : pond.label}</small>
       </div>
 
       {/* The whole surface is the strike target. Asking for a small button

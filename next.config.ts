@@ -47,6 +47,24 @@ const config: NextConfig = {
           { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, must-revalidate' },
         ],
       },
+      {
+        /*
+         * Last, so it wins: Next applies every matching rule and the later one
+         * takes precedence — the same behaviour that once re-opened the /api
+         * hole when I assumed first-match.
+         *
+         * Validator logos come from a registry that changes a few times a year,
+         * and re-fetching a 24KB image for every row of the pond list would
+         * cost more than the rest of the page put together.
+         */
+        source: '/validator/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=604800',
+          },
+        ],
+      },
     ];
   },
 };

@@ -3,6 +3,7 @@ import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
 import { currentAddress } from '@/lib/server/session';
 import { getReefState } from '@/lib/server/reef-state';
 import { pondFor } from '@/lib/reef/ponds';
+import { registry } from '@/lib/server/registry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,17 +20,26 @@ export async function GET() {
   if (!address) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
   try {
-    const [validators, state] = await Promise.all([
+    const [validators, state, known] = await Promise.all([
       rpc.getActiveValidators(),
       getReefState(address),
+      // Never blocks the list: registry() resolves to an empty map on failure,
+      // and every row falls back to its identicon and hashed pond name.
+      registry(),
     ]);
 
     const ponds = validators
       .map((v) => {
         const { water, name } = pondFor(v.address);
+        const meta = known.get(v.address.replace(/\s+/g, '').toUpperCase());
         return {
           address: v.address,
           name,
+          // The operator's real name where they registered one; roughly half
+          // the elected set has not, and those keep the hashed pond name.
+          validator: meta?.name ?? null,
+          logo: Boolean(meta?.logo),
+          website: meta?.website ?? null,
           water: water.key,
           label: water.label,
           blurb: water.blurb,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { rpc, RpcUnavailableError, type ActiveValidator } from '@/lib/server/rpc';
+import { registry } from '@/lib/server/registry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,8 +24,14 @@ export async function GET() {
   }
 
   try {
-    const validators = (await rpc.getActiveValidators())
-      .map((v) => ({ address: v.address, balance: Number(v.balance), numStakers: Number(v.numStakers) }))
+    const [elected, known] = await Promise.all([rpc.getActiveValidators(), registry()]);
+    const validators = elected
+      .map((v) => ({
+        address: v.address,
+        balance: Number(v.balance),
+        numStakers: Number(v.numStakers),
+        name: known.get(v.address.replace(/\s+/g, '').toUpperCase())?.name ?? null,
+      }))
       .sort((a, b) => a.address.localeCompare(b.address));
     cache = { at: Date.now(), data: validators };
     return NextResponse.json({ validators, cached: false });

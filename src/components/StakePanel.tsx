@@ -12,6 +12,8 @@ interface Validator {
   address: string;
   balance: number;
   numStakers: number;
+  /** Registered operator name, where there is one. */
+  name: string | null;
 }
 
 interface Props {
@@ -117,7 +119,8 @@ export function StakePanel({ reef, onDone }: Props) {
             </option>
             {validators.map((v) => (
               <option key={v.address} value={v.address}>
-                {v.address.slice(0, 14)}… · {v.numStakers} stakers
+                {v.name ?? `${v.address.slice(0, 14)}…`} · {v.numStakers}{' '}
+                {v.numStakers === 1 ? 'staker' : 'stakers'}
               </option>
             ))}
           </select>
