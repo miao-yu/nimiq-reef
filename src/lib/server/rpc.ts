@@ -62,6 +62,22 @@ export interface ActiveValidator {
   numStakers: number;
 }
 
+/** A validator holding slots in the current epoch, and how many. */
+export interface ElectedValidator {
+  address: string;
+  balance: number;
+  numStakers: number;
+  numSlots: number;
+}
+
+interface MacroSlot {
+  validator: string;
+  numSlots: number;
+}
+
+/** Keyed on the election block, because the set cannot change until the next one. */
+let elected: { block: number; data: ElectedValidator[] } | undefined;
+
 export const rpc = {
   /**
    * The current epoch's elected validators. Unlike getValidators and
@@ -72,6 +88,48 @@ export const rpc = {
   getActiveValidators: () => call<ActiveValidator[]>('getActiveValidators'),
 
   getBlockNumber: () => call<number>('getBlockNumber'),
+
+  /**
+   * The validators actually elected for this epoch.
+   *
+   * **Not `getActiveValidators`.** That returns everything active in the
+   * staking contract — 37 at the time of writing — while the election chose
+   * 29. "Active" only means not deactivated; being elected means winning slots
+   * at the election block, and that is what a validator being live this epoch
+   * actually is.
+   *
+   * The slots come from the last election macro block, which is also why this
+   * can be cached until the next one: the set cannot change in between.
+   * `getActiveValidators` supplies the balance and staker counts the slots
+   * do not carry.
+   */
+  async electedValidators(): Promise<ElectedValidator[]> {
+    const { Policy } = await import('@nimiq/core');
+    const head = await call<number>('getBlockNumber');
+    const electionBlock = Policy.electionBlockBefore(head);
+
+    if (elected && elected.block === electionBlock) return elected.data;
+
+    const [block, active] = await Promise.all([
+      call<{ slots?: MacroSlot[] }>('getBlockByNumber', [electionBlock, false]),
+      call<ActiveValidator[]>('getActiveValidators'),
+    ]);
+
+    const byAddress = new Map(active.map((v) => [v.address, v]));
+    const slots = new Map<string, number>();
+    for (const slot of block.slots ?? []) {
+      slots.set(slot.validator, (slots.get(slot.validator) ?? 0) + Number(slot.numSlots));
+    }
+
+    const data = [...slots].map(([address, numSlots]) => ({
+      address,
+      numSlots,
+      balance: Number(byAddress.get(address)?.balance ?? 0),
+      numStakers: Number(byAddress.get(address)?.numStakers ?? 0),
+    }));
+    elected = { block: electionBlock, data };
+    return data;
+  },
 
   /** A name — 'MainAlbatross' — not the number TransactionBuilder wants. */
   getNetworkId: () => call<string>('getNetworkId'),

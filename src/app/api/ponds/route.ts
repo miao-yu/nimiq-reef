@@ -9,7 +9,8 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * The ponds: every elected validator, with the water its address gives it.
+ * The ponds: every validator elected for this epoch, with the water its address
+ * gives it.
  *
  * The list rotates on the chain's clock — the elected set changes at each
  * election block — but a pond's character is keyed to its address, so a
@@ -21,7 +22,7 @@ export async function GET() {
 
   try {
     const [validators, state, known] = await Promise.all([
-      rpc.getActiveValidators(),
+      rpc.electedValidators(),
       getReefState(address),
       // Never blocks the list: registry() resolves to an empty map on failure,
       // and every row falls back to its identicon and hashed pond name.
@@ -44,6 +45,7 @@ export async function GET() {
           label: water.label,
           blurb: water.blurb,
           stakers: Number(v.numStakers),
+          slots: Number(v.numSlots),
           // The one place the app can reward *which* validator you chose.
           yours: state.delegation === v.address,
         };

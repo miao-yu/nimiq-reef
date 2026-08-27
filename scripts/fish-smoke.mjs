@@ -40,6 +40,18 @@ const pond = pondsBody.ponds?.[0];
 if (!pond) { console.log('\n  SKIP — no ponds from the node'); process.exit(fail ? 1 : 0); }
 check('every pond has water and a face', pondsBody.ponds.every((p) => p.water && p.label && p.address));
 
+/*
+ * Ponds must be the *elected* set, not merely the active one.
+ *
+ * getActiveValidators returns everything not deactivated — 37 against the 29
+ * the election actually chose — and the difference is invisible in the UI. The
+ * slots of an elected set always sum to the policy total, so this catches a
+ * silent slip back to the wrong call.
+ */
+const { Policy } = await import('@nimiq/core');
+const slots = pondsBody.ponds.reduce((n, p) => n + (p.slots ?? 0), 0);
+check('ponds are the elected set', slots === Policy.SLOTS, `${slots} slots of ${Policy.SLOTS}`);
+
 const junk = await post('/api/fish', { pond: 'not-an-address', outcome: 'landed' }, cookie);
 check('a malformed pond is refused', junk.status === 400, `HTTP ${junk.status}`);
 

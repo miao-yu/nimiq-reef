@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
-import { rpc, RpcUnavailableError, type ActiveValidator } from '@/lib/server/rpc';
+import { rpc, RpcUnavailableError, type ElectedValidator } from '@/lib/server/rpc';
 import { registry } from '@/lib/server/registry';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * The elected validator set, for choosing where to delegate.
+ * The validators elected for this epoch, for choosing where to delegate.
+ *
+ * Elected, not merely active: getActiveValidators returns everything that is
+ * not deactivated, which is a larger set than the election actually chose.
  *
  * Reef is validator-neutral: this lists everyone the chain elected, sorted by
  * address so the ordering carries no opinion. Our own pool gets no default, no
@@ -16,7 +19,7 @@ export const dynamic = 'force-dynamic';
  * (43,200 blocks at one second each).
  */
 const TTL_MS = 5 * 60 * 1000;
-let cache: { at: number; data: ActiveValidator[] } | undefined;
+let cache: { at: number; data: (ElectedValidator & { name: string | null })[] } | undefined;
 
 export async function GET() {
   if (cache && Date.now() - cache.at < TTL_MS) {
@@ -24,12 +27,13 @@ export async function GET() {
   }
 
   try {
-    const [elected, known] = await Promise.all([rpc.getActiveValidators(), registry()]);
+    const [elected, known] = await Promise.all([rpc.electedValidators(), registry()]);
     const validators = elected
       .map((v) => ({
         address: v.address,
         balance: Number(v.balance),
         numStakers: Number(v.numStakers),
+        numSlots: Number(v.numSlots),
         name: known.get(v.address.replace(/\s+/g, '').toUpperCase())?.name ?? null,
       }))
       .sort((a, b) => a.address.localeCompare(b.address));
