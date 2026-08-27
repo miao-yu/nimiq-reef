@@ -28,13 +28,22 @@ export function maturity(ageDays: number, fullDays = MATURE_DAYS): number {
  * has to be recognisable as what it is, and its eye still has to read.
  */
 export function faunaScale(ageDays: number): number {
-  return 0.58 + 0.42 * maturity(ageDays);
+  return FAUNA_FLOOR + (1 - FAUNA_FLOOR) * maturity(ageDays);
 }
 
+/** Smallest a fauna specimen is drawn, on the day it is caught. */
+export const FAUNA_FLOOR = 0.58;
+
 /**
- * Grass starts as a sprout, and much smaller than a fish starts, because a
- * short blade still reads as grass where a tiny shark reads as a bug.
+ * Smallest grass is drawn.
+ *
+ * Lower than the fauna floor, because a short blade still reads as grass where
+ * a tiny shark reads as a bug — but not as low as it first was: at 0.22 a new
+ * reef's grass was a few pixels of stubble and read as a rendering fault
+ * rather than as a sprout.
  */
+export const GRASS_FLOOR = 0.34;
+
 export function grassScale(ageDays: number): number {
-  return 0.22 + 0.78 * maturity(ageDays);
+  return GRASS_FLOOR + (1 - GRASS_FLOOR) * maturity(ageDays);
 }
