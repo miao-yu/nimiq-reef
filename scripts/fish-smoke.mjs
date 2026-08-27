@@ -13,6 +13,14 @@ const call = (p, o = {}) => fetch(B + p, o).then(j);
 const post = (p, b, cookie) =>
   call(p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { cookie } : {}) }, body: JSON.stringify(b ?? {}) });
 
+/**
+ * Real play cannot settle twice inside about four seconds — a cast is 0.7s out,
+ * 0.5s sinking and at least 3s of waiting — so the endpoint refuses anything
+ * faster than 1.5s apart. The test has to keep that cadence or it is testing
+ * the throttle rather than the game.
+ */
+const beat = () => new Promise((r) => setTimeout(r, 1700));
+
 let fail = 0;
 const check = (n, ok, d = '') => { console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ' — ' + d : ''}`); if (!ok) fail++; };
 
@@ -45,10 +53,12 @@ const miss1 = await post('/api/fish', { pond: pond.address, outcome: 'missed' },
 check('the first miss of the day is forgiven', miss1.status === 200 && miss1.body.forgiven === true);
 check('and costs no charge', miss1.body.reef.charges === before, `${before} -> ${miss1.body.reef.charges}`);
 
+await beat();
 const miss2 = await post('/api/fish', { pond: pond.address, outcome: 'missed' }, cookie);
 check('the second miss is not forgiven', miss2.status === 200 && miss2.body.forgiven === false);
 check('and does cost a charge', miss2.body.reef.charges === before - 1, `${before} -> ${miss2.body.reef.charges}`);
 
+await beat();
 const landed = await post('/api/fish', { pond: pond.address, outcome: 'landed' }, cookie);
 check('landing produces a specimen', landed.status === 200 && Boolean(landed.body.caught?.species), `HTTP ${landed.status}`);
 check('the catch carries its blurb', Boolean(landed.body.caught?.blurb), landed.body.caught?.label);
@@ -57,10 +67,20 @@ check('landing costs a charge', landed.body.reef.charges === before - 2, `${befo
 // Spend the rest, then confirm it stops.
 let guard = 0;
 while ((await call('/api/reef', { headers: { cookie } })).body.charges > 0 && guard++ < 6) {
+  await beat();
   await post('/api/fish', { pond: pond.address, outcome: 'landed' }, cookie);
 }
+await beat();
 const empty = await post('/api/fish', { pond: pond.address, outcome: 'landed' }, cookie);
 check('fishing with no charges is refused', empty.status === 409, `HTTP ${empty.status}`);
+
+// A burst must not drain the account. The client used to fire one of these per
+// animation frame; the server now refuses the flood on its own.
+const burst = await Promise.all(
+  Array.from({ length: 6 }, () => post('/api/fish', { pond: pond.address, outcome: 'missed' }, cookie)),
+);
+const accepted = burst.filter((r) => r.status === 200).length;
+check('a burst of settles is throttled', accepted <= 1, `${accepted} of 6 accepted`);
 
 console.log(fail === 0 ? '\nPASS — fishing holds' : `\nFAIL (${fail})`);
 process.exit(fail ? 1 : 0);

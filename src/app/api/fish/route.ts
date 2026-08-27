@@ -11,6 +11,35 @@ import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
 export const runtime = 'nodejs';
 
 /**
+ * One settle per address per second and a half.
+ *
+ * A backstop, not the fix: the real guard is on the client, which used to fire
+ * `settle('missed')` on every animation frame until the response came back and
+ * so spent every charge a player had on one missed bite. A cast takes seconds,
+ * so nothing legitimate is ever this fast, and bounding it here means the next
+ * client bug of that shape costs one charge instead of all of them.
+ *
+ * In memory, so it does not survive a restart and would not hold across
+ * several instances. There is one instance, and this protects charges rather
+ * than money.
+ */
+const RECENT = new Map<string, number>();
+const MIN_GAP_MS = 1500;
+
+function tooSoon(address: string): boolean {
+  const now = Date.now();
+  const last = RECENT.get(address) ?? 0;
+  if (now - last < MIN_GAP_MS) return true;
+  RECENT.set(address, now);
+  // The map only ever holds signed-in addresses that fished recently, but it
+  // should not grow without bound on a long-lived process.
+  if (RECENT.size > 5000) {
+    for (const [key, at] of RECENT) if (now - at > 60_000) RECENT.delete(key);
+  }
+  return false;
+}
+
+/**
  * Land a fish, or lose it.
  *
  * The minigame runs on the client and reports its outcome, which means a
@@ -38,6 +67,10 @@ export async function POST(request: Request) {
   if (!parsed) return NextResponse.json({ error: 'Which pond?' }, { status: 400 });
   if (body.outcome !== 'landed' && body.outcome !== 'missed') {
     return NextResponse.json({ error: 'outcome must be landed or missed.' }, { status: 400 });
+  }
+
+  if (tooSoon(address)) {
+    return NextResponse.json({ error: 'Slow down a moment.' }, { status: 429 });
   }
 
   const pond = formatAddress(parsed);

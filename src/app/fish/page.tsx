@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Avatar } from '@/components/Avatar';
 import { drawFishing, type Phase } from '@/lib/fishing/scene';
-import { WATERS, type WaterKey } from '@/lib/reef/ponds';
+import { WATERS, WATER_ORDER, type WaterKey } from '@/lib/reef/ponds';
 import { truncateAddress } from '@/lib/nimiq/address';
 import { report } from '@/lib/client-log';
 import styles from './page.module.css';
@@ -40,6 +40,19 @@ const DURATION: Partial<Record<Phase, number>> = {
   landing: 900,
 };
 
+/** Waters in ladder order, but whichever one holds your validator comes first. */
+function groupPonds(ponds: Pond[]): [WaterKey, Pond[]][] {
+  const by = new Map<WaterKey, Pond[]>();
+  for (const p of ponds) {
+    if (!by.has(p.water)) by.set(p.water, []);
+    by.get(p.water)!.push(p);
+  }
+  return [...by.entries()].sort((a, b) => {
+    const mine = (g: Pond[]) => (g.some((p) => p.yours) ? 0 : 1);
+    return mine(a[1]) - mine(b[1]) || WATER_ORDER.indexOf(a[0]) - WATER_ORDER.indexOf(b[0]);
+  });
+}
+
 export default function Fish() {
   const [ponds, setPonds] = useState<Pond[] | null>(null);
   const [charges, setCharges] = useState(0);
@@ -54,6 +67,16 @@ export default function Fish() {
   const waitFor = useRef<number>(0);
   const phaseRef = useRef<Phase>('ready');
   phaseRef.current = phase;
+
+  /**
+   * One settle per cast.
+   *
+   * The animation loop runs every frame, and `phase` does not change until the
+   * request comes back — so without this the loop fired `settle('missed')` on
+   * every frame of the gap and a single missed bite spent every charge the
+   * player had. Caught by playing it, not by reading it.
+   */
+  const settling = useRef(false);
 
   useEffect(() => {
     void fetch('/api/ponds', { cache: 'no-store' })
@@ -75,7 +98,8 @@ export default function Fish() {
 
   const settle = useCallback(
     async (outcome: 'landed' | 'missed') => {
-      if (!pond) return;
+      if (!pond || settling.current) return;
+      settling.current = true;
       try {
         const res = await fetch('/api/fish', {
           method: 'POST',
@@ -101,6 +125,8 @@ export default function Fish() {
         report('fish', cause);
         setError(cause instanceof Error ? cause.message : 'Something went wrong.');
         enter('ready');
+      } finally {
+        settling.current = false;
       }
     },
     [pond, enter],
@@ -148,7 +174,7 @@ export default function Fish() {
             waitFor.current = WAIT_MIN_MS + Math.random() * (WAIT_MAX_MS - WAIT_MIN_MS);
             enter('waiting');
           } else if (p === 'waiting' && elapsed >= waitFor.current) enter('bite');
-          else if (p === 'bite' && elapsed >= STRIKE_MS) void settle('missed');
+          else if (p === 'bite' && elapsed >= STRIKE_MS && !settling.current) void settle('missed');
           else if (p === 'landing' && elapsed >= DURATION.landing!) enter('landed');
         }
       }
@@ -159,7 +185,7 @@ export default function Fish() {
   }, [pond, caught, enter, settle]);
 
   function strike() {
-    if (phase === 'bite') void settle('landed');
+    if (phase === 'bite' && !settling.current) void settle('landed');
   }
 
   function cast() {
@@ -195,23 +221,35 @@ export default function Fish() {
           much you have staked.
         </p>
         {error ? <p className={styles.error}>{error}</p> : null}
-        <ul className={styles.ponds}>
-          {(ponds ?? []).map((p) => (
-            <li key={p.address}>
-              <button className={styles.pond} onClick={() => setPond(p)} type="button">
-                <Avatar address={p.address} size={34} />
-                <span className={styles.pondText}>
-                  <strong>
-                    {p.label}
+        {/* Grouped by water. Six waters across ~37 validators means the same
+            name appears half a dozen times; listed flat, distinct ponds read as
+            duplicates of each other. Under a heading, the repetition is the
+            point — these really are all trenches. */}
+        {groupPonds(ponds ?? []).map(([water, group]) => (
+          <section key={water} className={styles.group}>
+            <h2 className={styles.groupHead}>
+              {WATERS[water].label}
+              <span className={styles.count}>{group.length}</span>
+            </h2>
+            <p className={styles.groupBlurb}>{WATERS[water].blurb}</p>
+            <ul className={styles.ponds}>
+              {group.map((p) => (
+                <li key={p.address}>
+                  <button className={styles.pond} onClick={() => setPond(p)} type="button">
+                    <Avatar address={p.address} size={32} />
+                    <span className={styles.pondText}>
+                      <code>{truncateAddress(p.address)}</code>
+                      <small>
+                        {p.stakers} {p.stakers === 1 ? 'staker' : 'stakers'}
+                      </small>
+                    </span>
                     {p.yours ? <span className={styles.yours}>yours</span> : null}
-                  </strong>
-                  <small>{p.blurb}</small>
-                  <code>{truncateAddress(p.address)}</code>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
         {ponds && ponds.length === 0 ? <p className={styles.sub}>No ponds right now.</p> : null}
       </main>
     );

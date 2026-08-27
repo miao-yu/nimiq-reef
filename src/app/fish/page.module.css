@@ -28,9 +28,9 @@
 .pond:hover { border-color: var(--leaf); }
 .pond:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
 .pondText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.pondText strong { font-size: 0.92rem; display: flex; align-items: center; gap: 7px; }
+
 .pondText small { font-size: 0.78rem; color: var(--muted); }
-.pondText code { font-size: 0.72rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
+.pondText code { font-size: 0.84rem; color: var(--muted); font-family: ui-monospace, Menlo, monospace; }
 .yours {
   font-size: 0.66rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
   background: var(--leaf); color: var(--ground); border-radius: 999px; padding: 1px 7px;
@@ -87,3 +87,14 @@
 .cta:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
 .secondary { font-size: 0.85rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 .error { margin: 0; font-size: 0.86rem; color: #b0453a; text-align: center; }
+
+.group { display: flex; flex-direction: column; gap: 6px; }
+.groupHead {
+  margin: 8px 0 0; font-size: 0.95rem; display: flex; align-items: center; gap: 8px;
+}
+.count {
+  font-size: 0.7rem; font-weight: 600; color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0 7px;
+  font-variant-numeric: tabular-nums;
+}
+.groupBlurb { margin: 0 0 4px; font-size: 0.8rem; color: var(--muted); }
