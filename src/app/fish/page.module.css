@@ -98,3 +98,6 @@
   font-variant-numeric: tabular-nums;
 }
 .groupBlurb { margin: 0 0 4px; font-size: 0.8rem; color: var(--muted); }
+
+.pondText strong { font-size: 0.92rem; }
+.pondName small { font-size: 0.8rem; color: var(--muted); }

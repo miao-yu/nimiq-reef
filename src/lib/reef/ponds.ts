@@ -179,9 +179,37 @@ function hashAddress(address: string): number {
   return mix32(h);
 }
 
+/**
+ * Adjectives for pond names. Paired with the water's own noun, so a name always
+ * agrees with the water it describes — "Slate Trench" is a trench.
+ *
+ * Names can repeat across the 37 elected validators, and that is fine: the name
+ * is flavour and the address underneath is the identity. Guaranteeing
+ * uniqueness would mean either a much longer list of increasingly silly words
+ * or a number stapled on the end.
+ */
+const ADJECTIVES = [
+  'Quiet', 'Amber', 'Slate', 'Pale', 'Salt', 'Glass', 'Lunar', 'Tidal',
+  'Still', 'Bright', 'Iron', 'Ember', 'Hollow', 'Silver', 'Copper', 'Ash',
+  'Dusk', 'Drift', 'Low', 'Far', 'Long', 'Old', 'North', 'Marrow',
+  'Cinder', 'Hush', 'Mercy', 'Rook', 'Thistle', 'Vane', 'Wren', 'Loom',
+];
+
+/** The noun each water contributes to a name. */
+const NOUNS: Record<WaterKey, string> = {
+  shallows: 'Shallows',
+  kelp: 'Kelp',
+  trench: 'Trench',
+  current: 'Current',
+  flats: 'Flats',
+  vent: 'Vent',
+};
+
 export interface Pond {
   address: string;
   water: Water;
+  /** A place name, hashed from the address like everything else here. */
+  name: string;
 }
 
 /**
@@ -192,6 +220,10 @@ export interface Pond {
  * was — the list rotates, the places do not.
  */
 export function pondFor(address: string): Pond {
-  const water = WATERS[WATER_ORDER[hashAddress(address) % WATER_ORDER.length]!]!;
-  return { address, water };
+  const h = hashAddress(address);
+  const water = WATERS[WATER_ORDER[h % WATER_ORDER.length]!]!;
+  // A second, independent stream, so the adjective does not move in lockstep
+  // with the water — otherwise every trench would be called the same thing.
+  const adjective = ADJECTIVES[mix32(h + 0x5bf03635) % ADJECTIVES.length]!;
+  return { address, water, name: `${adjective} ${NOUNS[water.key]}` };
 }

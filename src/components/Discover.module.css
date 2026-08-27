@@ -29,8 +29,34 @@
   border-radius: 10px;
   padding: 13px 18px;
   cursor: pointer;
+  /* It is a link now, so none of the button defaults apply: centring and the
+     missing underline both have to be said out loud. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-decoration: none;
+  text-align: center;
 }
 .cta:disabled { opacity: 0.45; cursor: default; }
+
+/* No charges: the door is shut, and it should look shut rather than inviting. */
+.ctaOff {
+  background: var(--surface-2, #e1eaef);
+  border-color: var(--line);
+  color: var(--muted);
+  cursor: default;
+}
+.ctaOff .bob { animation: none; opacity: 0.5; }
+
+.bob { animation: bob 1.9s ease-in-out infinite; flex: none; }
+@keyframes bob {
+  0%, 100% { transform: translateY(-1.5px) rotate(-4deg); }
+  50% { transform: translateY(2px) rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bob { animation: none; }
+}
 .cta:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
 
 .found {

@@ -11,6 +11,7 @@ import styles from './page.module.css';
 
 interface Pond {
   address: string;
+  name: string;
   water: WaterKey;
   label: string;
   blurb: string;
@@ -238,6 +239,7 @@ export default function Fish() {
                   <button className={styles.pond} onClick={() => setPond(p)} type="button">
                     <Avatar address={p.address} size={32} />
                     <span className={styles.pondText}>
+                      <strong>{p.name}</strong>
                       <code>{truncateAddress(p.address)}</code>
                       <small>
                         {p.stakers} {p.stakers === 1 ? 'staker' : 'stakers'}
@@ -266,7 +268,8 @@ export default function Fish() {
 
       <div className={styles.pondName}>
         <Avatar address={pond.address} size={26} />
-        <strong>{pond.label}</strong>
+        <strong>{pond.name}</strong>
+        <small>{pond.label}</small>
       </div>
 
       {/* The whole surface is the strike target. Asking for a small button

@@ -17,7 +17,7 @@ import { depthForStake } from '@/lib/reef/vessel';
 import { foodInWater } from '@/lib/reef/feeding';
 import { SPECIES } from '@/lib/reef/species';
 import { SEEDED_COMMUNITY, layoutCommunity, type CommunityPlant } from '@/lib/reef/community';
-import { formatNim } from '@/lib/nimiq/policy';
+import { formatNimShort } from '@/lib/nimiq/policy';
 import { useLocale } from '@/lib/i18n';
 import type { ReefState } from '@/lib/reef/state';
 import type { ProviderKind } from '@/lib/nimiq/types';
@@ -37,6 +37,15 @@ export default function Home() {
   const [community, setCommunity] = useState<Community | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  /**
+   * False until we know whose reef this is.
+   *
+   * The community tank used to render on the first paint and then be replaced
+   * once the session resolved, so a refresh showed a stranger's fish for a
+   * beat and then "lost" them. An empty tank for that beat is honest; the
+   * wrong tank is not.
+   */
+  const [known, setKnown] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
@@ -55,9 +64,12 @@ export default function Home() {
     void getProvider()
       .then((p) => setKind(p.kind))
       .catch((e) => report('getProvider', e));
-    void currentSession().then((address) => {
-      if (address) void load();
-    });
+    void currentSession()
+      .then(async (address) => {
+        if (address) await load();
+      })
+      .catch((e) => report('session', e))
+      .finally(() => setKnown(true));
   }, [load]);
 
   async function connect(fresh = false) {
@@ -75,7 +87,11 @@ export default function Home() {
   }
 
   const communityPlants = community?.plants.length ? community.plants : SEEDED_COMMUNITY;
-  const inhabitants = reef ? adaptPlants(reef.plants) : adaptPlants(layoutCommunity(communityPlants));
+  const inhabitants = !known
+    ? []
+    : reef
+      ? adaptPlants(reef.plants)
+      : adaptPlants(layoutCommunity(communityPlants));
 
   return (
     <main className={styles.wrap}>
@@ -110,7 +126,7 @@ export default function Home() {
             </div>
             <div>
               <dt>{t('staked')}</dt>
-              <dd>{reef.stakedLuna > 0 ? formatNim(reef.stakedLuna) : '—'}</dd>
+              <dd>{reef.stakedLuna > 0 ? formatNimShort(reef.stakedLuna) : '—'}</dd>
             </div>
             <div>
               <dt>{t('slots')}</dt>

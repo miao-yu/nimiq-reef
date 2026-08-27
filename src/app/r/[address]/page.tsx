@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { publicReef } from '@/lib/server/reef-repo';
 import { SPECIES } from '@/lib/reef/species';
-import { formatNim } from '@/lib/nimiq/policy';
+import { formatNimShort } from '@/lib/nimiq/policy';
 import { formatAddress, normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
 import styles from './page.module.css';
 
@@ -79,7 +79,7 @@ export default async function ReefPage({ params }: { params: Promise<{ address: 
 
       <dl className={styles.stats}>
         <div><dt>Days staked</dt><dd>{reef.daysStaked}</dd></div>
-        <div><dt>Staked</dt><dd>{formatNim(reef.stakedLuna)} NIM</dd></div>
+        <div><dt>Staked</dt><dd>{formatNimShort(reef.stakedLuna)} NIM</dd></div>
         <div><dt>Fed</dt><dd>{reef.receivedLifetime}</dd></div>
       </dl>
 

@@ -57,13 +57,20 @@ export function Discover({ reef }: { reef: ReefState }) {
       </div>
 
       <Link
-        className={styles.cta}
+        className={`${styles.cta} ${reef.charges < 1 ? styles.ctaOff : ''}`}
         href="/fish"
         aria-disabled={reef.charges < 1}
         onClick={(e) => {
           if (reef.charges < 1) e.preventDefault();
         }}
       >
+        {/* A float, bobbing. The button is the way into the only part of the
+            app you actually do, and a flat green rectangle did not say so. */}
+        <svg className={styles.bob} viewBox="0 0 16 22" width="15" height="21" aria-hidden="true">
+          <path d="M8 0v6" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          <path d="M8 6a5 5 0 0 1 5 5c0 3-5 9-5 9S3 14 3 11a5 5 0 0 1 5-5z" fill="#E5473B" />
+          <path d="M3.6 13.5h8.8C11.3 16.6 8 20 8 20s-3.3-3.4-4.4-6.5z" fill="#F4F1EA" />
+        </svg>
         {t('goFishing')}
       </Link>
 

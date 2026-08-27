@@ -26,9 +26,10 @@ export async function GET() {
 
     const ponds = validators
       .map((v) => {
-        const { water } = pondFor(v.address);
+        const { water, name } = pondFor(v.address);
         return {
           address: v.address,
+          name,
           water: water.key,
           label: water.label,
           blurb: water.blurb,

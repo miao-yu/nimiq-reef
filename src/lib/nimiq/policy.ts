@@ -31,6 +31,20 @@ export function formatNim(luna: number, locale = 'en'): string {
   return new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(lunaToNim(luna));
 }
 
+/**
+ * Short form, for the places a balance is glanced at rather than read.
+ *
+ * "332,446.74" is eleven characters of precision nobody wants in a stat tile;
+ * "332.4K" is the same fact. The exact figure stays wherever somebody is
+ * actually deciding an amount.
+ */
+export function formatNimShort(luna: number, locale = 'en'): string {
+  return new Intl.NumberFormat(locale, {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  }).format(lunaToNim(luna));
+}
+
 export function meetsMinimumStake(luna: number): boolean {
   return luna >= MINIMUM_STAKE_LUNA;
 }
