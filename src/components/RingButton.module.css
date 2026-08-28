@@ -20,19 +20,22 @@
   background: var(--tone);
   /* Ready: a warm rim and a glow, so "you can press this" is legible from
      across the room rather than only on inspection. */
-  border: 1.5px solid rgba(252, 135, 2, 0.85);
+  border: 1.5px solid var(--ready);
   box-shadow:
     0 6px 18px rgba(0, 0, 0, 0.38),
-    0 0 14px rgba(252, 135, 2, 0.45),
+    0 0 16px var(--readyGlow),
     inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: transform 0.12s ease;
 }
 /*
- * Nimiq's orange, the same one the identicon palette uses. It is the warmest
- * thing available against blue water, which is what a control that is ready to
- * press should be — the tank is every other colour on the screen.
+ * Gold. Brighter than Nimiq's orange against deep blue, and it is the one hue
+ * on the screen nothing in the tank uses — the fish run warm-orange through
+ * green to magenta, so gold reads as "control", never as another creature.
  */
-.button { --ready: #fc8702; }
+.button {
+  --ready: #ffc93c;
+  --readyGlow: rgba(255, 201, 60, 0.55);
+}
 .leaf { --tone: #2f7350; }
 .coral { --tone: #c1614a; }
 
@@ -52,7 +55,7 @@
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
 .off .glyph { opacity: 0.75; }
-.off .label { color: rgba(255, 255, 255, 0.88); }
+.off .label { color: #fff; }
 
 .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .track { fill: none; stroke: rgba(255, 255, 255, 0.24); stroke-width: 3.5; }
@@ -61,7 +64,7 @@
   stroke: var(--ready);
   stroke-width: 3.5;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 3px rgba(252, 135, 2, 0.7));
+  filter: drop-shadow(0 0 4px var(--readyGlow));
   transition: stroke-dasharray 0.4s linear;
 }
 /* Asleep: the ring is still information, but it should not shout. */
@@ -82,8 +85,13 @@
    * on the seabed, which is dark, so a dark translucent pill gave no
    * separation at all. Nearly opaque, and the type is heavier.
    */
+  /*
+   * Pure white on a near-solid ground. White only looks white next to
+   * something dark enough — at 0.86 over the seabed the pill was still
+   * sampling the sand and the type came out grey.
+   */
   color: #fff;
-  background: rgba(6, 18, 25, 0.86);
+  background: rgba(4, 13, 19, 0.94);
   padding: 3px 11px;
   border-radius: 999px;
 }
@@ -106,5 +114,5 @@
 .pipOn {
   background: var(--ready);
   border-color: var(--ready);
-  box-shadow: 0 0 7px rgba(252, 135, 2, 0.9);
+  box-shadow: 0 0 8px rgba(255, 201, 60, 0.95);
 }
