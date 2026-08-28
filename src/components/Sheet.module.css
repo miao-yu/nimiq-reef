@@ -58,3 +58,16 @@
   flex-direction: column;
   gap: 14px;
 }
+
+/*
+ * Nothing in the sheet may shrink.
+ *
+ * A flex item's automatic minimum size is its content — except when it sets
+ * `overflow: hidden`, where it resolves to zero and the item collapses. The
+ * field guide does set it, so it rendered as an empty 20px strip while every
+ * other panel was fine. The failure is silent: the text is in the DOM and the
+ * accessibility tree, just squeezed to nothing.
+ */
+.body > * {
+  flex: none;
+}

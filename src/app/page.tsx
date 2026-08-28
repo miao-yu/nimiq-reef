@@ -55,6 +55,13 @@ export default function Home() {
     else setReef(null);
   }, []);
 
+  // Hold the document still for as long as this screen is mounted. See
+  // `html.stage` in globals.css.
+  useEffect(() => {
+    document.documentElement.classList.add('stage');
+    return () => document.documentElement.classList.remove('stage');
+  }, []);
+
   useEffect(() => {
     installErrorReporting();
     // Unconditional and first: the page has to be alive before anybody is

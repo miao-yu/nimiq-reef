@@ -68,7 +68,7 @@
   bottom: calc(env(safe-area-inset-bottom, 0px) + 146px);
   z-index: 3;
   border: none;
-  background: rgba(8, 22, 30, 0.55);
+  background: rgba(8, 22, 30, 0.66);
   color: #fff;
   font-size: 0.9rem;
   font-weight: 600;
@@ -78,7 +78,8 @@
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  backdrop-filter: blur(6px);
+  /* No backdrop-filter: it resamples the animating canvas underneath every
+     frame, which on iOS makes the layer shimmer. A solid tint is free. */
   -webkit-tap-highlight-color: transparent;
 }
 

@@ -119,6 +119,27 @@ body {
   user-select: none;
 }
 
+/*
+ * The game screen is not a document, and must never scroll like one.
+ *
+ * On iOS, a page that can scroll even slightly lets Safari retract its toolbar,
+ * which changes the visual viewport and moves everything — in a recording the
+ * whole stage jumped about thirty pixels the moment the sheet opened and stayed
+ * there. Locking the document removes the cause rather than the symptom.
+ *
+ * Applied by the home screen only, since /fish, /preview and the reef pages are
+ * ordinary documents that do need to scroll.
+ */
+html.stage,
+html.stage body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  position: fixed;
+  inset: 0;
+  width: 100%;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

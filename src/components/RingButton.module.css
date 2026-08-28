@@ -64,10 +64,9 @@
   white-space: nowrap;
   /* A shadow is not enough over pale water; the pill is what guarantees it. */
   color: #fff;
-  background: rgba(8, 22, 30, 0.5);
+  background: rgba(8, 22, 30, 0.62);
   padding: 2px 9px;
   border-radius: 999px;
-  backdrop-filter: blur(4px);
 }
 
 /* Charges, read at a glance without a number. */

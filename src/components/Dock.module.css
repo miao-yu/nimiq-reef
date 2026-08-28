@@ -21,10 +21,9 @@
   font-size: 0.82rem;
   font-weight: 500;
   color: #fff;
-  background: rgba(8, 22, 30, 0.72);
+  background: rgba(8, 22, 30, 0.82);
   border-radius: 999px;
   padding: 7px 14px;
-  backdrop-filter: blur(6px);
   animation: rise 0.22s ease-out;
 }
 @keyframes rise {

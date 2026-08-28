@@ -54,23 +54,6 @@ export function Sheet({
     if (!open) setDrag(0);
   }, [open]);
 
-  /*
-   * Hold the page still underneath.
-   *
-   * Without this the document behind kept scrolling and rubber-banding while
-   * the sheet was open, which on iOS also shows and hides the Safari toolbar —
-   * and that resizes the stage, so the header appeared to shake.
-   */
-  useEffect(() => {
-    if (!open) return;
-    const root = document.documentElement;
-    const previous = root.style.overflow;
-    root.style.overflow = 'hidden';
-    return () => {
-      root.style.overflow = previous;
-    };
-  }, [open]);
-
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
