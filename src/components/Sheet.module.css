@@ -22,10 +22,15 @@
   border-radius: 20px 20px 0 0;
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
   transform: translateY(101%);
-  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  /* Not in the layout at all while closed, so it can neither be focused nor
+     scrolled to. visibility flips on open before the transform animates. */
+  visibility: hidden;
+  transition:
+    transform 0.28s cubic-bezier(0.32, 0.72, 0, 1),
+    visibility 0s 0.28s;
   outline: none;
 }
-.sheetOn { transform: none; }
+.sheetOn { transform: none; visibility: visible; transition-delay: 0s; }
 @media (prefers-reduced-motion: reduce) {
   .sheet, .scrim { transition: none; }
 }

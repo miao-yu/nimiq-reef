@@ -60,7 +60,9 @@ export function Sheet({
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKey);
-    panel.current?.focus();
+    // preventScroll: focusing scrolls the nearest scrollable ancestor to reveal
+    // the element, and this one starts off-screen on purpose.
+    panel.current?.focus({ preventScroll: true });
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
 
