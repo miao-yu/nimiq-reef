@@ -17,14 +17,16 @@
   position: absolute;
   inset: 6px;
   border-radius: 50%;
-  background: var(--tone);
+  /* A little lighter at the top: a lit sphere rather than a flat disc, which
+     is most of what makes a control look pressable. */
+  background: linear-gradient(180deg, var(--toneTop), var(--tone));
   /* Ready: a warm rim and a glow, so "you can press this" is legible from
      across the room rather than only on inspection. */
   border: 1.5px solid var(--ready);
   box-shadow:
-    0 6px 18px rgba(0, 0, 0, 0.38),
-    0 0 16px var(--readyGlow),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    0 6px 20px rgba(0, 0, 0, 0.42),
+    0 0 18px var(--readyGlow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
   transition: transform 0.12s ease;
 }
 /*
@@ -36,8 +38,14 @@
   --ready: #ffc93c;
   --readyGlow: rgba(255, 201, 60, 0.55);
 }
-.leaf { --tone: #2f7350; }
-.coral { --tone: #c1614a; }
+/*
+ * Ready tones are lifted well above the app's ink-on-paper greens and corals.
+ * Those were picked for a white card; sitting on deep water they read as
+ * translucent even though they are solid, because there is barely any
+ * luminance between the fill and the tank behind it.
+ */
+.leaf { --tone: #3fa572; --toneTop: #58c98f; }
+.coral { --tone: #e0714f; --toneTop: #f08e6c; }
 
 .button:active::before { transform: scale(0.93); }
 .button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
@@ -51,6 +59,7 @@
 .off { cursor: default; }
 .off::before {
   background: rgba(255, 255, 255, 0.2);
+  background-image: none;
   border: 1.5px solid rgba(255, 255, 255, 0.4);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
 }
