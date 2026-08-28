@@ -1,0 +1,64 @@
+/*
+ * A screen, not a document.
+ *
+ * The app is a fixed-height stage with the tank behind everything and the
+ * controls floating on it. On a phone that is the whole viewport; on a desktop
+ * it is a phone-shaped stage centred on the page, because a Mini App that
+ * stretches to 3440px is neither a game nor a website.
+ */
+.screen {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  /*
+   * svh, not dvh. On iOS Safari the toolbar collapses when the sheet opens and
+   * dvh changes with it, so the whole stage resized mid-animation and the
+   * header visibly jumped. svh is the smallest viewport height and does not
+   * move, which costs a little room and buys a screen that holds still.
+   */
+  height: 100svh;
+  max-height: 940px;
+  margin: 0 auto;
+  /*
+   * clip, not hidden. An overflow:hidden box is still a scroll container — it
+   * only hides the bar — and the sheet, translated 101% below the stage while
+   * closed, extends this box's scrollable area by its own height. Focusing the
+   * sheet then scrolled the stage to reveal it: measured, main.scrollTop went
+   * 0 → 562 the instant it opened, and the header sat at -533px. On a phone
+   * that read as the whole background jumping. clip is not a scroll container
+   * and cannot be scrolled by anything.
+   */
+  overflow: clip;
+  background: var(--tank-water-deep, #0a2739);
+  isolation: isolate;
+}
+@media (min-width: 520px) and (min-height: 700px) {
+  .screen {
+    height: min(92svh, 900px);
+    margin-top: max(0px, calc((100svh - min(92svh, 900px)) / 2));
+    border-radius: 26px;
+    box-shadow: 0 24px 70px rgba(6, 20, 28, 0.35);
+  }
+}
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+/* Type over moving water needs a floor under it. */
+.topScrim, .bottomScrim { position: absolute; left: 0; right: 0; pointer-events: none; z-index: 1; }
+.topScrim {
+  top: 0;
+  height: 128px;
+  background: linear-gradient(rgba(4, 18, 26, 0.55), rgba(4, 18, 26, 0));
+}
+.bottomScrim {
+  bottom: 0;
+  height: 210px;
+  background: linear-gradient(rgba(4, 18, 26, 0), rgba(4, 18, 26, 0.62));
+}
+.hud {
+  position: absolute;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  padding: 10px 14px 0;
+  color: #fff;
+}

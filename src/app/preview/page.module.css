@@ -1,52 +1,89 @@
-.wrap {
-  min-height: 100dvh;
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.back {
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+}
+.tag {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(8, 22, 30, 0.6);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+/* The two sliders are the whole page. They sit on the water like the dock. */
+.dock {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+  z-index: 3;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
-  max-width: 660px;
-  margin-inline: auto;
+  gap: 14px;
+  padding: 0 20px;
+  color: #fff;
 }
-.head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-.title { margin: 0; font-size: 1.45rem; letter-spacing: -0.02em; }
-.sub { font-size: 0.8rem; color: var(--muted); }
+.ctl { display: flex; flex-direction: column; gap: 5px; }
+.row { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; font-weight: 600; }
+.row b { font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+.ctl small { font-size: 0.75rem; color: rgba(255, 255, 255, 0.78); }
+.ctl span, .ctl small { text-shadow: 0 1px 5px rgba(0, 0, 0, 0.6); }
 
-.canvasFrame { border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--surface); }
-.canvas { display: block; width: 100%; height: 340px; }
-@media (max-width: 560px) { .canvas { height: 260px; } }
-
-.controls { display: flex; flex-direction: column; gap: 14px; }
-.ctl { display: flex; flex-direction: column; gap: 5px; font-size: 0.88rem; }
-.ctl > span { display: flex; justify-content: space-between; }
-.ctl b { font-variant-numeric: tabular-nums; }
-.ctl small { color: var(--muted); font-size: 0.78rem; }
-.ctl input { width: 100%; accent-color: var(--leaf); }
-
-.odds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
-.odds div { border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; background: var(--surface); }
-.odds dt { font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.odds dd { margin: 0; font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-.note { margin: 0; font-size: 0.85rem; color: var(--muted); }
-.reseed {
-  align-self: flex-start;
-  font-size: 0.78rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+/* Hand-styled, because the native control is a grey bar that vanishes here. */
+.slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
   background: none;
-  border: 1px solid var(--line-strong, var(--line));
-  color: var(--muted);
-  border-radius: 8px;
-  padding: 8px 13px;
   cursor: pointer;
 }
-.reseed:hover { color: var(--ink); border-color: var(--leaf); }
-
-.back {
-  align-self: flex-start;
-  font-size: 0.85rem;
-  color: var(--muted);
-  text-decoration: none;
+.slider::-webkit-slider-runnable-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.34);
 }
-.back:hover { color: var(--ink); }
-.back:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
+.slider::-moz-range-track {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.34);
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8.5px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+.slider:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 4px; }
+
+.reseed {
+  align-self: center;
+  margin-top: 2px;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 9px 20px;
+  cursor: pointer;
+}
+.reseed:hover { background: rgba(255, 255, 255, 0.22); }
+.reseed:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }

@@ -2,22 +2,26 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { Tank } from '@/components/Tank';
-import { depthForStake } from '@/lib/reef/vessel';
+import { Stage } from '@/components/Stage';
+import { depthForStake, slotsFor } from '@/lib/reef/vessel';
 import { SPECIES, SPECIES_ORDER, speciesUnlocked } from '@/lib/reef/species';
-import { tierWeights, slotsFor } from '@/lib/reef/progression';
-import { rng } from '@/lib/tank/rng';
-import type { Inhabitant } from '@/lib/tank/types';
+import { formatNimShort } from '@/lib/nimiq/policy';
 import { useLocale } from '@/lib/i18n';
+import type { Inhabitant } from '@/lib/tank/types';
+import stage from '@/components/Stage.module.css';
 import styles from './page.module.css';
 
 /**
- * The simulator.
+ * The simulator, on the same stage as the real thing.
  *
  * Progression runs to a year, which is right for an asset people stake for
  * years but leaves anybody evaluating the app in a fortnight staring at day
- * one. This shows the whole arc in ten seconds, and it costs almost nothing
- * because the renderer is already fully parametric.
+ * one. Two sliders show the whole arc in ten seconds, and it costs almost
+ * nothing because the renderer is already fully parametric.
+ *
+ * The two sliders are the model: money sets the depth and the room, time sets
+ * what lives in it. Nothing else is on screen, because everything else was
+ * commentary on those two.
  *
  * Labelled a preview throughout — never dressed up as somebody's own reef.
  */
@@ -29,10 +33,6 @@ import styles from './page.module.css';
  * built; and beyond that, do not spend the long-haul reveals here — the
  * octopus, the turtle and the whale are the reasons to still be staking in six
  * months, and a slider that shows them for free is a slider that spends them.
- *
- * The field guide still lists them as silhouettes with their unlock day, so
- * people know a whale exists at 365. Knowing it exists without having seen it
- * is the stronger version.
  */
 const PREVIEW_CAP_DAYS = 90;
 const LAST_BUILT = Math.max(...SPECIES_ORDER.map((k) => SPECIES[k].unlockDay));
@@ -40,39 +40,20 @@ const MAX_DAY = Math.min(PREVIEW_CAP_DAYS, LAST_BUILT);
 
 /** A plausible tank for a given day, not a real one. Deterministic per day. */
 function populate(days: number, seed: number): Inhabitant[] {
-  const unlocked = speciesUnlocked(days);
-  const out: Inhabitant[] = [];
-  let n = 0;
-  unlocked.forEach((species, i) => {
+  return speciesUnlocked(days).flatMap((species, i) => {
     const def = SPECIES[species];
     // Commoner things school; an apex predator does not.
     const count =
       def.tier === 'common' ? 3 : def.tier === 'uncommon' ? 2 : def.tier === 'rare' ? 2 : 1;
-    for (let k = 0; k < count; k++) {
+    return Array.from({ length: count }, (_, k) => ({
+      species,
+      tier: def.tier,
       // Assume it was found near its unlock day, so dragging the year forward
-      // also ages what is already in the tank rather than only adding to it.
-      out.push({
-        species,
-        tier: def.tier,
-        ageDays: Math.max(0, days - def.unlockDay),
-        seed: seed + i * 7919 + k * 104729,
-      });
-      n++;
-    }
+      // ages what is already in the tank rather than only adding to it.
+      ageDays: Math.max(0, days - def.unlockDay),
+      seed: seed + i * 7919 + k * 104729,
+    }));
   });
-  void n;
-  return out;
-}
-
-/**
- * Names the next species only while it is inside the cap. Past that it stays
- * unnamed — otherwise the line under the slider announces the octopus long
- * before the slider itself would ever show one.
- */
-function nextLine(days: number): string {
-  const next = SPECIES_ORDER.find((k) => SPECIES[k].unlockDay > days);
-  if (!next || SPECIES[next].unlockDay > MAX_DAY) return 'And more, over the years.';
-  return `${SPECIES[next].label} arrives on day ${SPECIES[next].unlockDay}.`;
 }
 
 export default function Preview() {
@@ -81,77 +62,69 @@ export default function Preview() {
   const [nimSlider, setNimSlider] = useState(0);
   const [seed, setSeed] = useState(20260826);
 
+  // Logarithmic: the interesting range spans four orders of magnitude, and a
+  // linear slider would spend nine tenths of its travel above 100k.
   const nim = Math.round(Math.pow(10, 2 + (nimSlider / 1000) * 4));
   const inhabitants = useMemo(() => populate(days, seed), [days, seed]);
-  const weights = tierWeights(days);
 
   return (
-    <main className={styles.wrap}>
-      <div className={styles.head}>
-        <h1 className={styles.title}>Preview</h1>
-        <span className={styles.sub}>Not your reef — a simulation</span>
-      </div>
-      <Link className={styles.back} href="/">
-        ← {t('backToReef')}
-      </Link>
+    <Stage
+      inhabitants={inhabitants}
+      waterLevel={depthForStake(nim * 1e5)}
+      label={`A simulated reef after ${days} days staked with ${nim} NIM.`}
+    >
+      <header className={stage.hud}>
+        <div className={styles.head}>
+          <Link className={styles.back} href="/">
+            ← {t('backToReef')}
+          </Link>
+          <span className={styles.tag}>Preview — not your reef</span>
+        </div>
+      </header>
 
-      <div className={styles.canvasFrame}>
-        <Tank
-          inhabitants={inhabitants}
-          waterLevel={depthForStake(nim * 1e5)}
-          className={styles.canvas}
-          label={`A simulated reef after ${days} days staked with ${nim} NIM.`}
-        />
-      </div>
-
-      <div className={styles.controls}>
+      <div className={styles.dock}>
         <label className={styles.ctl}>
-          <span>
-            NIM staked <b>{nim.toLocaleString('en-US')}</b>
+          <span className={styles.row}>
+            <span>NIM staked</span>
+            <b>{formatNimShort(nim * 1e5)}</b>
           </span>
           <input
+            className={styles.slider}
             type="range"
             min={0}
             max={1000}
             value={nimSlider}
             onChange={(e) => setNimSlider(Number(e.target.value))}
+            aria-label="NIM staked"
           />
-          <small>Sets the depth — {slotsFor(nim * 1e5)} places to display something.</small>
+          <small>Depth, and {slotsFor(nim * 1e5)} places to display something.</small>
         </label>
 
         <label className={styles.ctl}>
-          <span>
-            Days staked <b>{days}</b>
+          <span className={styles.row}>
+            <span>Days staked</span>
+            <b>{days}</b>
           </span>
           <input
+            className={styles.slider}
             type="range"
             min={1}
             max={MAX_DAY}
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
+            aria-label="Days staked"
           />
-          <small>Fills it — species, numbers, and the odds below.</small>
+          <small>What lives in it, and how likely a rare one is.</small>
         </label>
+
+        <button
+          className={styles.reseed}
+          onClick={() => setSeed(Math.floor(Math.random() * 1e9))}
+          type="button"
+        >
+          New seed
+        </button>
       </div>
-
-      <div className={styles.odds}>
-        {(['common', 'uncommon', 'rare', 'legendary'] as const).map((tier) => (
-          <div key={tier}>
-            <dt>{tier}</dt>
-            <dd>{weights[tier].toFixed(1)}%</dd>
-          </div>
-        ))}
-      </div>
-
-      <p className={styles.note}>{nextLine(days)}</p>
-
-      <button className={styles.reseed} onClick={() => setSeed(Math.floor(Math.random() * 1e9))} type="button">
-        New seed
-      </button>
-      <p className={styles.note}>
-        Common species look identical for everyone. Press <em>New seed</em> and watch only the rare
-        ones change — that uniformity is what makes a rare one legible as rare without a label.
-      </p>
-    </main>
+    </Stage>
   );
 }

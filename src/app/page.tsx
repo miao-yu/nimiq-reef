@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Tank } from '@/components/Tank';
+import { Stage } from '@/components/Stage';
 import { GivePanel } from '@/components/GivePanel';
 import { Dock } from '@/components/Dock';
 import { Sheet } from '@/components/Sheet';
@@ -22,6 +22,7 @@ import { formatNimShort } from '@/lib/nimiq/policy';
 import { useLocale } from '@/lib/i18n';
 import type { ReefState } from '@/lib/reef/state';
 import type { ProviderKind } from '@/lib/nimiq/types';
+import stage from '@/components/Stage.module.css';
 import styles from './page.module.css';
 
 interface Community {
@@ -53,13 +54,6 @@ export default function Home() {
     const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
     if (res.ok) setReef((await res.json()) as ReefState);
     else setReef(null);
-  }, []);
-
-  // Hold the document still for as long as this screen is mounted. See
-  // `html.stage` in globals.css.
-  useEffect(() => {
-    document.documentElement.classList.add('stage');
-    return () => document.documentElement.classList.remove('stage');
   }, []);
 
   useEffect(() => {
@@ -111,19 +105,12 @@ export default function Home() {
      * out it is the same shape, so the app never rearranges itself under
      * somebody who has just signed in.
      */
-    <main className={styles.screen}>
-      <Tank
-        inhabitants={inhabitants}
-        waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
-        feedings={reef ? foodInWater(reef) : 0}
-        className={styles.canvas}
-      />
-
-      {/* Scrims, so type over moving water always holds. */}
-      <div className={styles.topScrim} aria-hidden="true" />
-      <div className={styles.bottomScrim} aria-hidden="true" />
-
-      <header className={styles.hud}>
+    <Stage
+      inhabitants={inhabitants}
+      waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
+      feedings={reef ? foodInWater(reef) : 0}
+    >
+      <header className={stage.hud}>
         {reef ? (
           <AccountBar reef={reef} onSignOut={() => void signOut().then(() => setReef(null))} />
         ) : (
@@ -236,6 +223,6 @@ export default function Home() {
       )}
 
       {error ? <p className={styles.error}>{error}</p> : null}
-    </main>
+    </Stage>
   );
 }
