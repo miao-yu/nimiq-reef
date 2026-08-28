@@ -18,9 +18,21 @@
   inset: 6px;
   border-radius: 50%;
   background: var(--tone);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  /* Ready: a warm rim and a glow, so "you can press this" is legible from
+     across the room rather than only on inspection. */
+  border: 1.5px solid rgba(252, 135, 2, 0.85);
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.38),
+    0 0 14px rgba(252, 135, 2, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
   transition: transform 0.12s ease;
 }
+/*
+ * Nimiq's orange, the same one the identicon palette uses. It is the warmest
+ * thing available against blue water, which is what a control that is ready to
+ * press should be — the tank is every other colour on the screen.
+ */
+.button { --ready: #fc8702; }
 .leaf { --tone: #2f7350; }
 .coral { --tone: #c1614a; }
 
@@ -43,14 +55,17 @@
 .off .label { color: rgba(255, 255, 255, 0.88); }
 
 .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-.track { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 3; }
+.track { fill: none; stroke: rgba(255, 255, 255, 0.24); stroke-width: 3.5; }
 .fill {
   fill: none;
-  stroke: #fff;
-  stroke-width: 3;
+  stroke: var(--ready);
+  stroke-width: 3.5;
   stroke-linecap: round;
+  filter: drop-shadow(0 0 3px rgba(252, 135, 2, 0.7));
   transition: stroke-dasharray 0.4s linear;
 }
+/* Asleep: the ring is still information, but it should not shout. */
+.off .fill { stroke: rgba(255, 255, 255, 0.55); filter: none; }
 
 .glyph { position: relative; display: grid; place-items: center; width: 30px; height: 30px; }
 
@@ -58,14 +73,18 @@
   position: absolute;
   top: 100%;
   margin-top: 5px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
   white-space: nowrap;
-  /* A shadow is not enough over pale water; the pill is what guarantees it. */
+  /*
+   * A shadow is not enough over water, and neither was a faint pill: these sit
+   * on the seabed, which is dark, so a dark translucent pill gave no
+   * separation at all. Nearly opaque, and the type is heavier.
+   */
   color: #fff;
-  background: rgba(8, 22, 30, 0.62);
-  padding: 2px 9px;
+  background: rgba(6, 18, 25, 0.86);
+  padding: 3px 11px;
   border-radius: 999px;
 }
 
@@ -84,4 +103,8 @@
   border: 1px solid rgba(255, 255, 255, 0.45);
   box-sizing: border-box;
 }
-.pipOn { background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); }
+.pipOn {
+  background: var(--ready);
+  border-color: var(--ready);
+  box-shadow: 0 0 7px rgba(252, 135, 2, 0.9);
+}
