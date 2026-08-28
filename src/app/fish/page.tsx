@@ -221,8 +221,8 @@ export default function Fish() {
         </header>
         <h1 className={styles.title}>Pick a pond</h1>
         <p className={styles.sub}>
-          Every validator is water of its own. What lives there depends on the water — not on how
-          much you have staked.
+          Every staking pool is water of its own. What lives there depends on the water — not on
+          how much you have staked.
         </p>
         {error ? <p className={styles.error}>{error}</p> : null}
         {/* Grouped by water. Six waters across ~37 validators means the same

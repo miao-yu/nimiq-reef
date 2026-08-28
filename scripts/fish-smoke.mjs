@@ -41,16 +41,32 @@ if (!pond) { console.log('\n  SKIP — no ponds from the node'); process.exit(fa
 check('every pond has water and a face', pondsBody.ponds.every((p) => p.water && p.label && p.address));
 
 /*
- * Ponds must be the *elected* set, not merely the active one.
+ * Ponds are the staking pools among the elected validators.
  *
- * getActiveValidators returns everything not deactivated — 37 against the 29
- * the election actually chose — and the difference is invisible in the UI. The
- * slots of an elected set always sum to the policy total, so this catches a
- * silent slip back to the wrong call.
+ * Two ways this goes wrong silently, and both are invisible in the UI. It
+ * could slip back to getActiveValidators, which returns everything not
+ * deactivated rather than what the election chose; or the pool filter could
+ * stop filtering and let the solo nodes back in.
+ *
+ * Every pool is in the public registry by definition — that is where
+ * payoutType comes from — so every pond must carry an operator name. A pond
+ * without one means an unregistered validator got through.
  */
-const { Policy } = await import('@nimiq/core');
-const slots = pondsBody.ponds.reduce((n, p) => n + (p.slots ?? 0), 0);
-check('ponds are the elected set', slots === Policy.SLOTS, `${slots} slots of ${Policy.SLOTS}`);
+const { body: electedBody } = await call('/api/validators', { headers: { cookie } });
+const elected = new Set((electedBody.validators ?? []).map((v) => v.address));
+const ponds = pondsBody.ponds;
+
+check(
+  'every pond is an elected validator',
+  ponds.every((p) => elected.has(p.address)),
+  `${ponds.length} ponds of ${elected.size} elected`,
+);
+check('the list is filtered, not the whole election', ponds.length < elected.size);
+check(
+  'every pond is a registered pool',
+  ponds.length > 0 && ponds.every((p) => typeof p.validator === 'string' && p.validator.length > 0),
+  ponds.filter((p) => !p.validator).map((p) => p.address).join(', ') || 'all named',
+);
 
 const junk = await post('/api/fish', { pond: 'not-an-address', outcome: 'landed' }, cookie);
 check('a malformed pond is refused', junk.status === 400, `HTTP ${junk.status}`);

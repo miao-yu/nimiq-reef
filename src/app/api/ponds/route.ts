@@ -9,8 +9,17 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * The ponds: every validator elected for this epoch, with the water its address
- * gives it.
+ * The ponds: the staking pools elected for this epoch, with the water each
+ * address gives it.
+ *
+ * Pools, not every elected validator. Half the elected set is solo nodes with
+ * a handful of stakers and no registry entry — nothing a player could
+ * meaningfully choose between, and nothing with a name or a face to show. What
+ * is left is fifteen recognisable pools, every one of them with a real logo.
+ *
+ * Your own validator is always in the list even if it is not a pool. Dropping
+ * it would take the "yours" badge and its bonus away from anybody who
+ * delegates to a solo node, which is a stranger outcome than a short list.
  *
  * The list rotates on the chain's clock — the elected set changes at each
  * election block — but a pond's character is keyed to its address, so a
@@ -30,6 +39,10 @@ export async function GET() {
     ]);
 
     const ponds = validators
+      .filter((v) => {
+        const meta = known.get(v.address.replace(/\s+/g, '').toUpperCase());
+        return meta?.isPool || state.delegation === v.address;
+      })
       .map((v) => {
         const { water, name } = pondFor(v.address);
         const meta = known.get(v.address.replace(/\s+/g, '').toUpperCase());

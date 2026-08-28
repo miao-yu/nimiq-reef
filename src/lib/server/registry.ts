@@ -25,6 +25,19 @@ export interface ValidatorMeta {
   name: string;
   website: string | null;
   logo: string | null;
+  /**
+   * A pool takes other people's stake and pays them for it.
+   *
+   * `payoutType` is the only field that separates one from a solo or private
+   * validator: `isListed`, `isMaintainedByNimiq` and `hasDefaultLogo` are
+   * uniform across every entry and say nothing. `restake` and `direct` are
+   * both payouts; `none` is a validator that keeps what it earns — measured
+   * against the live registry, that is Private Whalidator and Nimiq Surf.
+   *
+   * Anything absent from the registry is not a pool either: those are the
+   * solo nodes, a median of five stakers each.
+   */
+  isPool: boolean;
 }
 
 let cache: { at: number; byAddress: Map<string, ValidatorMeta> } | undefined;
@@ -49,11 +62,13 @@ async function load(): Promise<Map<string, ValidatorMeta>> {
       const address = typeof row.address === 'string' ? row.address : null;
       const name = typeof row.name === 'string' ? row.name : null;
       if (!address || !name) continue;
+      const payout = typeof row.payoutType === 'string' ? row.payoutType : null;
       byAddress.set(key(address), {
         address,
         name,
         website: typeof row.website === 'string' ? row.website : null,
         logo: typeof row.logo === 'string' ? row.logo : null,
+        isPool: payout !== null && payout !== 'none',
       });
     }
     return byAddress;
