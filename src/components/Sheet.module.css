@@ -1,0 +1,58 @@
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 14, 20, 0.5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
+  z-index: 4;
+}
+.scrimOn { opacity: 1; pointer-events: auto; }
+
+.sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 5;
+  max-height: 82%;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  transform: translateY(101%);
+  transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  outline: none;
+}
+.sheetOn { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .scrim { transition: none; }
+}
+
+.grip {
+  flex: none;
+  width: 100%;
+  padding: 11px 0 7px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.grip span {
+  display: block;
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong, #c6d3da);
+}
+
+.body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px calc(env(safe-area-inset-bottom, 0px) + 22px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}

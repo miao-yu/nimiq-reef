@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Tank } from '@/components/Tank';
-import { Discover } from '@/components/Discover';
-import { FeedPanel } from '@/components/FeedPanel';
+import { GivePanel } from '@/components/GivePanel';
+import { Dock } from '@/components/Dock';
+import { Sheet } from '@/components/Sheet';
 import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
@@ -46,6 +47,7 @@ export default function Home() {
    * wrong tank is not.
    */
   const [known, setKnown] = useState(false);
+  const [sheet, setSheet] = useState(false);
 
   const load = useCallback(async () => {
     const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
@@ -94,83 +96,93 @@ export default function Home() {
       : adaptPlants(layoutCommunity(communityPlants));
 
   return (
-    <main className={styles.wrap}>
-      {reef ? (
-        <AccountBar reef={reef} onSignOut={() => void signOut().then(() => setReef(null))} />
-      ) : (
-        <div className={styles.head}>
-          <h1 className={styles.title}>Reef</h1>
-          <span className={styles.day}>
-            {community && community.reefs > 0
-              ? t('reefsLiving', { n: community.reefs })
-              : t('communityReef')}
-          </span>
-        </div>
-      )}
+    /*
+     * A screen, not a page.
+     *
+     * The tank fills the viewport and everything else floats on it: a thin bar
+     * at the top, two actions at the bottom, and a sheet for the rest. Signed
+     * out it is the same shape, so the app never rearranges itself under
+     * somebody who has just signed in.
+     */
+    <main className={styles.screen}>
+      <Tank
+        inhabitants={inhabitants}
+        waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
+        feedings={reef ? foodInWater(reef) : 0}
+        className={styles.canvas}
+      />
 
-      <div className={styles.canvasFrame}>
-        <Tank
-          inhabitants={inhabitants}
-          waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
-          feedings={reef ? foodInWater(reef) : 0}
-          className={styles.canvas}
-        />
-      </div>
+      {/* Scrims, so type over moving water always holds. */}
+      <div className={styles.topScrim} aria-hidden="true" />
+      <div className={styles.bottomScrim} aria-hidden="true" />
+
+      <header className={styles.hud}>
+        {reef ? (
+          <AccountBar reef={reef} onSignOut={() => void signOut().then(() => setReef(null))} />
+        ) : (
+          <div className={styles.brandRow}>
+            <span className={styles.brand}>Reef</span>
+            <span className={styles.sub}>
+              {community && community.reefs > 0
+                ? t('reefsLiving', { n: community.reefs })
+                : t('communityReef')}
+            </span>
+          </div>
+        )}
+      </header>
 
       {reef ? (
         <>
-          <dl className={styles.stats}>
-            <div>
-              <dt>{t('daysStaked')}</dt>
-              <dd>{reef.daysStaked}</dd>
-            </div>
-            <div>
-              <dt>{t('staked')}</dt>
-              <dd>{reef.stakedLuna > 0 ? formatNimShort(reef.stakedLuna) : '—'}</dd>
-            </div>
-            <div>
-              <dt>{t('slots')}</dt>
-              <dd>
-                {reef.plants.length}/{reef.plotsUnlocked}
-              </dd>
-            </div>
-            <div>
-              <dt>{t('streak')}</dt>
-              <dd>{reef.feedStreak}</dd>
-            </div>
-          </dl>
+          <Dock reef={reef} onChange={setReef} />
 
-          {reef.chainOffline ? <p className={styles.warn}>{t('chainOffline')}</p> : null}
+          <button className={styles.pull} onClick={() => setSheet(true)} type="button">
+            {reef.plants.length}/{reef.plotsUnlocked} · {t('day', { n: reef.day })}
+          </button>
 
-          <Discover reef={reef} />
-          <FeedPanel reef={reef} onChange={setReef} />
-          <FieldGuide reef={reef} onChange={setReef} />
+          <Sheet open={sheet} onClose={() => setSheet(false)} title={t('day', { n: reef.day })}>
+            <dl className={styles.stats}>
+              <div>
+                <dt>{t('daysStaked')}</dt>
+                <dd>{reef.daysStaked}</dd>
+              </div>
+              <div>
+                <dt>{t('staked')}</dt>
+                <dd>{reef.stakedLuna > 0 ? formatNimShort(reef.stakedLuna) : '—'}</dd>
+              </div>
+              <div>
+                <dt>{t('slots')}</dt>
+                <dd>
+                  {reef.plants.length}/{reef.plotsUnlocked}
+                </dd>
+              </div>
+              <div>
+                <dt>{t('streak')}</dt>
+                <dd>{reef.feedStreak}</dd>
+              </div>
+            </dl>
 
-          <p className={styles.hint}>
-            {reef.next
-              ? t('unlocksAfter', {
-                  species: SPECIES[reef.next.species].label,
-                  n: reef.next.atDay,
-                  away: reef.next.daysAway,
-                })
-              : t('everythingUnlocked')}
-          </p>
+            {reef.chainOffline ? <p className={styles.warn}>{t('chainOffline')}</p> : null}
 
-          <Link className={styles.previewLink} href="/preview">
-            {t('seePreview')} →
-          </Link>
+            {/* Where charges come from stays one tap away, never further: the
+                omission fooled the person who wrote the rule once already. */}
+            <details className={styles.how}>
+              <summary>{t('chargeSource')}</summary>
+              <p>{t('chargeIncoming')}</p>
+            </details>
 
-          <StakePanel reef={reef} onDone={load} />
+            <FieldGuide reef={reef} onChange={setReef} />
+            <GivePanel reef={reef} onChange={setReef} />
+            <StakePanel reef={reef} onDone={load} />
 
+            <Link className={styles.previewLink} href="/preview">
+              {t('seePreview')} →
+            </Link>
+          </Sheet>
         </>
       ) : (
-        <>
+        <div className={styles.gate}>
           <p className={styles.hint}>{t('claimPrompt')}</p>
-          <Link className={styles.previewLink} href="/preview">
-            {t('seePreview')} →
-          </Link>
-          <p className={styles.hint}>{t('previewNote')}</p>
-          <div className={styles.account}>
+          <div className={styles.gateRow}>
             <button
               className={styles.button}
               onClick={() => void connect()}
@@ -179,12 +191,12 @@ export default function Home() {
             >
               {busy ? t('waitingWallet') : kind === 'hub' ? t('signInWallet') : t('claimReef')}
             </button>
-            <ShareButton label={t('shareThis')} />
+            <span className={styles.onWater}>
+              <ShareButton label={t('shareThis')} />
+            </span>
           </div>
-          {/* Only the browser needs this door. Inside Nimiq Pay a wallet
-              already exists, so offering to create one would be noise. */}
           {kind === 'hub' ? (
-            <>
+            <div className={styles.gateLinks}>
               <button
                 className={styles.secondary}
                 onClick={() => void connect(true)}
@@ -196,9 +208,12 @@ export default function Home() {
               <Link className={styles.secondary} href="/open">
                 {t('openOnPhone')}
               </Link>
-            </>
+              <Link className={styles.secondary} href="/preview">
+                {t('seePreview')}
+              </Link>
+            </div>
           ) : null}
-        </>
+        </div>
       )}
 
       {error ? <p className={styles.error}>{error}</p> : null}

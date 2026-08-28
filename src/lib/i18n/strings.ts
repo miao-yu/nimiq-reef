@@ -34,6 +34,7 @@ export const STRINGS = {
     chargeSource:
       'One charge every epoch — twice a day. One more for any epoch you spend from your wallet, and one when somebody feeds your reef.',
     goFishing: 'Go fishing',
+    fedJustNow: 'Fed. The tank knows.',
     chargeIncoming: 'Money arriving does not earn one: a validator payout looks the same to us as a transfer in.',
     found: 'A {label} has appeared.',
     foundRare: 'A {label} has appeared — {tier}.',
@@ -123,6 +124,7 @@ export const STRINGS = {
     chargeSource:
       'Eine Ladung pro Epoche — zweimal täglich. Eine weitere für jede Epoche, in der du etwas ausgibst, und eine, wenn jemand dein Riff füttert.',
     goFishing: 'Angeln gehen',
+    fedJustNow: 'Gefüttert. Das Riff merkt es.',
     chargeIncoming: 'Eingehendes zählt nicht: Eine Validator-Auszahlung sieht für uns aus wie eine Überweisung.',
     found: 'Ein {label} ist aufgetaucht.',
     foundRare: 'Ein {label} ist aufgetaucht — {tier}.',
@@ -208,6 +210,7 @@ export const STRINGS = {
     chargeSource:
       'Una carga por época — dos veces al día. Una más por cada época en la que gastes desde tu cartera, y una cuando alguien alimenta tu arrecife.',
     goFishing: 'Ir a pescar',
+    fedJustNow: 'Alimentado. El arrecife lo nota.',
     chargeIncoming: 'Lo que entra no cuenta: un pago del validador nos parece igual que una transferencia.',
     found: 'Ha aparecido un {label}.',
     foundRare: 'Ha aparecido un {label} — {tier}.',

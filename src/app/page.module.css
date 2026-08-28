@@ -1,180 +1,135 @@
-.wrap {
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 22px 18px calc(22px + env(safe-area-inset-bottom));
-  max-width: 640px;
-  margin-inline: auto;
-}
-
-.head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-}
-
-.title {
-  margin: 0;
-  font-size: 1.45rem;
-  letter-spacing: -0.02em;
-}
-
-.day {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.canvasFrame {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-  background: var(--surface);
-}
-
-.canvas {
-  display: block;
+/*
+ * A screen, not a document.
+ *
+ * The app is a fixed-height stage with the tank behind everything and the
+ * controls floating on it. On a phone that is the whole viewport; on a desktop
+ * it is a phone-shaped stage centred on the page, because a Mini App that
+ * stretches to 3440px is neither a game nor a website.
+ */
+.screen {
+  position: relative;
   width: 100%;
-  height: 340px;
+  max-width: 480px;
+  height: 100dvh;
+  max-height: 940px;
+  margin: 0 auto;
+  overflow: hidden;
+  background: var(--tank-water-deep, #0a2739);
+  isolation: isolate;
 }
-
-@media (max-width: 560px) {
-  .canvas {
-    height: 260px;
+@media (min-width: 520px) and (min-height: 700px) {
+  .screen {
+    height: min(92dvh, 900px);
+    margin-top: max(0px, calc((100dvh - min(92dvh, 900px)) / 2));
+    border-radius: 26px;
+    box-shadow: 0 24px 70px rgba(6, 20, 28, 0.35);
   }
 }
 
-.slider {
-  width: 100%;
-  accent-color: var(--leaf);
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+
+/* Type over moving water needs a floor under it. */
+.topScrim, .bottomScrim { position: absolute; left: 0; right: 0; pointer-events: none; z-index: 1; }
+.topScrim {
+  top: 0;
+  height: 128px;
+  background: linear-gradient(rgba(4, 18, 26, 0.55), rgba(4, 18, 26, 0));
+}
+.bottomScrim {
+  bottom: 0;
+  height: 210px;
+  background: linear-gradient(rgba(4, 18, 26, 0), rgba(4, 18, 26, 0.62));
 }
 
-.hint {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--muted);
+.hud {
+  position: absolute;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  z-index: 3;
+  padding: 10px 14px 0;
+  color: #fff;
 }
+.brandRow { display: flex; align-items: baseline; justify-content: space-between; }
+.brand { font-weight: 700; font-size: 1.05rem; }
+.sub { font-size: 0.8rem; opacity: 0.8; }
 
-.account {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-
-
-.button {
-  font-size: 0.85rem;
-  font-weight: 600;
-  background: var(--leaf);
-  color: var(--ground);
-  border: 1px solid var(--leaf);
-  border-radius: 9px;
-  padding: 10px 18px;
-  cursor: pointer;
-}
-
-.button:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.button:focus-visible {
-  outline: 2px solid var(--leaf);
-  outline-offset: 3px;
-}
-
-.error {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #b0453a;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  margin: 0;
-}
-.stats div {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 10px 12px;
-}
-.stats dt {
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.stats dd {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-
-
-
-
-
-
-
-
-.ghost {
-  font-size: 0.8rem;
-  background: none;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  border-radius: 8px;
-  padding: 7px 13px;
-  cursor: pointer;
-}
-.warn {
-  margin: 0;
-  font-size: 0.87rem;
-  color: var(--ink-soft);
-  background: var(--surface);
-  border: 1px dashed var(--line-strong, var(--line));
-  border-radius: 9px;
-  padding: 10px 13px;
-}
-
-.previewLink {
-  align-self: flex-start;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--leaf);
-  text-decoration: none;
-  border: 1px solid var(--leaf);
-  border-radius: 9px;
-  padding: 10px 15px;
-}
-.previewLink:hover { background: var(--surface); }
-.previewLink:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
-
-
-
-
-
-/* The second door on the signed-out screen: quieter than sign-in, because
-   most visitors already have a wallet. */
-.secondary {
-  background: none;
+/* The handle into everything that is not one of the two actions. */
+.pull {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 146px);
+  z-index: 3;
   border: none;
-  color: var(--muted);
-  font-size: 0.85rem;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  background: rgba(8, 22, 30, 0.55);
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 6px 14px;
   cursor: pointer;
-  padding: 4px;
+  backdrop-filter: blur(6px);
+  -webkit-tap-highlight-color: transparent;
 }
-.secondary:hover:not(:disabled) { color: var(--ink); }
-.secondary:disabled { opacity: 0.5; cursor: default; }
-.secondary:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; border-radius: 4px; }
+.pull::after { content: ' ⌃'; opacity: 0.7; }
+.pull:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+/* --- inside the sheet --- */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.stats div {
+  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--line); border-radius: 11px; padding: 9px 10px;
+}
+.stats dt { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stats dd { margin: 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.how { font-size: 0.82rem; color: var(--muted); }
+.how summary { cursor: pointer; }
+.how p { margin: 6px 0 0; }
+.warn { margin: 0; font-size: 0.85rem; color: #b0453a; }
+.previewLink { font-size: 0.85rem; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; align-self: center; }
+
+/* --- signed out --- */
+.gate {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);
+  z-index: 3;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  padding: 0 20px;
+  color: #fff;
+}
+.hint { margin: 0; text-align: center; font-size: 0.92rem; max-width: 30ch; text-shadow: 0 1px 6px rgba(0,0,0,.5); }
+.gateRow { display: flex; gap: 10px; align-items: center; }
+.gateLinks { display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; }
+.button {
+  background: var(--leaf); color: #fff; font-weight: 600; font-size: 0.98rem;
+  border: none; border-radius: 12px; padding: 13px 24px; cursor: pointer;
+  box-shadow: 0 6px 18px rgba(0,0,0,.28);
+}
+.button:disabled { opacity: 0.55; cursor: default; }
+.secondary {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: rgba(255,255,255,.82); font-size: 0.82rem;
+  text-decoration: underline; text-underline-offset: 3px;
+}
+.error {
+  position: absolute; left: 16px; right: 16px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
+  z-index: 6; margin: 0; text-align: center;
+  font-size: 0.85rem; color: #fff;
+  background: rgba(150, 50, 40, 0.85); border-radius: 10px; padding: 8px 12px;
+}
+
+/*
+ * Anything borrowed from the old card layout sits on dark water now, and its
+ * ink-on-paper colours vanish there. This repaints one without giving the
+ * component a prop it would only ever use here.
+ */
+.onWater :global(button) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.08);
+}
+.onWater :global(button:hover) { border-color: rgba(255, 255, 255, 0.8); }

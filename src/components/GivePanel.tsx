@@ -7,7 +7,7 @@ import { getProvider } from '@/lib/nimiq/provider';
 import { formatAddress, normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
 import { Avatar } from './Avatar';
 import type { ReefState } from '@/lib/reef/state';
-import styles from './FeedPanel.module.css';
+import styles from './GivePanel.module.css';
 
 interface Candidate {
   address: string;
@@ -15,7 +15,11 @@ interface Candidate {
 }
 
 /**
- * Feeding: your own reef, and somebody else's.
+ * Feeding somebody else's reef.
+ *
+ * Feeding your own is a button in the dock now — it is one of the two things
+ * you do, and it needed no panel around it. What is left here is the part that
+ * takes a decision: who.
  *
  * Feeding a stranger needs no social graph, which matters because we have no
  * way to build one. The address is the identity: it draws the identicon, it is
@@ -27,14 +31,7 @@ interface Candidate {
  * reef whose address the user brought with them, rate limited to one a day on
  * the signed-in wallet.
  */
-function hhmm(ms: number): string {
-  const total = Math.max(0, Math.round(ms / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
-}
-
-export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: ReefState) => void }) {
+export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: ReefState) => void }) {
   const { t } = useLocale();
   const [busy, setBusy] = useState(false);
   const [deviceId, setDeviceId] = useState<string | null>(null);
@@ -78,22 +75,6 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
     if (deviceId) void loadCandidates(deviceId);
   }, [deviceId, loadCandidates]);
 
-  async function feedOwn() {
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/feed', { method: 'POST' });
-      const data = (await res.json()) as { reef?: ReefState; error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Could not feed.');
-      if (data.reef) onChange(data.reef);
-    } catch (cause) {
-      report('feed', cause);
-      setError(cause instanceof Error ? cause.message : 'Could not feed.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function give(address: string) {
     setBusy(true);
     setError(null);
@@ -118,45 +99,10 @@ export function FeedPanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
 
   return (
     <div className={styles.panel}>
-      <div className={styles.head}>
-        <span className={styles.label}>{reef.fedToday ? t('fedAlready') : t('feed')}</span>
-        <span className={styles.next}>{t('dayResets', { time: hhmm(reef.dayResetsInMs) })}</span>
-      </div>
-
-      {/* Feeding runs on the UTC day while charges run on the epoch. Two
-          clocks on purpose — the chain's clock governs what the chain gives
-          you, your day governs what you do — but a bar each makes the
-          difference visible rather than confusing. */}
-      <div
-        className={styles.day}
-        role="progressbar"
-        aria-valuenow={Math.round(reef.dayProgress * 100)}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label="Progress through the UTC day"
-      >
-        <span style={{ width: `${Math.round(reef.dayProgress * 100)}%` }} />
-      </div>
-
-      <button
-        className={styles.cta}
-        onClick={() => void feedOwn()}
-        disabled={busy || reef.fedToday}
-        type="button"
-      >
-        {reef.fedToday ? t('fedAlready') : t('feed')}
-      </button>
-      <p className={styles.note}>
-        {t('feedNote')} {t('dayResetsUtc')}
-      </p>
-
+      <h3 className={styles.title}>{t('feedStranger')}</h3>
       {reef.receivedToday > 0 ? (
         <p className={styles.received}>{t('fedBy', { n: reef.receivedToday })}</p>
       ) : null}
-
-      <div className={styles.divider} />
-
-      <h3 className={styles.title}>{t('feedStranger')}</h3>
       {gave !== null ? (
         <p className={styles.note}>{gave ? t('feedGiven', { who: gave }) : t('feedStrangerNote')}</p>
       ) : deviceId ? (
