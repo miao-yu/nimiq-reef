@@ -135,8 +135,20 @@ export default function Home() {
         <>
           <Dock reef={reef} onChange={setReef} />
 
-          <button className={styles.pull} onClick={() => setSheet(true)} type="button">
-            {reef.plants.length}/{reef.plotsUnlocked} · {t('day', { n: reef.day })}
+          <button
+            className={styles.pull}
+            onClick={() => setSheet(true)}
+            type="button"
+            aria-label={t('guide')}
+          >
+            <span>
+              {reef.plants.length}/{reef.plotsUnlocked} · {t('day', { n: reef.day })}
+            </span>
+            <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true">
+              <circle cx="10" cy="10" r="8.6" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="10" cy="5.9" r="1.15" fill="currentColor" />
+              <path d="M10 9v6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
           </button>
 
           <Sheet open={sheet} onClose={() => setSheet(false)} title={t('day', { n: reef.day })}>

@@ -1,14 +1,15 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './Sheet.module.css';
 
 /**
  * Everything that is not one of the two actions.
  *
- * Opened by a visible handle rather than a swipe. A gesture nobody is told
- * about is a feature nobody finds, and the readouts moved in here are the ones
- * that explain why the game behaves the way it does.
+ * Opened by a visible handle rather than a swipe — a gesture nobody is told
+ * about is a feature nobody finds. Closing is the other way round: the tap
+ * target is there, and dragging it down works too, because on a phone that is
+ * what a sheet is expected to do.
  */
 export function Sheet({
   open,
@@ -22,6 +23,53 @@ export function Sheet({
   children: React.ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
+  const from = useRef<number | null>(null);
+  const [drag, setDrag] = useState(0);
+
+  /*
+   * Drag to dismiss, downwards only.
+   *
+   * Pointer events rather than touch, so a trackpad drag behaves the same. The
+   * sheet body scrolls, so only the grip starts a drag — otherwise flicking a
+   * long list would throw the whole sheet off screen.
+   */
+  function start(e: React.PointerEvent) {
+    from.current = e.clientY;
+    (e.target as Element).setPointerCapture?.(e.pointerId);
+  }
+  function move(e: React.PointerEvent) {
+    if (from.current === null) return;
+    setDrag(Math.max(0, e.clientY - from.current));
+  }
+  function end() {
+    if (from.current === null) return;
+    from.current = null;
+    // A short tug springs back; past a finger's width it is a dismissal.
+    if (drag > 90) onClose();
+    setDrag(0);
+  }
+
+  // Reset when it reopens, or a dismissed sheet returns already half dragged.
+  useEffect(() => {
+    if (!open) setDrag(0);
+  }, [open]);
+
+  /*
+   * Hold the page still underneath.
+   *
+   * Without this the document behind kept scrolling and rubber-banding while
+   * the sheet was open, which on iOS also shows and hides the Safari toolbar —
+   * and that resizes the stage, so the header appeared to shake.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = 'hidden';
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -48,8 +96,18 @@ export function Sheet({
         aria-hidden={!open}
         ref={panel}
         tabIndex={-1}
+        style={drag ? { transform: `translateY(${drag}px)`, transition: 'none' } : undefined}
       >
-        <button className={styles.grip} onClick={onClose} type="button" aria-label="Close">
+        <button
+          className={styles.grip}
+          onClick={onClose}
+          onPointerDown={start}
+          onPointerMove={move}
+          onPointerUp={end}
+          onPointerCancel={end}
+          type="button"
+          aria-label="Close"
+        >
           <span />
         </button>
         <div className={styles.body}>{children}</div>

@@ -5,17 +5,26 @@
   padding: 2px 0;
 }
 
+/*
+ * This bar floats on the tank now, not on paper. `--muted` is an ink-on-white
+ * grey and against a bright waterline it was invisible — reported from a
+ * phone, where the sky band is at its palest.
+ */
 .brand {
   font-size: 1.25rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  color: #fff;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
 }
 
 /* Takes the slack, so the avatar stays pinned right whatever the day number. */
 .day {
   flex: 1;
-  font-size: 0.82rem;
-  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
   font-variant-numeric: tabular-nums;
 }
 

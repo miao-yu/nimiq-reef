@@ -27,10 +27,20 @@
 .button:active::before { transform: scale(0.93); }
 .button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 50%; }
 
-/* Off: still pressable, so it can explain itself. */
+/*
+ * Off: still pressable, so it can explain itself — but it must still read as a
+ * control. At 14% white on dark water the buttons and their labels all but
+ * disappeared on a phone, which looks like a broken screen rather than a
+ * sleeping one.
+ */
 .off { cursor: default; }
-.off::before { background: rgba(255, 255, 255, 0.14); box-shadow: none; }
-.off .glyph { opacity: 0.55; }
+.off::before {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px solid rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+}
+.off .glyph { opacity: 0.75; }
+.off .label { color: rgba(255, 255, 255, 0.88); }
 
 .ring { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .track { fill: none; stroke: rgba(255, 255, 255, 0.22); stroke-width: 3; }
@@ -48,24 +58,31 @@
   position: absolute;
   top: 100%;
   margin-top: 5px;
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  /* A shadow is not enough over pale water; the pill is what guarantees it. */
+  color: #fff;
+  background: rgba(8, 22, 30, 0.5);
+  padding: 2px 9px;
+  border-radius: 999px;
+  backdrop-filter: blur(4px);
 }
 
 /* Charges, read at a glance without a number. */
 .pips {
   position: absolute;
-  top: -9px;
+  top: -13px;
   display: flex;
-  gap: 3px;
+  gap: 4px;
 }
 .pip, .pipOn {
-  width: 5px;
-  height: 5px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-sizing: border-box;
 }
 .pipOn { background: #fff; box-shadow: 0 0 6px rgba(255, 255, 255, 0.8); }
