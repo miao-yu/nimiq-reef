@@ -101,10 +101,36 @@ interface StakeRequest {
  * came from this address and goes to the staking contract before it does.
  */
 async function stake(hub: HubApi, request: StakeRequest): Promise<string> {
-  const built = await post<{ raw: string; kind: string }>('/api/stake/build', {
+  const built = await post<{
+    raw: string;
+    kind: string;
+    delegation: string | null;
+    delegationLogo: boolean;
+  }>('/api/stake/build', {
     value: request.value,
     delegation: request.delegation ?? null,
   });
+
+  /*
+   * `validatorAddress` is why adding to an existing stake used to fail with
+   * "No delegation or validatorAddress provided".
+   *
+   * A create-staker transaction carries its delegation in the transaction data,
+   * so the signing screen can name the validator. An add-stake transaction
+   * carries only the staker, so there is nothing to name — and the Keyguard
+   * refuses rather than show an unlabelled confirmation. It accepts the
+   * validator as a separate field instead, and `validatorImageUrl` beside it.
+   *
+   * Neither is in hub-api's published types, but both the Hub and the Keyguard
+   * spread the request through unchanged, and the Keyguard parses both by name.
+   */
+  const extra: Record<string, string> = {};
+  if (built.delegation) {
+    extra.validatorAddress = built.delegation;
+    if (built.delegationLogo) {
+      extra.validatorImageUrl = `${window.location.origin}/validator/${built.delegation.replace(/\s/g, '')}/logo`;
+    }
+  }
 
   const signed = await hub.signStaking({
     appName: APP_NAME,
@@ -113,7 +139,8 @@ async function stake(hub: HubApi, request: StakeRequest): Promise<string> {
     senderLabel: 'Your wallet',
     recipientLabel: 'Nimiq staking',
     transaction: hexToBytes(built.raw),
-  });
+    ...extra,
+  } as Parameters<HubApi['signStaking']>[0]);
 
   const { hashes } = await post<{ hashes: string[] }>('/api/stake/send', {
     raw: signed.map((tx) => tx.serializedTx),

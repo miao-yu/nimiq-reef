@@ -1,6 +1,7 @@
 import 'server-only';
 import { Address, Transaction, TransactionBuilder } from '@nimiq/core';
 import { rpc } from './rpc';
+import { metaFor } from './registry';
 
 /**
  * Building staking transactions on the server so a browser can stake.
@@ -34,6 +35,8 @@ export interface BuiltTransaction {
   kind: 'create-staker' | 'add-stake';
   value: number;
   delegation: string | null;
+  /** Whether the validator has a logo the signing screen can show. */
+  delegationLogo: boolean;
 }
 
 function toHex(bytes: Uint8Array): string {
@@ -83,7 +86,13 @@ export async function buildStakeTransaction(
     // changing validator is a different transaction and not something to do as
     // a side effect of "add stake".
     const tx = TransactionBuilder.newAddStake(from, from, BigInt(value), fee, height, network);
-    return { raw: toHex(tx.serialize()), kind: 'add-stake', value, delegation: staker.delegation };
+    return {
+      raw: toHex(tx.serialize()),
+      kind: 'add-stake',
+      value,
+      delegation: staker.delegation,
+      delegationLogo: Boolean(staker.delegation && (await metaFor(staker.delegation))?.logo),
+    };
   }
 
   if (!delegation) throw new Error('A new staking position needs a validator to delegate to.');
@@ -95,7 +104,13 @@ export async function buildStakeTransaction(
     height,
     network,
   );
-  return { raw: toHex(tx.serialize()), kind: 'create-staker', value, delegation };
+  return {
+    raw: toHex(tx.serialize()),
+    kind: 'create-staker',
+    value,
+    delegation,
+    delegationLogo: Boolean((await metaFor(delegation))?.logo),
+  };
 }
 
 export type RelayRefusal = 'malformed' | 'wrong-sender' | 'not-staking';

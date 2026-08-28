@@ -52,6 +52,22 @@ if (built.status === 200) {
   check('built for the signed-in address', plain.sender.replace(/\s/g, '') === w.address.replace(/\s/g, ''));
   check('built to the staking contract', plain.recipient.startsWith('NQ77 0000'), plain.recipient);
   check('built for the right value', plain.value === 10_000_000, String(plain.value));
+
+  /*
+   * The signing screen needs the validator by name, not just in the bytes.
+   *
+   * A create-staker transaction carries its delegation in the data; an
+   * add-stake carries only the staker, and the Keyguard refuses that outright
+   * with "No delegation or validatorAddress provided" rather than show an
+   * unlabelled confirmation. So the build has to hand the validator back for
+   * the client to pass along.
+   */
+  check(
+    'the build names the validator for the signing screen',
+    typeof built.body.delegation === 'string' && built.body.delegation.startsWith('NQ'),
+    String(built.body.delegation),
+  );
+  check('and says whether it has a logo to show', typeof built.body.delegationLogo === 'boolean');
 }
 
 // --- the relay must refuse anything that is not this user staking ---
