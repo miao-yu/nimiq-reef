@@ -5,6 +5,7 @@ import { RingButton } from './RingButton';
 import { report } from '@/lib/client-log';
 import { useLocale } from '@/lib/i18n';
 import type { ReefState } from '@/lib/reef/state';
+import type { LiveClock } from '@/lib/reef/live';
 import styles from './Dock.module.css';
 
 /** Hours and minutes, for a control explaining why it is asleep. */
@@ -24,9 +25,16 @@ function hhmm(ms: number): string {
  */
 export function Dock({
   reef,
+  live,
   onChange,
 }: {
   reef: ReefState;
+  /**
+   * The clocks, advanced since the last fetch. The rings read from here rather
+   * than from `reef`, whose progress values are frozen at fetch time — a
+   * cooldown that never moves looks broken.
+   */
+  live: LiveClock | null;
   onChange: (r: ReefState) => void;
 }) {
   const { t } = useLocale();
@@ -63,14 +71,16 @@ export function Dock({
         <RingButton
           label={t('goFishing')}
           href="/fish"
-          progress={reef.epochProgress}
+          progress={live?.epochProgress ?? reef.epochProgress}
           pips={{ filled: reef.charges, total: reef.maxCharges }}
           disabled={noCharges}
           onBlocked={() =>
             say(
-              reef.nextChargeInMs === null
+              (live?.nextChargeInMs ?? reef.nextChargeInMs) === null
                 ? t('noCharges')
-                : t('nextCharge', { time: hhmm(reef.nextChargeInMs) }),
+                : t('nextCharge', {
+                    time: hhmm((live?.nextChargeInMs ?? reef.nextChargeInMs) as number),
+                  }),
             )
           }
         >
@@ -85,10 +95,10 @@ export function Dock({
         <RingButton
           label={reef.fedToday ? t('fedAlready') : t('feed')}
           tone="coral"
-          progress={reef.dayProgress}
+          progress={live?.dayProgress ?? reef.dayProgress}
           disabled={reef.fedToday || busy}
           onClick={() => void feed()}
-          onBlocked={() => say(t('dayResets', { time: hhmm(reef.dayResetsInMs) }))}
+          onBlocked={() => say(t('dayResets', { time: hhmm(live?.dayResetsInMs ?? reef.dayResetsInMs) }))}
         >
           {reef.fedToday ? (
             <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">

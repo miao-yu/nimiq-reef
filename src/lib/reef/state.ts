@@ -30,6 +30,8 @@ export interface ReefState {
   epoch: number;
   /** 0..1 through the current epoch, straight from the chain. */
   epochProgress: number;
+  /** How long an epoch lasts, so the client can advance the ring itself. */
+  epochMs: number;
 
   /** Money. The only thing stake size governs. */
   plotsUnlocked: number;

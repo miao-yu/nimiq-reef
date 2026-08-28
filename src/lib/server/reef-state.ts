@@ -82,6 +82,7 @@ export async function getReefState(address: string): Promise<ReefState> {
     nextChargeInMs: charges.nextInMs,
     epoch: charges.epoch,
     epochProgress: charges.epochProgress,
+    epochMs: clock.epochMs,
 
     fedToday,
     dayResetsInMs: dayClock.resetsInMs,

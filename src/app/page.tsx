@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Stage } from '@/components/Stage';
 import { GivePanel } from '@/components/GivePanel';
@@ -16,6 +16,7 @@ import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { depthForStake } from '@/lib/reef/vessel';
 import { foodInWater } from '@/lib/reef/feeding';
+import { liveClock } from '@/lib/reef/live';
 import { SPECIES } from '@/lib/reef/species';
 import { SEEDED_COMMUNITY, layoutCommunity, type CommunityPlant } from '@/lib/reef/community';
 import { formatNimShort } from '@/lib/nimiq/policy';
@@ -50,10 +51,24 @@ export default function Home() {
   const [known, setKnown] = useState(false);
   const [sheet, setSheet] = useState(false);
 
+  const [fetchedAt, setFetchedAt] = useState(() => Date.now());
+  const [now, setNow] = useState(() => Date.now());
+  const loading = useRef(false);
+
   const load = useCallback(async () => {
-    const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
-    if (res.ok) setReef((await res.json()) as ReefState);
-    else setReef(null);
+    // One in flight at a time: the boundary trigger and the interval can
+    // otherwise fire together on a slow connection.
+    if (loading.current) return;
+    loading.current = true;
+    try {
+      const res = await fetch('/api/reef', { credentials: 'same-origin', cache: 'no-store' });
+      if (res.ok) setReef((await res.json()) as ReefState);
+      else setReef(null);
+      setFetchedAt(Date.now());
+      setNow(Date.now());
+    } finally {
+      loading.current = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -89,12 +104,74 @@ export default function Home() {
     }
   }
 
+  /*
+   * The clocks run here; the state is refetched around them.
+   *
+   * The tick is unconditional. Gating it on visibilityState looked thriftier
+   * and was a trap: a window that is merely unfocused or occluded reports
+   * hidden, and a webview may report it at times a person is plainly looking
+   * at the screen — which would freeze every countdown on the page, the exact
+   * complaint this is fixing. Browsers already throttle timers in a truly
+   * backgrounded tab, so the guard bought almost nothing.
+   *
+   * The *network* is a different matter, and stays gated below.
+   */
+  useEffect(() => {
+    if (!reef) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    // Anything could have happened while away — a charge, a new day, a
+    // stranger feeding the reef. Ask rather than extrapolate.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void load();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [reef, load]);
+
+  const live = useMemo(
+    () => (reef ? liveClock(reef, now - fetchedAt) : null),
+    [reef, now, fetchedAt],
+  );
+
+  /*
+   * Refetch on a boundary, and slowly otherwise.
+   *
+   * The boundary is the one that matters: the instant the ring completes, the
+   * charge is real and the number should say so. The slow interval catches
+   * everything that happens off-screen — being fed, the tick planting a day.
+   */
+  useEffect(() => {
+    if (!live || !reef) return;
+    if (live.epochTurned || live.dayRolled) {
+      // The chain may not have advanced its own view yet; do not spin on it.
+      const since = Date.now() - fetchedAt;
+      if (since > 10_000) void load();
+    }
+  }, [live, reef, fetchedAt, load]);
+
+  useEffect(() => {
+    if (!reef) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void load();
+    }, 60_000);
+    return () => window.clearInterval(id);
+  }, [reef, load]);
+
   const communityPlants = community?.plants.length ? community.plants : SEEDED_COMMUNITY;
-  const inhabitants = !known
-    ? []
-    : reef
-      ? adaptPlants(reef.plants)
-      : adaptPlants(layoutCommunity(communityPlants));
+  const inhabitants = useMemo(
+    () =>
+      !known
+        ? []
+        : reef
+          ? adaptPlants(reef.plants)
+          : adaptPlants(layoutCommunity(communityPlants)),
+    // Memoised because Tank's painter is keyed on this array's identity: a new
+    // one every second would restart the animation loop on every tick.
+    [known, reef, communityPlants],
+  );
 
   return (
     /*
@@ -127,7 +204,7 @@ export default function Home() {
 
       {reef ? (
         <>
-          <Dock reef={reef} onChange={setReef} />
+          <Dock reef={reef} live={live} onChange={setReef} />
 
           <button
             className={styles.pull}
