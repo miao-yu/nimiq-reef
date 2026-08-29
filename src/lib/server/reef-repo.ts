@@ -2,6 +2,7 @@ import 'server-only';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
 import { addDays, reefDay, utcDay } from '@/lib/reef/day';
+import { stakingStreak, STAKE_LOOKBACK_DAYS } from '@/lib/reef/streak';
 import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey } from '@/lib/reef';
 
@@ -111,37 +112,17 @@ export async function recordDay(
   );
 }
 
-/**
- * Unbroken days staked, walking back from today.
- *
- * Forgiving by design: a day we never observed neither counts nor breaks the
- * run. Our own tick outage should not reset somebody's streak. A day we *did*
- * observe with nothing staked does break it — that is the user's choice, and
- * the garden pausing is the honest consequence.
- */
-export async function daysStaked(address: string, lookback = 400): Promise<number> {
+export async function daysStaked(
+  address: string,
+  lookback = STAKE_LOOKBACK_DAYS,
+): Promise<number> {
   const [rows] = await db().query<DayRow[]>(
     `SELECT day, staked_luna FROM reef_days
      WHERE address = ? AND day >= ?
      ORDER BY day DESC`,
     [address, addDays(utcDay(), -lookback)],
   );
-
-  const observed = new Map(rows.map((r) => [asDay(r.day), Number(r.staked_luna)]));
-  let streak = 0;
-  let cursor = utcDay();
-
-  for (let i = 0; i <= lookback; i++) {
-    const staked = observed.get(cursor);
-    if (staked === undefined) {
-      cursor = addDays(cursor, -1);
-      continue; // never watched that day; say nothing about it
-    }
-    if (staked <= 0) break;
-    streak++;
-    cursor = addDays(cursor, -1);
-  }
-  return streak;
+  return stakingStreak(new Map(rows.map((r) => [asDay(r.day), Number(r.staked_luna)])), lookback);
 }
 
 /** Addresses the tick should look up. Reefs only exist once someone signs in. */
@@ -629,6 +610,20 @@ export async function communityReefs(options: {
   };
   const { column, desc } = ORDER[sort];
 
+  /*
+   * days_staked must be the *same* number the reef itself shows, which is the
+   * unbroken run from daysStaked() — not a lifetime tally. Sorting on a
+   * lifetime count while every reef page showed a streak meant one click
+   * changed the number under the same words.
+   *
+   * The walk in daysStaked() reduces to this: skip days we never observed,
+   * stop at the first observed day with nothing staked, count what is left.
+   * So the streak is every staked day after the most recent unstaked one. The
+   * lookback bound is carried over too, or the two would still disagree for a
+   * reef whose break falls outside the window daysStaked() can see.
+   */
+  const since = addDays(utcDay(), -STAKE_LOOKBACK_DAYS);
+
   const where: string[] = ['r.hidden = 0'];
   const params: unknown[] = [];
   if (options.pool) {
@@ -654,7 +649,13 @@ export async function communityReefs(options: {
             (SELECT COUNT(DISTINCT s.species) FROM specimens s WHERE s.address = r.address) AS species,
             (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime,
             (SELECT COUNT(*) FROM reef_days rd
-              WHERE rd.address = r.address AND rd.staked_luna > 0)                AS days_staked
+              WHERE rd.address = r.address
+                AND rd.staked_luna > 0
+                AND rd.day >= ?
+                AND rd.day > COALESCE(
+                  (SELECT MAX(b.day) FROM reef_days b
+                    WHERE b.address = r.address AND b.staked_luna <= 0 AND b.day >= ?),
+                  '1000-01-01'))                                                  AS days_staked
      FROM reefs r
      LEFT JOIN reef_days d
        ON d.address = r.address
@@ -663,7 +664,7 @@ export async function communityReefs(options: {
      ${having.length ? `HAVING ${having.join(' AND ')}` : ''}
      ORDER BY ${column} ${desc ? 'DESC' : 'ASC'}, r.address ASC
      LIMIT ?`,
-    [...params, ...havingParams, limit + 1],
+    [since, since, ...params, ...havingParams, limit + 1],
   );
 
   const page = rows.slice(0, limit);
