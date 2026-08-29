@@ -1,0 +1,48 @@
+.rail {
+  position: absolute;
+  right: 10px;
+  /* Above centre: below it the rail crowds the drawer handle and the dock. */
+  top: 42%;
+  transform: translateY(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-decoration: none;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.glyph {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(8, 22, 30, 0.66);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+}
+.item:hover .glyph { background: rgba(8, 22, 30, 0.82); border-color: rgba(255, 255, 255, 0.5); }
+.item:active .glyph { transform: scale(0.94); }
+.item:focus-visible .glyph { outline: 2px solid #fff; outline-offset: 3px; }
+
+.label {
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-align: center;
+  max-width: 58px;
+  line-height: 1.15;
+  background: rgba(4, 13, 19, 0.9);
+  border-radius: 999px;
+  padding: 2px 7px;
+}

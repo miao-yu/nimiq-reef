@@ -6,6 +6,7 @@ import { Stage } from '@/components/Stage';
 import { GivePanel } from '@/components/GivePanel';
 import { Dock } from '@/components/Dock';
 import { Sheet } from '@/components/Sheet';
+import { REEFS_ICON, SideRail } from '@/components/SideRail';
 import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
@@ -206,6 +207,8 @@ export default function Home() {
 
       {reef ? (
         <>
+          <SideRail items={[{ href: '/community', label: 'Reefs', icon: REEFS_ICON }]} />
+
           <Dock reef={reef} live={live} onChange={setReef} />
 
           <button
