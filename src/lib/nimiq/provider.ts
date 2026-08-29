@@ -33,21 +33,8 @@ async function resolve(): Promise<ReefProvider> {
     const { init } = await import('@nimiq/mini-app-sdk');
     const nimiq = await init({ timeout: 1500 });
 
-    const { requestDeviceIdentifier } = await import('@nimiq/mini-app-sdk');
     return {
       kind: 'nimiq-pay',
-      deviceId: async () => {
-        try {
-          // The user is prompted once per origin; refusing is a legitimate
-          // answer, not an error, so it degrades to "no giving" rather than
-          // to a weaker check.
-          return await requestDeviceIdentifier({
-            reason: 'So each device can feed one reef a day',
-          });
-        } catch {
-          return null;
-        }
-      },
       listAccounts: async () => unwrap(await nimiq.listAccounts()),
       sign: async (message) => unwrap(await nimiq.sign(message)),
       getBlockNumber: () => nimiq.getBlockNumber(),

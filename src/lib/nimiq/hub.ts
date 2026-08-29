@@ -56,7 +56,6 @@ export function createHubProvider(): ReefProvider {
   return {
     kind: 'hub',
     // Only the Mini App host can vouch for a device.
-    deviceId: async () => null,
     async listAccounts() {
       return [await address()];
     },

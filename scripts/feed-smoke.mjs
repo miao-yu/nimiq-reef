@@ -73,6 +73,22 @@ check('the fed reef sees it', aState.body.receivedToday === 1, `receivedToday=${
 const again = await post('/api/feed/give', { address: a.address }, b.cookie);
 check('a second give the same day is refused', again.status === 409, `HTTP ${again.status}`);
 
+/*
+ * A *different* reef, which is the rule the button greys on.
+ *
+ * Feeding the same reef twice would be refused by any per-target key, so the
+ * assertion above cannot tell "one a day" from "not this one again". The
+ * budget is one gift per wallet per day wherever it is spent — and this is
+ * the case that used to ride on the device identifier.
+ */
+const elsewhere = await post('/api/feed/give', { address: fresh.address }, b.cookie);
+check('the budget is one a day per wallet, not one per reef',
+  elsewhere.status === 409, `HTTP ${elsewhere.status}`);
+
+const budget = await call('/api/auth/session', { headers: { cookie: b.cookie } });
+check('the session reports the budget spent, so the button can grey',
+  budget.body.canFeedOther === false, `canFeedOther=${budget.body.canFeedOther}`);
+
 // The compact form is what a URL carries, so it has to be accepted everywhere
 // the spaced form is.
 const c = await signIn();

@@ -82,11 +82,17 @@ check('giving to a checksum typo is refused', typo.status === 400, `HTTP ${typo.
 const anon = await post('/api/feed/give', { address: VALID, device: 'a'.repeat(64) });
 check('giving with no session is refused', anon.status === 401, `HTTP ${anon.status}`);
 
-const noDeviceCandidates = await call('/api/feed/candidates', { headers: { cookie } });
+/*
+ * Candidates used to demand a device identifier and refuse without one, which
+ * made the feature dark for every desktop visitor. It guarded very little: a
+ * reef takes one 'fed' charge a day however many feeds arrive, so farming
+ * wallets bought a vanity counter and cost the farmer discoverability.
+ */
+const candidates = await call('/api/feed/candidates', { headers: { cookie } });
 check(
-  'candidates still need a device — that is the farmable surface',
-  noDeviceCandidates.status === 400 && noDeviceCandidates.body.reason === 'no-device',
-  `HTTP ${noDeviceCandidates.status}`,
+  'candidates are handed out in a plain browser',
+  candidates.status === 200 && Array.isArray(candidates.body.candidates),
+  `HTTP ${candidates.status}`,
 );
 
 // --- nothing is reachable without a session ---

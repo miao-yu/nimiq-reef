@@ -3,23 +3,24 @@ import { currentAddress } from '@/lib/server/session';
 import { ensureReef, feedOther, grantFedCharge } from '@/lib/server/reef-repo';
 import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
 import { getReefState } from '@/lib/server/reef-state';
-import { deviceHash, isDeviceId } from '@/lib/server/device';
 import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
 
 export const runtime = 'nodejs';
 
 /**
- * Feed somebody else's reef. One per device per UTC day.
+ * Feed somebody else's reef. One per wallet per UTC day.
  *
- * Gated on the device rather than the wallet, and refused outright without a
- * device identifier rather than falling back to something weaker — a fallback
- * would just be the farm we are trying to stop, wearing a different hat.
+ * The limit rode on a device identifier until it was clear what it was
+ * buying: bonus_charges is UNIQUE (address, day, reason), so a reef collects
+ * one 'fed' charge a day however many feeds arrive, and giving earns the
+ * giver nothing. Farming wallets bought a bigger vanity counter and cost the
+ * farmer discoverability, since the quiet sort ranks by fewest feeds.
  */
 export async function POST(request: Request) {
   const address = await currentAddress();
   if (!address) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
-  let body: { address?: unknown; device?: unknown };
+  let body: { address?: unknown };
   try {
     body = (await request.json()) as typeof body;
   } catch {
@@ -28,12 +29,6 @@ export async function POST(request: Request) {
 
   const target = normalizeAddress(body.address);
   if (!target) return NextResponse.json({ error: 'Which reef?' }, { status: 400 });
-
-  // A device identifier is the strong limit and Nimiq Pay is the only source of
-  // one. Outside it we fall back to the signed-in address, which is weaker —
-  // a wallet costs nothing to create — and so is allowed only for a reef the
-  // user reached deliberately, never for the candidates we hand out.
-  const limiter = isDeviceId(body.device) ? deviceHash(body.device) : deviceHash(`address:${address}`);
 
   /*
    * The giver needs a reef row before the foreign key will accept them.
@@ -46,7 +41,7 @@ export async function POST(request: Request) {
    */
   await ensureReef(address);
 
-  const outcome = await feedOther(address, formatAddress(target), limiter);
+  const outcome = await feedOther(address, formatAddress(target));
   if (outcome === 'unknown-reef') {
     return NextResponse.json({ error: 'No reef by that name.' }, { status: 404 });
   }

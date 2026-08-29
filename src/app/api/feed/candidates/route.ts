@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
-import { feedCandidates, gaveToday } from '@/lib/server/reef-repo';
-import { deviceHash, isDeviceId } from '@/lib/server/device';
+import { feedCandidates, fedOtherToday } from '@/lib/server/reef-repo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -13,27 +12,17 @@ export const dynamic = 'force-dynamic';
  * nothing new: stake and staking history are already readable from any Nimiq
  * node for anybody who has the address.
  *
- * The candidate list still needs a device — it is the one place Reef hands out
- * strangers to feed, so it is the one place worth rate limiting hard.
+ * This used to demand a device identifier and refuse without one, which made
+ * the whole feature dark outside Nimiq Pay — a desktop visitor was told to go
+ * and get an app. The limit is the wallet now, so the door is the same one
+ * everywhere.
  */
-export async function GET(request: Request) {
+export async function GET() {
   const address = await currentAddress();
   if (!address) return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
 
-  const deviceId = new URL(request.url).searchParams.get('device');
-  if (!isDeviceId(deviceId)) {
-    return NextResponse.json(
-      { error: 'Feeding other reefs needs Nimiq Pay.', reason: 'no-device' },
-      { status: 400 },
-    );
-  }
-
-  const hash = deviceHash(deviceId);
-  if (await gaveToday(hash)) {
+  if (await fedOtherToday(address)) {
     return NextResponse.json({ candidates: [], gaveToday: true });
   }
-  return NextResponse.json({
-    candidates: await feedCandidates(address, hash),
-    gaveToday: false,
-  });
+  return NextResponse.json({ candidates: await feedCandidates(address), gaveToday: false });
 }

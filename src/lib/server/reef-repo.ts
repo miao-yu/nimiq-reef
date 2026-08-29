@@ -750,11 +750,7 @@ export interface FeedCandidate {
  * discloses nothing a block explorer does not already show — and the address is
  * what draws the identicon people actually recognise.
  */
-export async function feedCandidates(
-  exclude: string,
-  deviceHash: string,
-  limit = 3,
-): Promise<FeedCandidate[]> {
+export async function feedCandidates(exclude: string, limit = 3): Promise<FeedCandidate[]> {
   const [rows] = await db().query<RowDataPacket[]>(
     `SELECT r.address,
             (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS received
@@ -763,11 +759,11 @@ export async function feedCandidates(
        AND r.hidden = 0
        AND NOT EXISTS (
          SELECT 1 FROM feedings f
-         WHERE f.to_address = r.address AND f.day = ? AND f.device_hash = ?
+         WHERE f.to_address = r.address AND f.day = ? AND f.from_address = ?
        )
      ORDER BY received ASC, RAND()
      LIMIT ?`,
-    [exclude, utcDay(), deviceHash, limit],
+    [exclude, utcDay(), exclude, limit],
   );
 
   const out: FeedCandidate[] = [];
@@ -787,17 +783,12 @@ export async function feedCandidates(
 export type FeedOutcome = 'fed' | 'already-fed-today' | 'unknown-reef' | 'own-reef';
 
 /**
- * Feed another reef. One per device per UTC day.
+ * Feed another reef. One per wallet per UTC day.
  *
- * The limit is on the device rather than the wallet because a wallet costs
- * nothing to create. UNIQUE (device_hash, day) is what enforces it — a check
- * in application code would lose a race to a double tap.
+ * UNIQUE (from_address, day) is what enforces it — a check in application code
+ * would lose a race to a double tap.
  */
-export async function feedOther(
-  fromAddress: string,
-  toAddress: string,
-  deviceHash: string,
-): Promise<FeedOutcome> {
+export async function feedOther(fromAddress: string, toAddress: string): Promise<FeedOutcome> {
   const [rows] = await db().query<RowDataPacket[]>(
     'SELECT address FROM reefs WHERE address = ?',
     [toAddress],
@@ -808,8 +799,8 @@ export async function feedOther(
 
   try {
     await db().execute(
-      'INSERT INTO feedings (from_address, to_address, day, device_hash) VALUES (?, ?, ?, ?)',
-      [fromAddress, to, utcDay(), deviceHash],
+      'INSERT INTO feedings (from_address, to_address, day) VALUES (?, ?, ?)',
+      [fromAddress, to, utcDay()],
     );
     return 'fed';
   } catch (error) {
@@ -821,12 +812,9 @@ export async function feedOther(
 /**
  * Has this address already spent today's gift?
  *
- * For display only. The limit that actually holds is UNIQUE (device_hash,
- * day) inside feedOther — this asks by address because a session knows who
- * you are but not what you are holding, and the device identifier only exists
- * inside Nimiq Pay. Two wallets on one device therefore still see an enabled
- * button and still get refused; that is the farming case, and refusing it
- * loudly is the point.
+ * The same key the database enforces, so a grey button and a refusal now
+ * always agree. They did not while the limit rode on the device: a session
+ * knows who you are but not what you are holding.
  */
 export async function fedOtherToday(address: string): Promise<boolean> {
   const [rows] = await db().query<RowDataPacket[]>(
@@ -858,13 +846,6 @@ export async function feedingCounts(address: string): Promise<FeedingCounts> {
   };
 }
 
-export async function gaveToday(deviceHash: string): Promise<boolean> {
-  const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT 1 FROM feedings WHERE device_hash = ? AND day = ?',
-    [deviceHash, utcDay()],
-  );
-  return rows.length > 0;
-}
 
 
 /** The last epoch we saw for a reef, for when the chain cannot be reached. */

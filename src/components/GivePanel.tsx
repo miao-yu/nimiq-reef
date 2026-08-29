@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useLocale } from '@/lib/i18n';
 import { report } from '@/lib/client-log';
-import { getProvider } from '@/lib/nimiq/provider';
 import { formatAddress, normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
 import { Avatar } from './Avatar';
 import type { ReefState } from '@/lib/reef/state';
@@ -26,15 +25,17 @@ interface Candidate {
  * what you paste to feed a friend, and it discloses nothing a Nimiq node would
  * not tell anybody who asked.
  *
- * Two doors, deliberately unequal. Nimiq Pay can vouch for a device, so it gets
- * suggestions — strangers picked by us. A browser cannot, so it may only feed a
- * reef whose address the user brought with them, rate limited to one a day on
- * the signed-in wallet.
+ * One door. Suggestions and a paste-an-address form, the same everywhere.
+ *
+ * These used to be two unequal doors: Nimiq Pay could vouch for a device so it
+ * got suggestions, and a browser could only feed an address the user already
+ * had. The device identifier turned out to be guarding very little — a reef
+ * takes one 'fed' charge a day however many feeds arrive — so the asymmetry
+ * was buying nothing and costing every desktop visitor the feature.
  */
 export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: ReefState) => void }) {
   const { t } = useLocale();
   const [busy, setBusy] = useState(false);
-  const [deviceId, setDeviceId] = useState<string | null>(null);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [gave, setGave] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -49,19 +50,9 @@ export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
     if (parsed) setTyped(formatAddress(parsed));
   }, []);
 
-  // Only Nimiq Pay can supply this. Its absence no longer disables giving, it
-  // just closes the suggestion list — the part that would actually be worth
-  // farming, since it is where Reef hands out reefs the user did not choose.
-  useEffect(() => {
-    void getProvider()
-      .then((p) => (p.kind === 'nimiq-pay' ? p.deviceId() : null))
-      .then(setDeviceId)
-      .catch(() => setDeviceId(null));
-  }, []);
-
-  const loadCandidates = useCallback(async (device: string) => {
+  const loadCandidates = useCallback(async () => {
     try {
-      const res = await fetch(`/api/feed/candidates?device=${encodeURIComponent(device)}`);
+      const res = await fetch('/api/feed/candidates');
       if (!res.ok) return;
       const data = (await res.json()) as { candidates: Candidate[]; gaveToday: boolean };
       setCandidates(data.gaveToday ? [] : data.candidates);
@@ -72,8 +63,8 @@ export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
   }, []);
 
   useEffect(() => {
-    if (deviceId) void loadCandidates(deviceId);
-  }, [deviceId, loadCandidates]);
+    void loadCandidates();
+  }, [loadCandidates]);
 
   async function give(address: string) {
     setBusy(true);
@@ -82,7 +73,7 @@ export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
       const res = await fetch('/api/feed/give', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ address, device: deviceId }),
+        body: JSON.stringify({ address }),
       });
       const data = (await res.json()) as { reef?: ReefState; error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not feed that reef.');
@@ -105,7 +96,7 @@ export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
       ) : null}
       {gave !== null ? (
         <p className={styles.note}>{gave ? t('feedGiven', { who: gave }) : t('feedStrangerNote')}</p>
-      ) : deviceId ? (
+      ) : (
         <>
           <p className={styles.note}>{t('feedStrangerNote')}</p>
           <div className={styles.candidates}>
@@ -135,10 +126,6 @@ export function GivePanel({ reef, onChange }: { reef: ReefState; onChange: (r: R
               </button>
             ))}
           </div>
-        </>
-      ) : (
-        <>
-          <p className={styles.note}>{t('feedNeedsApp')}</p>
           <form
             className={styles.form}
             onSubmit={(e) => {
