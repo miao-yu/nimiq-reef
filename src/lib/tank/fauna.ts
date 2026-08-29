@@ -1,6 +1,7 @@
 import { rng } from './rng';
 import { drawBlush, drawCrest, drawEye, drawMouth, drawPattern, traitsFor } from './traits';
-import type { SpeciesKey, Tier } from './types';
+import { isFlora } from './types';
+import type { FaunaKey, SpeciesKey, Tier } from './types';
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -10,6 +11,10 @@ type Ctx = CanvasRenderingContext2D;
  */
 export const BODY_LENGTH: Record<SpeciesKey, number> = {
   grass: 0,
+  kelp: 0,
+  fan: 0,
+  anemone: 0,
+  tubeworm: 0,
   guppy: 0.2,
   shrimp: 0.16,
   angel: 0.3,
@@ -25,6 +30,10 @@ export const BODY_LENGTH: Record<SpeciesKey, number> = {
 /** Tail beat, in radians per second. Small fish flick; a whale barely moves. */
 export const TAIL_RATE: Record<SpeciesKey, number> = {
   grass: 0,
+  kelp: 0,
+  fan: 0,
+  anemone: 0,
+  tubeworm: 0,
   guppy: 5.6,
   shrimp: 6.4,
   angel: 4.2,
@@ -63,7 +72,7 @@ const UNCOMMON_MORPHS = ['#D9CE5E', '#E08A6A', '#8FD1C4'];
  * a reason to keep rolling without touching what rarity means.
  */
 export function colourFor(species: SpeciesKey, tier: Tier, seed: number): string {
-  const shiny = species !== 'grass' && traitsFor(seed, tier).shiny;
+  const shiny = !isFlora(species) && traitsFor(seed, tier).shiny;
   const r = rng(seed);
 
   if (tier === 'common') {
@@ -97,7 +106,7 @@ function tail(ctx: Ctx, len: number, spread: number, wag: number): void {
  * Where markings sit, per species: an ellipse standing in for the body.
  * Approximate on purpose — see drawPattern.
  */
-const BODY: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number, number]> = {
+const BODY: Record<FaunaKey, [number, number, number, number]> = {
   guppy: [0, 0, 0.5, 0.22],
   angel: [0, 0, 0.3, 0.52],
   jelly: [0, -0.06, 0.44, 0.34],
@@ -111,7 +120,7 @@ const BODY: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number, number
 };
 
 /** Where the crest sits: the top of the head, and how big it should be. */
-const CREST: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number]> = {
+const CREST: Record<FaunaKey, [number, number, number]> = {
   guppy: [0.06, -0.2, 0.44],
   angel: [0.0, -0.5, 0.42],
   jelly: [0, -0.34, 0.4],
@@ -134,7 +143,7 @@ const CREST: Record<Exclude<SpeciesKey, 'grass'>, [number, number, number]> = {
  */
 function face(
   ctx: Ctx,
-  species: Exclude<SpeciesKey, 'grass'>,
+  species: FaunaKey,
   L: number,
   x: number,
   y: number,
@@ -571,7 +580,7 @@ function whale({ ctx, L, colour, time, rate, seed, tier }: Args): void {
 
 type Painter = (a: Args) => void;
 
-const PAINTERS: Record<Exclude<SpeciesKey, 'grass'>, Painter> = {
+const PAINTERS: Record<FaunaKey, Painter> = {
   guppy,
   shrimp,
   angel,
@@ -585,7 +594,7 @@ const PAINTERS: Record<Exclude<SpeciesKey, 'grass'>, Painter> = {
 };
 
 /** Draws centred at the origin, facing +x. The caller flips and scales. */
-export function drawFauna(species: Exclude<SpeciesKey, 'grass'>, args: Args): void {
+export function drawFauna(species: FaunaKey, args: Args): void {
   // Crest first: drawn behind the body, so spikes and plumes rise out of the
   // silhouette instead of sitting on top of it like a sticker.
   const { crest } = traitsFor(args.seed, args.tier);

@@ -6,6 +6,10 @@ type Style = 'swim' | 'drift' | 'crawl' | 'glide';
 
 const STYLE: Record<SpeciesKey, Style> = {
   grass: 'crawl',
+  kelp: 'crawl',
+  fan: 'crawl',
+  anemone: 'crawl',
+  tubeworm: 'crawl',
   guppy: 'swim',
   angel: 'swim',
   lionfish: 'swim',
@@ -21,6 +25,10 @@ const STYLE: Record<SpeciesKey, Style> = {
 /** Tank widths per second. Small fish dart; a whale crosses in about a minute. */
 const SPEED: Record<SpeciesKey, number> = {
   grass: 0,
+  kelp: 0,
+  fan: 0,
+  anemone: 0,
+  tubeworm: 0,
   guppy: 0.075,
   shrimp: 0.02,
   angel: 0.05,

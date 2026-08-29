@@ -1,5 +1,25 @@
+/**
+ * Plants. Rooted, drawn by flora.ts, and outside the trait system — a sea fan
+ * has no eyes to blink and no crest to wear.
+ *
+ * The renderer used to ask `species === 'grass'` to tell a plant from a fish.
+ * That was true exactly as long as there was one plant.
+ */
+export const FLORA_KEYS = ['grass', 'kelp', 'fan', 'anemone', 'tubeworm'] as const;
+export type FloraKey = (typeof FLORA_KEYS)[number];
+
+/** Everything that swims. Has a painter in fauna.ts and wears traits. */
+export type FaunaKey = Exclude<SpeciesKey, FloraKey>;
+
+const FLORA_SET: ReadonlySet<string> = new Set(FLORA_KEYS);
+export const isFlora = (species: string): species is FloraKey => FLORA_SET.has(species);
+
 export type SpeciesKey =
   | 'grass'
+  | 'kelp'
+  | 'fan'
+  | 'anemone'
+  | 'tubeworm'
   | 'guppy'
   | 'angel'
   | 'jelly'

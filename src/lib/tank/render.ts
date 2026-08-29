@@ -1,8 +1,9 @@
 import { clamp, lerp, tankRect } from './geometry';
 import { drawFauna, BODY_LENGTH, TAIL_RATE, colourFor } from './fauna';
-import { drawGrass, grassPositions } from './flora';
+import { FLORA_HEIGHT, drawFlora, grassPositions } from './flora';
 import { placeAt, STILL_TIME } from './motion';
 import { faunaScale, grassScale } from './growth';
+import { isFlora, type FaunaKey, type FloraKey } from './types';
 import {
   clipToTank,
   drawBubbles,
@@ -62,13 +63,16 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   const fed = Math.min(MAX_FEEDINGS_SHOWN, Math.max(0, Math.floor(options.feedings ?? 0)));
   const interest = fed === 0 ? 0 : Math.min(1, 0.55 + (fed - 1) * 0.15);
 
-  const flora = options.inhabitants.filter((i) => i.species === 'grass');
-  const fauna = options.inhabitants.filter((i) => i.species !== 'grass');
+  // Asking `=== 'grass'` was true for exactly as long as there was one plant.
+  const flora = options.inhabitants.filter((i) => isFlora(i.species));
+  const fauna = options.inhabitants.filter((i) => !isFlora(i.species));
 
   grassPositions(tank, flora.length).forEach((x, i) => {
     const plant = flora[i]!;
-    const height = (tank.groundY - tank.surfaceY) * 0.3 * grassScale(plant.ageDays);
-    drawGrass(ctx, x, tank.groundY + 4, height, p, time, plant.seed, moving ? 1 : 0.35);
+    const kind = plant.species as FloraKey;
+    const height =
+      (tank.groundY - tank.surfaceY) * 0.3 * grassScale(plant.ageDays) * FLORA_HEIGHT[kind];
+    drawFlora(kind, ctx, x, tank.groundY + 4, height, p, time, plant.seed, moving ? 1 : 0.35);
   });
 
   // Far to near, so nearer things overlap what is behind them.
@@ -81,7 +85,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
     .sort((a, b) => a.at.depth - b.at.depth);
 
   placed.forEach(({ inhabitant, index, at }) => {
-    const species = inhabitant.species as Exclude<Inhabitant['species'], 'grass'>;
+    const species = inhabitant.species as FaunaKey;
     ctx.save();
     ctx.translate(at.x, at.y);
     // Haze with distance. Cheap depth, and it stops a crowded tank reading flat.

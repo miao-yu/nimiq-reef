@@ -39,6 +39,30 @@ export const SPECIES: Record<SpeciesKey, SpeciesDef> = {
     unlockDay: 0,
     blurb: 'Grows quietly and asks for nothing. Everything else builds its life around it.',
   },
+  kelp: {
+    label: 'Kelp',
+    tier: 'common',
+    unlockDay: 1,
+    blurb: 'Grows toward the light and takes the whole water column with it.',
+  },
+  fan: {
+    label: 'Sea fan',
+    tier: 'uncommon',
+    unlockDay: 7,
+    blurb: 'Stands in the current doing nothing, beautifully, for years.',
+  },
+  anemone: {
+    label: 'Anemone',
+    tier: 'rare',
+    unlockDay: 21,
+    blurb: 'Looks like a flower. Is not one. Will eat whatever it can reach.',
+  },
+  tubeworm: {
+    label: 'Tube worms',
+    tier: 'rare',
+    unlockDay: 45,
+    blurb: 'Built a tube, moved in, and has reconsidered nothing since.',
+  },
   guppy: {
     label: 'Guppy',
     tier: 'common',

@@ -1,5 +1,6 @@
 import { drawFauna, BODY_LENGTH, TAIL_RATE, colourFor } from '@/lib/tank/fauna';
-import type { SpeciesKey, TankPalette, Tier } from '@/lib/tank/types';
+import { isFlora } from '@/lib/tank/types';
+import type { FaunaKey, SpeciesKey, TankPalette, Tier } from '@/lib/tank/types';
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -220,7 +221,7 @@ function drawCatch(ctx: Ctx, s: FishingScene): void {
   ctx.save();
   ctx.translate(s.width * 0.42, s.height * 0.92 - (s.height * 0.92 - surfaceY - L * 0.6) * rise);
   ctx.scale(-1, 1); // facing the rod
-  drawFauna(s.fish.species as Exclude<SpeciesKey, 'grass'>, {
+  drawFauna(s.fish.species as FaunaKey, {
     ctx,
     L: Math.max(26, L),
     colour: colourFor(s.fish.species, s.fish.tier, s.fish.seed),
@@ -237,7 +238,7 @@ export function drawFishing(ctx: Ctx, s: FishingScene): void {
   drawWater(ctx, s);
 
   const f = floatAt(s);
-  if ((s.phase === 'landing' || s.phase === 'landed') && s.fish?.species !== 'grass') {
+  if ((s.phase === 'landing' || s.phase === 'landed') && !isFlora(s.fish?.species ?? '')) {
     drawCatch(ctx, s);
   }
   drawRodAndLine(ctx, s, f);
