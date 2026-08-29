@@ -23,6 +23,17 @@ const check = (n, ok, d = '') => {
   if (!ok) fail++;
 };
 
+/** A fresh wallet, signed in, but with no reef row until something makes one. */
+async function signInOnly() {
+  const { body: w } = await call('/api/dev/wallet?fresh=1');
+  const { body: ch } = await post('/api/auth/challenge', { address: w.address });
+  const { body: sig } = await post('/api/dev/wallet', { message: ch.message });
+  const v = await post('/api/auth/verify', {
+    code: ch.code, address: w.address, publicKey: sig.publicKey, signature: sig.signature,
+  });
+  return { address: w.address, cookie: (v.setCookie ?? '').split(';')[0] };
+}
+
 /** A fresh wallet, signed in, with its reef row created. */
 async function signIn() {
   const { body: w } = await call('/api/dev/wallet?fresh=1');
@@ -39,6 +50,18 @@ async function signIn() {
 const a = await signIn();
 const b = await signIn();
 console.log(`\n  ${b.address}\n  feeds ${a.address}\n`);
+
+/*
+ * B has never loaded its own reef — exactly what happens when somebody signs
+ * in and then feeds from the community list or a reef page. That used to be a
+ * foreign key violation and a 500.
+ */
+const fresh = await signInOnly();
+// Targets b, not a: a's received count is asserted below and this must not
+// move it.
+const cold = await post('/api/feed/give', { address: b.address }, fresh.cookie);
+check('a giver who has never loaded their own reef can still feed',
+  cold.status === 200, `HTTP ${cold.status}${cold.body.error ? ' ' + cold.body.error : ''}`);
 
 const fed = await post('/api/feed/give', { address: a.address }, b.cookie);
 check('a browser with no device can feed a reef it reached by address',

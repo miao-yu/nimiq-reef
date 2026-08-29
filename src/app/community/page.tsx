@@ -78,7 +78,9 @@ export default function Community() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ address }),
       });
-      const data = (await res.json()) as { error?: string };
+      // A crashed route answers with an HTML error page, and parsing that as
+      // JSON reports a syntax error where a person needs a sentence.
+      const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not feed that reef.');
       setFed((prev) => new Set(prev).add(address));
       setNote('Fed. One a day.');

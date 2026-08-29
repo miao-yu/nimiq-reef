@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
-import { feedOther, grantFedCharge } from '@/lib/server/reef-repo';
+import { ensureReef, feedOther, grantFedCharge } from '@/lib/server/reef-repo';
 import { rpc, RpcUnavailableError } from '@/lib/server/rpc';
 import { getReefState } from '@/lib/server/reef-state';
 import { deviceHash, isDeviceId } from '@/lib/server/device';
@@ -34,6 +34,17 @@ export async function POST(request: Request) {
   // a wallet costs nothing to create — and so is allowed only for a reef the
   // user reached deliberately, never for the candidates we hand out.
   const limiter = isDeviceId(body.device) ? deviceHash(body.device) : deviceHash(`address:${address}`);
+
+  /*
+   * The giver needs a reef row before the foreign key will accept them.
+   *
+   * Signing in happens on the home screen, which loads /api/reef and creates
+   * it — so this held right up until feeding became reachable from the
+   * community list and a reef page, where somebody can arrive and act without
+   * ever having loaded their own. It failed as a 500 and an unparseable body,
+   * not as a refusal.
+   */
+  await ensureReef(address);
 
   const outcome = await feedOther(address, formatAddress(target), limiter);
   if (outcome === 'unknown-reef') {

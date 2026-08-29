@@ -1,0 +1,79 @@
+.bar { display: flex; align-items: center; gap: 9px; }
+.back {
+  color: #fff; font-size: 0.9rem; font-weight: 600; text-decoration: none;
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+}
+.address {
+  font-family: ui-monospace, Menlo, monospace;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
+}
+
+.pull {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 162px);
+  z-index: 3;
+  border: none;
+  background: rgba(8, 22, 30, 0.66);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+.pull:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+
+.dock {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 56px);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.note {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #fff;
+  background: rgba(8, 22, 30, 0.82);
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.claim {
+  background: var(--leaf);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.92rem;
+  border-radius: 12px;
+  padding: 12px 22px;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+/* --- inside the sheet --- */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.stats div {
+  display: flex; flex-direction: column; gap: 3px;
+  border: 1px solid var(--line); border-radius: 11px; padding: 9px 10px;
+}
+.stats dt { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+.stats dd { margin: 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.species { display: flex; flex-wrap: wrap; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.species li {
+  font-size: 0.8rem; border: 1px solid var(--line); border-radius: 999px;
+  padding: 3px 10px; color: var(--ink);
+}
+.times { color: var(--muted); }
+.empty { margin: 0; font-size: 0.85rem; color: var(--muted); text-align: center; }

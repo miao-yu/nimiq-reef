@@ -1,11 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { publicReef } from '@/lib/server/reef-repo';
-import { SPECIES } from '@/lib/reef/species';
-import { formatNimShort } from '@/lib/nimiq/policy';
 import { formatAddress, normalizeAddress, truncateAddress } from '@/lib/nimiq/address';
-import styles from './page.module.css';
+import { PublicReefView } from '@/components/PublicReefView';
 
 export const runtime = 'nodejs';
 
@@ -53,55 +50,10 @@ export default async function ReefPage({ params }: { params: Promise<{ address: 
   const reef = await load(address);
   if (!reef) notFound();
 
-  const compact = reef.address.replace(/\s/g, '');
-  const counts = new Map<string, number>();
-  for (const plant of reef.plants) counts.set(plant.species, (counts.get(plant.species) ?? 0) + 1);
-
-  return (
-    <main className={styles.wrap}>
-      <header className={styles.head}>
-        <Link className={styles.brand} href="/">Reef</Link>
-        <span className={styles.day}>Day {reef.day}</span>
-      </header>
-
-      {/* The card is a PNG from the same renderer the owner sees, so this page
-          needs no canvas and no JavaScript at all. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        className={styles.tank}
-        src={`/r/${encodeURIComponent(compact)}/card`}
-        alt={`A reef with ${reef.plants.length} species on display`}
-        width={480}
-        height={300}
-      />
-
-      <p className={styles.address}>{truncateAddress(reef.address)}</p>
-
-      <dl className={styles.stats}>
-        <div><dt>Days staked</dt><dd>{reef.daysStaked}</dd></div>
-        <div><dt>Staked</dt><dd>{formatNimShort(reef.stakedLuna)} NIM</dd></div>
-        <div><dt>Fed</dt><dd>{reef.receivedLifetime}</dd></div>
-      </dl>
-
-      {counts.size > 0 ? (
-        <ul className={styles.species}>
-          {[...counts].map(([key, n]) => (
-            <li key={key}>
-              {SPECIES[key as keyof typeof SPECIES]?.label ?? key}
-              {n > 1 ? <span className={styles.times}> ×{n}</span> : null}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className={styles.empty}>Nothing on display yet.</p>
-      )}
-
-      <Link className={styles.cta} href={`/?feed=${encodeURIComponent(compact)}`}>
-        Feed this reef
-      </Link>
-      <p className={styles.note}>
-        A reef fills from real Nimiq staking. Sign in to start your own.
-      </p>
-    </main>
-  );
+  /*
+   * The data is fetched here and handed down, so the species list and the
+   * numbers are in the server-rendered HTML — this is the only page on the
+   * site with content worth indexing, and a canvas indexes as nothing.
+   */
+  return <PublicReefView reef={reef} />;
 }
