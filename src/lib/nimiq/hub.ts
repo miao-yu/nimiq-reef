@@ -9,6 +9,13 @@ import type { ReefProvider, SignatureResult } from './types';
  * It can also stake: `signStaking` takes serialised bytes, so the server builds
  * the transaction and broadcasts the signed result. See src/lib/server/staking.ts.
  *
+ * It cannot create an account. The Hub only accepts nine request types from a
+ * third-party origin — checkout, signTransaction, signStaking, signMessage,
+ * chooseAddress, the two cashlink calls, connectAccount and
+ * signPolygonTransaction — and `onboard` is not one of them. Calling it from
+ * here answers "reef.nimiq.cafe is unauthorized to call onboard", and always
+ * would have. Somebody with no wallet is sent to the Nimiq Wallet instead.
+ *
  * The Hub frames signed messages as
  *   HubApi.MSG_PREFIX + byteLength + message, hashed with SHA-256
  * which is exactly the `hub-prefixed-sha256` candidate in
@@ -52,12 +59,6 @@ export function createHubProvider(): ReefProvider {
     deviceId: async () => null,
     async listAccounts() {
       return [await address()];
-    },
-    // The Hub's own create / import flow. chooseAddress() assumes an account
-    // already exists, so without this a newcomer opens the wallet and finds
-    // nothing to choose — a dead end at the very first step.
-    async onboard() {
-      await hub.onboard({ appName: APP_NAME });
     },
     async sign(message: string): Promise<SignatureResult> {
       const signed = await hub.signMessage({ appName: APP_NAME, signer: chosen, message });

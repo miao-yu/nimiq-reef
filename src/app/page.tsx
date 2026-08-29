@@ -10,7 +10,7 @@ import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
 import { ShareButton } from '@/components/ShareButton';
 import { AccountBar } from '@/components/AccountBar';
-import { currentSession, signIn, signOut, signUp } from '@/lib/nimiq/session';
+import { currentSession, signIn, signOut } from '@/lib/nimiq/session';
 import { getProvider } from '@/lib/nimiq/provider';
 import { installErrorReporting, report } from '@/lib/client-log';
 import { adaptPlants } from '@/lib/tank/adapt';
@@ -90,14 +90,14 @@ export default function Home() {
       .finally(() => setKnown(true));
   }, [load]);
 
-  async function connect(fresh = false) {
+  async function connect() {
     setBusy(true);
     setError(null);
     try {
-      await (fresh ? signUp() : signIn());
+      await signIn();
       await load();
     } catch (cause) {
-      report(fresh ? 'signup:failed' : 'connect:failed', cause);
+      report('connect:failed', cause);
       setError(cause instanceof Error ? cause.message : 'Sign-in failed.');
     } finally {
       setBusy(false);
@@ -280,14 +280,17 @@ export default function Home() {
           </div>
           {kind === 'hub' ? (
             <div className={styles.gateLinks}>
-              <button
+              {/* A link, not a call. The Hub refuses `onboard` from any origin
+                  that is not Nimiq's own, so making an account has to happen
+                  in the wallet and the person comes back here to sign in. */}
+              <a
                 className={styles.secondary}
-                onClick={() => void connect(true)}
-                disabled={busy}
-                type="button"
+                href="https://wallet.nimiq.com/"
+                target="_blank"
+                rel="noopener noreferrer"
               >
                 {t('newToNimiq')}
-              </button>
+              </a>
               <Link className={styles.secondary} href="/open">
                 {t('openOnPhone')}
               </Link>

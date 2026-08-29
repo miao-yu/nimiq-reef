@@ -31,20 +31,6 @@ export async function signIn(): Promise<SignInResult> {
   });
 }
 
-/**
- * For somebody with no Nimiq account: make one, then sign in with it.
- *
- * Deliberately a separate entry point rather than a fallback inside signIn().
- * Creating a wallet is not something to do to a person who only meant to log
- * in — they have to have asked for it.
- */
-export async function signUp(): Promise<SignInResult> {
-  const provider = await getProvider();
-  if (!provider.onboard) throw new Error('This wallet cannot create an account.');
-  await provider.onboard();
-  return signIn();
-}
-
 export async function currentSession(): Promise<string | null> {
   const res = await fetch('/api/auth/session');
   if (!res.ok) return null;

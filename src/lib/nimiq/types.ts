@@ -30,13 +30,5 @@ export interface ReefProvider {
    * a wallet costs nothing to create.
    */
   deviceId(): Promise<string | null>;
-  /**
-   * Create a Nimiq account, for somebody who has none.
-   *
-   * Only the Hub offers this. Inside Nimiq Pay a wallet always exists, and the
-   * mock invents one, so the absence of this method is what marks a provider
-   * that has nothing to onboard.
-   */
-  onboard?(): Promise<void>;
   readonly kind: ProviderKind;
 }
