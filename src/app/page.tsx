@@ -193,11 +193,13 @@ export default function Home() {
         ) : (
           <div className={styles.brandRow}>
             <span className={styles.brand}>Reef</span>
-            <span className={styles.sub}>
+            {/* The count was a dead number for the whole life of the app. */}
+            <Link className={styles.sub} href="/community">
               {community && community.reefs > 0
                 ? t('reefsLiving', { n: community.reefs })
-                : t('communityReef')}
-            </span>
+                : t('communityReef')}{' '}
+              →
+            </Link>
           </div>
         )}
       </header>

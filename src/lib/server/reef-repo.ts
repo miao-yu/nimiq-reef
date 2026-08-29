@@ -15,6 +15,8 @@ interface ReefRow extends RowDataPacket {
 
 interface SpecimenRow extends RowDataPacket {
   id: number;
+  /** Only selected when listing across several reefs. */
+  address?: string;
   slot: number | null;
   species: SpeciesKey;
   tier: 'common' | 'uncommon' | 'rare' | 'legendary';
@@ -528,6 +530,125 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     fedToday: fed,
     receivedToday: counts.receivedToday,
     receivedLifetime: counts.receivedLifetime,
+  };
+}
+
+export type CommunitySort = 'new' | 'species' | 'quiet';
+
+export interface CommunityReef {
+  address: string;
+  day: number;
+  species: number;
+  stakedLuna: number;
+  delegation: string | null;
+  fedLifetime: number;
+  plants: Plant[];
+}
+
+export interface CommunityPage {
+  reefs: CommunityReef[];
+  /** Pass back as `cursor` for the next page, or null at the end. */
+  next: string | null;
+}
+
+/**
+ * A page of public reefs.
+ *
+ * Two queries regardless of page size: one for the reefs, one for every
+ * inhabitant of the reefs on that page. Per-reef queries would be a dozen
+ * round trips to draw one screen.
+ *
+ * Keyset pagination rather than OFFSET, because reefs are created while
+ * somebody is scrolling and an offset page silently skips or repeats rows when
+ * the set shifts underneath it. Every sort ends in address, so the last
+ * address of a page is enough to resume exactly.
+ */
+export async function communityReefs(options: {
+  sort?: CommunitySort;
+  pool?: string | null;
+  cursor?: string | null;
+  limit?: number;
+}): Promise<CommunityPage> {
+  const sort: CommunitySort = options.sort ?? 'new';
+  const limit = Math.min(48, Math.max(1, options.limit ?? 12));
+
+  // Whitelisted rather than interpolated: these strings go straight into SQL.
+  const ORDER: Record<CommunitySort, string> = {
+    new: 'r.first_day DESC, r.address ASC',
+    species: 'species DESC, r.address ASC',
+    quiet: 'fed_lifetime ASC, r.address ASC',
+  };
+
+  const where: string[] = ['r.hidden = 0'];
+  const params: unknown[] = [];
+  if (options.pool) {
+    where.push('d.delegation = ?');
+    params.push(options.pool);
+  }
+  if (options.cursor) {
+    where.push('r.address > ?');
+    params.push(options.cursor);
+  }
+
+  const [rows] = await db().query<RowDataPacket[]>(
+    `SELECT r.address, r.first_day, d.staked_luna, d.delegation,
+            (SELECT COUNT(DISTINCT s.species) FROM specimens s WHERE s.address = r.address) AS species,
+            (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime
+     FROM reefs r
+     LEFT JOIN reef_days d
+       ON d.address = r.address
+      AND d.day = (SELECT MAX(day) FROM reef_days x WHERE x.address = r.address)
+     WHERE ${where.join(' AND ')}
+     ORDER BY ${ORDER[sort]}
+     LIMIT ?`,
+    [...params, limit + 1],
+  );
+
+  const page = rows.slice(0, limit);
+  const next = rows.length > limit ? (page[page.length - 1]!.address as string) : null;
+  if (page.length === 0) return { reefs: [], next: null };
+
+  const addresses = page.map((r) => r.address as string);
+  const [specimens] = await db().query<SpecimenRow[]>(
+    `SELECT address, id, slot, species, tier, seed, discovered_at
+     FROM specimens
+     WHERE address IN (${addresses.map(() => '?').join(',')}) AND slot IS NOT NULL
+     ORDER BY address, slot`,
+    addresses,
+  );
+
+  const today = Date.parse(`${utcDay()}T00:00:00Z`);
+  const byAddress = new Map<string, Plant[]>();
+  for (const row of specimens) {
+    const key = row.address as string;
+    const list = byAddress.get(key) ?? [];
+    list.push({
+      slot: row.slot!,
+      x: 0,
+      species: row.species,
+      tier: row.tier,
+      plantedDay: 1,
+      ageDays: Math.max(0, Math.round((today - discoveredDay(row.discovered_at)) / 86_400_000)),
+      seed: row.seed,
+    });
+    byAddress.set(key, list);
+  }
+
+  return {
+    next,
+    reefs: page.map((r) => {
+      const plants = byAddress.get(r.address as string) ?? [];
+      return {
+        address: r.address as string,
+        day: reefDay(asDay(r.first_day)),
+        species: Number(r.species ?? 0),
+        stakedLuna: Number(r.staked_luna ?? 0),
+        delegation: (r.delegation as string | null) ?? null,
+        fedLifetime: Number(r.fed_lifetime ?? 0),
+        // Spread across the tank on read, exactly as listPlants does.
+        plants: plants.map((p, i) => ({ ...p, x: (i + 0.5) / Math.max(1, plants.length) })),
+      };
+    }),
   };
 }
 

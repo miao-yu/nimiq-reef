@@ -1,0 +1,46 @@
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 16px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.head { display: flex; flex-direction: column; gap: 6px; }
+.back { font-size: 0.9rem; color: var(--muted); text-decoration: none; align-self: flex-start; }
+.back:hover { color: var(--ink); }
+.title { margin: 0; font-size: 1.35rem; }
+.sub { margin: 0; font-size: 0.9rem; color: var(--muted); max-width: 56ch; }
+
+.sorts { display: flex; gap: 8px; flex-wrap: wrap; }
+.sortBtn {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.sortOn { background: var(--leaf); border-color: var(--leaf); color: #fff; }
+.sortBtn:focus-visible { outline: 2px solid var(--leaf); outline-offset: 2px; }
+
+/* One column on a phone: the tank needs the width to be worth showing. */
+.grid { display: grid; grid-template-columns: 1fr; gap: 14px; }
+@media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 940px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+
+.loadMore {
+  align-self: center;
+  border: 1px solid var(--line-strong, var(--line));
+  background: var(--ground);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 10px 24px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.loadMore:disabled { opacity: 0.5; cursor: default; }
+.note { margin: 0; text-align: center; font-size: 0.86rem; color: var(--muted); }

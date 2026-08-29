@@ -3,7 +3,13 @@
 
 .brandRow { display: flex; align-items: baseline; justify-content: space-between; }
 .brand { font-weight: 700; font-size: 1.05rem; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5); }
-.sub { font-size: 0.8rem; color: rgba(255, 255, 255, 0.92); text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55); }
+.sub {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+}
+.sub:hover { color: #fff; }
 
 /* The handle into everything that is not one of the two actions. */
 .pull {
