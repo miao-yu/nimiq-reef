@@ -174,10 +174,6 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
       <Sheet open={open} onClose={() => setOpen(false)} title={`Day ${reef.day}`}>
         <dl className={styles.stats}>
           <div>
-            <dt>Staking streak</dt>
-            <dd>{reef.daysStaked}</dd>
-          </div>
-          <div>
             <dt>Staked</dt>
             <dd>{reef.stakedLuna > 0 ? formatNimShort(reef.stakedLuna) : '—'}</dd>
           </div>

@@ -33,7 +33,7 @@ export async function generateMetadata(
   const title = `${short}'s reef`;
   const description =
     `Day ${reef.day}. ${reef.plants.length} ${reef.plants.length === 1 ? 'species' : 'species'} ` +
-    `on display, ${reef.daysStaked}-day staking streak.`;
+    'on display.';
   const card = `/r/${encodeURIComponent(reef.address.replace(/\s/g, ''))}/card`;
 
   return {

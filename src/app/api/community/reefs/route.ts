@@ -7,7 +7,7 @@ import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SORTS: readonly CommunitySort[] = ['staked', 'new', 'species', 'quiet'];
+const SORTS: readonly CommunitySort[] = ['species', 'new', 'quiet'];
 
 /**
  * A page of public reefs.
@@ -20,7 +20,7 @@ const SORTS: readonly CommunitySort[] = ['staked', 'new', 'species', 'quiet'];
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const asked = url.searchParams.get('sort');
-  const sort = SORTS.includes(asked as CommunitySort) ? (asked as CommunitySort) : 'staked';
+  const sort = SORTS.includes(asked as CommunitySort) ? (asked as CommunitySort) : 'species';
 
   // A pool filter has to be a real address or it is not a filter.
   const poolParam = url.searchParams.get('pool');

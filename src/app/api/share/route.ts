@@ -26,9 +26,7 @@ export async function GET() {
     const caption =
       reef.plants.length === 0
         ? `Day ${reef.day} — nothing planted yet`
-        : reef.daysStaked > 0
-          ? `Day ${reef.day} — ${reef.daysStaked}-day staking streak`
-          : `Day ${reef.day} in my reef`;
+        : `Day ${reef.day} in my reef`;
     return png(
       renderShareImage({
         inhabitants: adaptPlants(reef.plants),

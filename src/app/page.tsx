@@ -230,10 +230,6 @@ export default function Home() {
           <Sheet open={sheet} onClose={() => setSheet(false)} title={t('day', { n: reef.day })}>
             <dl className={styles.stats}>
               <div>
-                <dt>{t('daysStaked')}</dt>
-                <dd>{reef.daysStaked}</dd>
-              </div>
-              <div>
                 <dt>{t('staked')}</dt>
                 <dd>{reef.stakedLuna > 0 ? formatNimShort(reef.stakedLuna) : '—'}</dd>
               </div>

@@ -17,7 +17,7 @@
     "check:inapp": "npx tsx scripts/in-app-check.mjs",
     "check:traits": "npx tsx scripts/traits-check.mjs",
     "icons": "bash -c 'rm -rf .icons && npx tsc --ignoreConfig src/lib/tank/*.ts --outDir .icons/tank --module esnext --target es2022 --moduleResolution bundler --skipLibCheck >/dev/null 2>&1 || true; find .icons -name \"*.js\" -print0 | xargs -0 sed -i \"\" -E \"s|from .(\\./[a-z]+).|from \\\"\\1.js\\\"|g\"; node scripts/make-icons.mjs'",
-    "check:streak": "npx tsx --env-file=.env.local scripts/streak-check.mjs"
+    "check:streak": "npx tsx scripts/streak-check.mjs"
   },
   "author": "",
   "license": "ISC",

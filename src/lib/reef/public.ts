@@ -11,7 +11,6 @@ export interface PublicReef {
   day: number;
   plants: Plant[];
   stakedLuna: number;
-  daysStaked: number;
   fedToday: boolean;
   receivedToday: number;
   receivedLifetime: number;

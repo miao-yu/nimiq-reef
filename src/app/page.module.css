@@ -37,7 +37,7 @@
 .pull:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
 
 /* --- inside the sheet --- */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 0; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0; }
 .stats div {
   display: flex; flex-direction: column; gap: 3px;
   border: 1px solid var(--line); border-radius: 11px; padding: 9px 10px;

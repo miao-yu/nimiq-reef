@@ -17,15 +17,15 @@ import styles from './page.module.css';
  * app dark for anybody on a desktop. Every card here is a target.
  */
 /*
- * The staking streak leads, and is the default.
+ * Most species leads, and is the default.
  *
  * Newest was the default and it opened the page on a wall of day-one reefs
  * with nothing in them — the worst possible first impression of a game about
- * things accumulating. The staking streak is the loyalty axis the whole app is
- * built on, so it surfaces reefs that have something to look at.
+ * things accumulating. The staking streak replaced it and ranked better, but
+ * ranking by a number shown nowhere reads as an arbitrary order. Species count
+ * is on every card, so the order explains itself.
  */
 const SORTS = [
-  { key: 'staked', label: 'Staking streak' },
   { key: 'species', label: 'Most species' },
   { key: 'new', label: 'Newest' },
   // Ordered by fewest feeds ever received: the reefs nobody has found yet.
@@ -36,7 +36,7 @@ type SortKey = (typeof SORTS)[number]['key'];
 
 export default function Community() {
   const [reefs, setReefs] = useState<CommunityReefCard[]>([]);
-  const [sort, setSort] = useState<SortKey>('staked');
+  const [sort, setSort] = useState<SortKey>('species');
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
   const [busy, setBusy] = useState(false);

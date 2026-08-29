@@ -467,7 +467,6 @@ export interface PublicReef {
   day: number;
   plants: Plant[];
   stakedLuna: number;
-  daysStaked: number;
   fedToday: boolean;
   receivedToday: number;
   receivedLifetime: number;
@@ -495,9 +494,8 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     'SELECT staked_luna FROM reef_days WHERE address = ? ORDER BY day DESC LIMIT 1',
     [address],
   );
-  const [plants, streak, counts, fed] = await Promise.all([
+  const [plants, counts, fed] = await Promise.all([
     listPlants(address),
-    daysStaked(address),
     feedingCounts(address),
     fedToday(address),
   ]);
@@ -507,7 +505,6 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     day: reefDay(asDay(row.first_day)),
     plants,
     stakedLuna: Number(stakeRows[0]?.staked_luna ?? 0),
-    daysStaked: streak,
     fedToday: fed,
     receivedToday: counts.receivedToday,
     receivedLifetime: counts.receivedLifetime,
@@ -547,12 +544,11 @@ function decodeCursor(raw: string | null | undefined): Cursor | null {
   }
 }
 
-export type CommunitySort = 'new' | 'species' | 'quiet' | 'staked';
+export type CommunitySort = 'new' | 'species' | 'quiet';
 
 export interface CommunityReef {
   address: string;
   day: number;
-  daysStaked: number;
   species: number;
   stakedLuna: number;
   delegation: string | null;
@@ -589,7 +585,7 @@ export async function communityReefs(options: {
   cursor?: string | null;
   limit?: number;
 }): Promise<CommunityPage> {
-  const sort: CommunitySort = options.sort ?? 'staked';
+  const sort: CommunitySort = options.sort ?? 'species';
   const limit = Math.min(48, Math.max(1, options.limit ?? 12));
 
   /*
@@ -606,23 +602,9 @@ export async function communityReefs(options: {
     new: { column: 'first_day_key', desc: true },
     species: { column: 'species', desc: true },
     quiet: { column: 'fed_lifetime', desc: false },
-    staked: { column: 'days_staked', desc: true },
   };
   const { column, desc } = ORDER[sort];
 
-  /*
-   * days_staked must be the *same* number the reef itself shows, which is the
-   * unbroken run from daysStaked() — not a lifetime tally. Sorting on a
-   * lifetime count while every reef page showed a streak meant one click
-   * changed the number under the same words.
-   *
-   * The walk in daysStaked() reduces to this: skip days we never observed,
-   * stop at the first observed day with nothing staked, count what is left.
-   * So the streak is every staked day after the most recent unstaked one. The
-   * lookback bound is carried over too, or the two would still disagree for a
-   * reef whose break falls outside the window daysStaked() can see.
-   */
-  const since = addDays(utcDay(), -STAKE_LOOKBACK_DAYS);
 
   const where: string[] = ['r.hidden = 0'];
   const params: unknown[] = [];
@@ -647,15 +629,7 @@ export async function communityReefs(options: {
             DATE_FORMAT(r.first_day, '%Y-%m-%d') AS first_day_key,
             d.staked_luna, d.delegation,
             (SELECT COUNT(DISTINCT s.species) FROM specimens s WHERE s.address = r.address) AS species,
-            (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime,
-            (SELECT COUNT(*) FROM reef_days rd
-              WHERE rd.address = r.address
-                AND rd.staked_luna > 0
-                AND rd.day >= ?
-                AND rd.day > COALESCE(
-                  (SELECT MAX(b.day) FROM reef_days b
-                    WHERE b.address = r.address AND b.staked_luna <= 0 AND b.day >= ?),
-                  '1000-01-01'))                                                  AS days_staked
+            (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime
      FROM reefs r
      LEFT JOIN reef_days d
        ON d.address = r.address
@@ -664,7 +638,7 @@ export async function communityReefs(options: {
      ${having.length ? `HAVING ${having.join(' AND ')}` : ''}
      ORDER BY ${column} ${desc ? 'DESC' : 'ASC'}, r.address ASC
      LIMIT ?`,
-    [since, since, ...params, ...havingParams, limit + 1],
+    [...params, ...havingParams, limit + 1],
   );
 
   const page = rows.slice(0, limit);
@@ -711,7 +685,6 @@ export async function communityReefs(options: {
       return {
         address: r.address as string,
         day: reefDay(asDay(r.first_day)),
-        daysStaked: Number(r.days_staked ?? 0),
         species: Number(r.species ?? 0),
         stakedLuna: Number(r.staked_luna ?? 0),
         delegation: (r.delegation as string | null) ?? null,

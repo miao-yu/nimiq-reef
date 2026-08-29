@@ -68,7 +68,7 @@ export const STRINGS = {
     // guide
     guide: 'Field guide',
     guideCount: '{found} of {total} discovered',
-    locked: '{n}d streak',
+    locked: '{n}d staking',
     inTank: 'In the tank',
     release: 'Return to the reef',
     display: 'Put on display',
@@ -155,7 +155,7 @@ export const STRINGS = {
 
     guide: 'Feldführer',
     guideCount: '{found} von {total} entdeckt',
-    locked: '{n}T Serie',
+    locked: '{n}T Staking',
     inTank: 'Im Becken',
     release: 'Zurück ins Riff',
     display: 'Ins Becken setzen',
@@ -241,7 +241,7 @@ export const STRINGS = {
 
     guide: 'Guía de campo',
     guideCount: '{found} de {total} descubiertas',
-    locked: '{n}d racha',
+    locked: '{n}d staking',
     inTank: 'En el acuario',
     release: 'Devolver al arrecife',
     display: 'Poner en el acuario',
