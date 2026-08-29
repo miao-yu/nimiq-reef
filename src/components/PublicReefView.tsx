@@ -5,14 +5,14 @@ import Link from 'next/link';
 import { Stage } from './Stage';
 import { Sheet } from './Sheet';
 import { RingButton } from './RingButton';
-import { Avatar } from './Avatar';
+import { IdentityMenu } from './IdentityMenu';
 import { adaptPlants } from '@/lib/tank/adapt';
 import { depthForStake, slotsFor } from '@/lib/reef/vessel';
 import { foodInWater } from '@/lib/reef/feeding';
 import { SPECIES } from '@/lib/reef/species';
-import { truncateAddress } from '@/lib/nimiq/address';
 import { formatNimShort } from '@/lib/nimiq/policy';
 import { report } from '@/lib/client-log';
+import { useLocale } from '@/lib/i18n';
 import type { PublicReef } from '@/lib/reef/public';
 import stage from './Stage.module.css';
 import styles from './PublicReefView.module.css';
@@ -29,17 +29,25 @@ import styles from './PublicReefView.module.css';
  * for crawlers even though the tank needs a canvas.
  */
 export function PublicReefView({ reef }: { reef: PublicReef }) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [me, setMe] = useState<string | null>(null);
   const [known, setKnown] = useState(false);
+  // Whether today's gift is still unspent. Unknown until the session answers,
+  // and a button that looks ready and then refuses is the bug this fixes — so
+  // it starts false and only the answer turns it on.
+  const [canFeed, setCanFeed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const [fed, setFed] = useState(false);
 
   useEffect(() => {
     void fetch('/api/auth/session')
-      .then((r) => (r.ok ? r.json() : { address: null }))
-      .then((d: { address: string | null }) => setMe(d.address))
+      .then((r) => (r.ok ? r.json() : { address: null, canFeedOther: false }))
+      .then((d: { address: string | null; canFeedOther?: boolean }) => {
+        setMe(d.address);
+        setCanFeed(Boolean(d.canFeedOther));
+      })
       .catch(() => setMe(null))
       .finally(() => setKnown(true));
   }, []);
@@ -65,6 +73,7 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not feed that reef.');
       setFed(true);
+      setCanFeed(false);
       say('Fed. They will see it.');
     } catch (cause) {
       report('public:feed', cause);
@@ -84,13 +93,21 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
       feedings={foodInWater({ fedToday: reef.fedToday, receivedToday: reef.receivedToday })}
       label={`A reef on day ${reef.day} with ${reef.plants.length} on display.`}
     >
+      {/* The same header as your own reef: where you came from on the left,
+          whose reef this is on the right, behind the same control. What
+          differs is the menu — there is no signing out of somebody else's
+          reef, and the share item hands over this reef rather than yours. */}
       <header className={stage.hud}>
         <div className={styles.bar}>
           <Link className={styles.back} href="/community">
             ← Reefs
           </Link>
-          <Avatar address={reef.address} size={26} />
-          <code className={styles.address}>{truncateAddress(reef.address)}</code>
+          <IdentityMenu
+            address={reef.address}
+            shareUrl={typeof window === 'undefined' ? undefined : window.location.href}
+            shareLabel={t('shareThis')}
+            size={30}
+          />
         </div>
       </header>
 
@@ -120,12 +137,16 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
           </Link>
         ) : (
           <RingButton
-            label={mine ? 'Your reef' : fed ? 'Fed' : 'Feed this reef'}
+            label={
+              mine ? 'Your reef' : fed ? 'Fed' : !canFeed && known ? 'Fed today' : 'Feed this reef'
+            }
             tone="coral"
-            progress={fed || mine ? 1 : 0}
-            disabled={mine || fed || busy || !me}
+            progress={fed || mine || !canFeed ? 1 : 0}
+            disabled={mine || fed || busy || !me || !canFeed}
             onClick={() => void feed()}
-            onBlocked={() => say(mine ? 'This one is yours.' : 'Fed. One a day.')}
+            onBlocked={() =>
+              say(mine ? 'This one is yours.' : 'You have already fed a reef today. One a day.')
+            }
           >
             <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
               {[

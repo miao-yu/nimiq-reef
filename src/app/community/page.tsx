@@ -16,9 +16,18 @@ import styles from './page.module.css';
  * to feed short of being handed an address, which left the social half of the
  * app dark for anybody on a desktop. Every card here is a target.
  */
+/*
+ * Days staked leads, and is the default.
+ *
+ * Newest was the default and it opened the page on a wall of day-one reefs
+ * with nothing in them — the worst possible first impression of a game about
+ * things accumulating. Days staked is the loyalty axis the whole app is built
+ * on, so it surfaces reefs that have something to look at.
+ */
 const SORTS = [
-  { key: 'new', label: 'Newest' },
+  { key: 'staked', label: 'Days staked' },
   { key: 'species', label: 'Most species' },
+  { key: 'new', label: 'Newest' },
   // Ordered by fewest feeds ever received: the reefs nobody has found yet.
   { key: 'quiet', label: 'Least fed' },
 ] as const;
@@ -27,19 +36,25 @@ type SortKey = (typeof SORTS)[number]['key'];
 
 export default function Community() {
   const [reefs, setReefs] = useState<CommunityReefCard[]>([]);
-  const [sort, setSort] = useState<SortKey>('new');
+  const [sort, setSort] = useState<SortKey>('staked');
   const [cursor, setCursor] = useState<string | null>(null);
   const [more, setMore] = useState(true);
   const [busy, setBusy] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
+  // One gift a day, shared across every card on this page — so feeding one
+  // reef has to grey out all the others, not just the one that was tapped.
+  const [canFeed, setCanFeed] = useState(false);
   const [feeding, setFeeding] = useState<string | null>(null);
   const [fed, setFed] = useState<Set<string>>(new Set());
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
     void fetch('/api/auth/session')
-      .then((r) => (r.ok ? r.json() : { address: null }))
-      .then((d: { address: string | null }) => setSignedIn(Boolean(d.address)))
+      .then((r) => (r.ok ? r.json() : { address: null, canFeedOther: false }))
+      .then((d: { address: string | null; canFeedOther?: boolean }) => {
+        setSignedIn(Boolean(d.address));
+        setCanFeed(Boolean(d.canFeedOther));
+      })
       .catch(() => setSignedIn(false));
   }, []);
 
@@ -83,6 +98,7 @@ export default function Community() {
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Could not feed that reef.');
       setFed((prev) => new Set(prev).add(address));
+      setCanFeed(false);
       setNote('Fed. One a day.');
     } catch (cause) {
       report('community:feed', cause);
@@ -95,7 +111,7 @@ export default function Community() {
   return (
     <main className={styles.wrap}>
       <header className={styles.head}>
-        <Link className={styles.back} href="/">← Reef</Link>
+        <Link className={styles.back} href="/">← My reef</Link>
         <h1 className={styles.title}>Reefs living</h1>
         <p className={styles.sub}>
           Every reef here fills from somebody&rsquo;s real Nimiq staking. Feed one — it costs you
@@ -128,6 +144,7 @@ export default function Community() {
             onFeed={signedIn ? feed : undefined}
             feeding={feeding === reef.address}
             fed={fed.has(reef.address)}
+            spent={!canFeed}
           />
         ))}
       </div>

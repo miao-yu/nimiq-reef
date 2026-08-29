@@ -4,12 +4,6 @@
   gap: 10px;
   padding: 2px 0;
 }
-
-/*
- * This bar floats on the tank now, not on paper. `--muted` is an ink-on-white
- * grey and against a bright waterline it was invisible — reported from a
- * phone, where the sky band is at its palest.
- */
 .brand {
   font-size: 1.25rem;
   font-weight: 700;
@@ -17,8 +11,6 @@
   color: #fff;
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
 }
-
-/* Takes the slack, so the avatar stays pinned right whatever the day number. */
 .day {
   flex: 1;
   font-size: 0.88rem;
@@ -27,70 +19,3 @@
   text-shadow: 0 1px 5px rgba(0, 0, 0, 0.55);
   font-variant-numeric: tabular-nums;
 }
-
-.wrap { position: relative; flex: none; }
-
-.trigger {
-  display: block;
-  padding: 0;
-  border: 0;
-  background: none;
-  cursor: pointer;
-  border-radius: 50%;
-  line-height: 0;
-}
-.trigger:focus-visible { outline: 2px solid var(--leaf); outline-offset: 3px; }
-
-.menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 20;
-  min-width: 240px;
-  max-width: min(300px, calc(100vw - 36px));
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.who {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  background: none;
-  border-left: 0;
-  border-right: 0;
-  border-top: 0;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-  width: 100%;
-}
-.who:hover { background: var(--ground); }
-.who:focus-visible { outline: 2px solid var(--leaf); outline-offset: -2px; }
-.who code {
-  font-family: ui-monospace, Menlo, monospace;
-  font-size: 0.82rem;
-  color: var(--ink);
-  letter-spacing: 0.02em;
-}
-.who small { font-size: 0.7rem; color: var(--muted); }
-
-.item {
-  background: none;
-  border: 0;
-  text-align: left;
-  padding: 11px 14px;
-  font: inherit;
-  font-size: 0.88rem;
-  color: var(--ink);
-  cursor: pointer;
-}
-.item:hover { background: var(--ground); }
-.item:focus-visible { outline: 2px solid var(--leaf); outline-offset: -2px; }

@@ -533,11 +533,45 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
   };
 }
 
-export type CommunitySort = 'new' | 'species' | 'quiet';
+/**
+ * A cursor is the sort value plus the address that broke its tie.
+ *
+ * Opaque on purpose: it is a position in a result set, not an address, and
+ * encoding it stops a caller building one by hand and getting a page that
+ * quietly skips rows.
+ */
+interface Cursor {
+  /** Dates travel as 'YYYY-MM-DD', where lexical order is chronological. */
+  value: number | string;
+  address: string;
+}
+
+function encodeCursor(cursor: Cursor): string {
+  return Buffer.from(JSON.stringify(cursor)).toString('base64url');
+}
+
+function decodeCursor(raw: string | null | undefined): Cursor | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(raw, 'base64url').toString()) as Partial<Cursor>;
+    const value = parsed.value;
+    const ok =
+      (typeof value === 'number' && Number.isFinite(value)) || typeof value === 'string';
+    if (!ok) return null;
+    if (typeof parsed.address !== 'string') return null;
+    return { value: value as number | string, address: parsed.address };
+  } catch {
+    // A cursor we cannot read means the first page, not a crash.
+    return null;
+  }
+}
+
+export type CommunitySort = 'new' | 'species' | 'quiet' | 'staked';
 
 export interface CommunityReef {
   address: string;
   day: number;
+  daysStaked: number;
   species: number;
   stakedLuna: number;
   delegation: string | null;
@@ -560,8 +594,13 @@ export interface CommunityPage {
  *
  * Keyset pagination rather than OFFSET, because reefs are created while
  * somebody is scrolling and an offset page silently skips or repeats rows when
- * the set shifts underneath it. Every sort ends in address, so the last
- * address of a page is enough to resume exactly.
+ * the set shifts underneath it.
+ *
+ * The cursor carries the sort value as well as the address. Comparing address
+ * alone — which this did — is not "the row after that one" in a list ordered
+ * by anything else: it drops every reef whose address sorts lower regardless
+ * of its position, so page two silently lost rows. Ties made it worse, and
+ * days staked is a small integer that is nearly all ties.
  */
 export async function communityReefs(options: {
   sort?: CommunitySort;
@@ -569,15 +608,26 @@ export async function communityReefs(options: {
   cursor?: string | null;
   limit?: number;
 }): Promise<CommunityPage> {
-  const sort: CommunitySort = options.sort ?? 'new';
+  const sort: CommunitySort = options.sort ?? 'staked';
   const limit = Math.min(48, Math.max(1, options.limit ?? 12));
 
-  // Whitelisted rather than interpolated: these strings go straight into SQL.
-  const ORDER: Record<CommunitySort, string> = {
-    new: 'r.first_day DESC, r.address ASC',
-    species: 'species DESC, r.address ASC',
-    quiet: 'fed_lifetime ASC, r.address ASC',
+  /*
+   * Whitelisted rather than interpolated: these strings go straight into SQL.
+   *
+   * `column` is the alias the sort leads on and `desc` its direction; both the
+   * ORDER BY and the cursor comparison are built from them, so the two cannot
+   * drift apart. Every sort still breaks ties on address, which is what makes
+   * a row's position unique and the cursor exact.
+   */
+  const ORDER: Record<CommunitySort, { column: string; desc: boolean }> = {
+    // Not r.first_day: the driver hands a DATE back as a Date object, which
+    // does not survive a round trip through the cursor as a number.
+    new: { column: 'first_day_key', desc: true },
+    species: { column: 'species', desc: true },
+    quiet: { column: 'fed_lifetime', desc: false },
+    staked: { column: 'days_staked', desc: true },
   };
+  const { column, desc } = ORDER[sort];
 
   const where: string[] = ['r.hidden = 0'];
   const params: unknown[] = [];
@@ -585,27 +635,46 @@ export async function communityReefs(options: {
     where.push('d.delegation = ?');
     params.push(options.pool);
   }
-  if (options.cursor) {
-    where.push('r.address > ?');
-    params.push(options.cursor);
+
+  // Aliases are not visible to WHERE in MySQL, but they are to HAVING — and
+  // with no aggregate in the query HAVING filters row by row, which is what
+  // this needs.
+  const having: string[] = [];
+  const havingParams: unknown[] = [];
+  const from = decodeCursor(options.cursor);
+  if (from) {
+    having.push(`(${column} ${desc ? '<' : '>'} ? OR (${column} = ? AND r.address > ?))`);
+    havingParams.push(from.value, from.value, from.address);
   }
 
   const [rows] = await db().query<RowDataPacket[]>(
-    `SELECT r.address, r.first_day, d.staked_luna, d.delegation,
+    `SELECT r.address, r.first_day AS first_day,
+            DATE_FORMAT(r.first_day, '%Y-%m-%d') AS first_day_key,
+            d.staked_luna, d.delegation,
             (SELECT COUNT(DISTINCT s.species) FROM specimens s WHERE s.address = r.address) AS species,
-            (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime
+            (SELECT COUNT(*) FROM feedings f WHERE f.to_address = r.address) AS fed_lifetime,
+            (SELECT COUNT(*) FROM reef_days rd
+              WHERE rd.address = r.address AND rd.staked_luna > 0)                AS days_staked
      FROM reefs r
      LEFT JOIN reef_days d
        ON d.address = r.address
       AND d.day = (SELECT MAX(day) FROM reef_days x WHERE x.address = r.address)
      WHERE ${where.join(' AND ')}
-     ORDER BY ${ORDER[sort]}
+     ${having.length ? `HAVING ${having.join(' AND ')}` : ''}
+     ORDER BY ${column} ${desc ? 'DESC' : 'ASC'}, r.address ASC
      LIMIT ?`,
-    [...params, limit + 1],
+    [...params, ...havingParams, limit + 1],
   );
 
   const page = rows.slice(0, limit);
-  const next = rows.length > limit ? (page[page.length - 1]!.address as string) : null;
+  const last = page[page.length - 1];
+  const next =
+    rows.length > limit && last
+      ? encodeCursor({
+          value: typeof last[column] === 'string' ? (last[column] as string) : Number(last[column]),
+          address: last.address as string,
+        })
+      : null;
   if (page.length === 0) return { reefs: [], next: null };
 
   const addresses = page.map((r) => r.address as string);
@@ -641,6 +710,7 @@ export async function communityReefs(options: {
       return {
         address: r.address as string,
         day: reefDay(asDay(r.first_day)),
+        daysStaked: Number(r.days_staked ?? 0),
         species: Number(r.species ?? 0),
         stakedLuna: Number(r.staked_luna ?? 0),
         delegation: (r.delegation as string | null) ?? null,
@@ -746,6 +816,24 @@ export async function feedOther(
     if ((error as { code?: string }).code === 'ER_DUP_ENTRY') return 'already-fed-today';
     throw error;
   }
+}
+
+/**
+ * Has this address already spent today's gift?
+ *
+ * For display only. The limit that actually holds is UNIQUE (device_hash,
+ * day) inside feedOther — this asks by address because a session knows who
+ * you are but not what you are holding, and the device identifier only exists
+ * inside Nimiq Pay. Two wallets on one device therefore still see an enabled
+ * button and still get refused; that is the farming case, and refusing it
+ * loudly is the point.
+ */
+export async function fedOtherToday(address: string): Promise<boolean> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT 1 FROM feedings WHERE from_address = ? AND day = ? LIMIT 1',
+    [address, utcDay()],
+  );
+  return rows.length > 0;
 }
 
 export interface FeedingCounts {

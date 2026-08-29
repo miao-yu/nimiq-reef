@@ -17,6 +17,7 @@ import styles from './ReefCard.module.css';
 export interface CommunityReefCard {
   address: string;
   day: number;
+  daysStaked: number;
   species: number;
   stakedLuna: number;
   plants: Plant[];
@@ -40,11 +41,14 @@ export function ReefCard({
   onFeed,
   feeding,
   fed,
+  spent,
 }: {
   reef: CommunityReefCard;
   onFeed?: (address: string) => void;
   feeding?: boolean;
   fed?: boolean;
+  /** Today's one gift is gone — on some other reef, or this one. */
+  spent?: boolean;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
 
@@ -83,7 +87,12 @@ export function ReefCard({
           <span className={styles.text}>
             <code>{truncateAddress(reef.address)}</code>
             <small>
-              Day {reef.day} · {reef.species} {reef.species === 1 ? 'species' : 'species'}
+              {/* Days staked leads when there are any, because that is what
+                  the default sort ranks by and a ranking whose key is
+                  invisible reads as an arbitrary order. */}
+              {reef.daysStaked > 0
+                ? `${reef.daysStaked}d staked`
+                : `Day ${reef.day}`} · {reef.species} species
               {reef.stakedLuna > 0 ? ` · ${formatNimShort(reef.stakedLuna)} NIM` : ''}
             </small>
           </span>
@@ -104,10 +113,11 @@ export function ReefCard({
           <button
             className={styles.feed}
             onClick={() => onFeed(reef.address)}
-            disabled={feeding || fed}
+            disabled={feeding || fed || spent}
             type="button"
+            title={spent && !fed ? 'You have already fed a reef today. One a day.' : undefined}
           >
-            {fed ? 'Fed' : feeding ? '…' : 'Feed'}
+            {fed ? 'Fed' : feeding ? '…' : spent ? 'Fed today' : 'Feed'}
           </button>
         ) : null}
       </div>
