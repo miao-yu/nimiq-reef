@@ -65,3 +65,44 @@
   border-radius: 12px;
   align-self: center;
 }
+
+/* Loud on purpose: this is the difference between the next tap working and
+   doing nothing at all. */
+.warn {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border: 1px solid #d9a441;
+  background: #fdf4e0;
+  color: #4a3413;
+  border-radius: 12px;
+  padding: 13px 15px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.warn strong { font-size: 0.95rem; }
+.warn em { font-style: normal; font-weight: 600; }
+
+.stuck {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #7a3b2e;
+  background: #fbeae6;
+  border: 1px solid #e2b7ad;
+  border-radius: 10px;
+  padding: 10px 13px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .warn {
+    background: #3a2e14;
+    color: #f6e6c4;
+    border-color: #8a6a2a;
+  }
+  :root:not([data-theme='light']) .stuck {
+    background: #3a211c;
+    color: #f6d9d2;
+    border-color: #8a4b3e;
+  }
+}
