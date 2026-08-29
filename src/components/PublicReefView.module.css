@@ -77,3 +77,15 @@
 }
 .times { color: var(--muted); }
 .empty { margin: 0; font-size: 0.85rem; color: var(--muted); text-align: center; }
+
+.pitch { margin: 0; font-size: 0.85rem; color: var(--muted); text-align: center; }
+/* Without this the anchor falls back to the UA default — visited purple,
+   default underline — on the one screen aimed at people who have no reef. */
+.pitch a {
+  color: var(--ink);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: var(--muted);
+}
+.pitch a:hover { text-decoration-color: currentColor; }

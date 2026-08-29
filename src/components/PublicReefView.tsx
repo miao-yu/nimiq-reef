@@ -185,9 +185,15 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
           <p className={styles.empty}>Nothing on display yet.</p>
         )}
 
-        <p className={styles.empty}>
-          A reef fills from real Nimiq staking. <Link href="/">Start your own.</Link>
-        </p>
+        {/* Signed out only. To somebody who already has a reef this is both
+            wrong and a link to a place they have already been — and on their
+            own page it is absurd. Gated on `known` so it does not flash
+            before the session resolves. */}
+        {known && !me ? (
+          <p className={styles.pitch}>
+            A reef fills from real Nimiq staking. <Link href="/">Start your own.</Link>
+          </p>
+        ) : null}
       </Sheet>
     </Stage>
   );
