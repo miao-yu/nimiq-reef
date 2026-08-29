@@ -81,6 +81,18 @@ export const SPECIES: Record<SpeciesKey, SpeciesDef> = {
     unlockDay: 10,
     blurb: 'Employed. Cleans up after everyone and never once mentions it.',
   },
+  seahorse: {
+    label: 'Seahorse',
+    tier: 'uncommon',
+    unlockDay: 20,
+    blurb: 'Swims upright, badly, and has never once been in a hurry.',
+  },
+  eel: {
+    label: 'Moray eel',
+    tier: 'legendary',
+    unlockDay: 90,
+    blurb: 'Lives in a hole and looks affronted about it. Three months of yours.',
+  },
   jelly: {
     label: 'Jellyfish',
     tier: 'rare',

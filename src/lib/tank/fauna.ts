@@ -16,6 +16,8 @@ export const BODY_LENGTH: Record<SpeciesKey, number> = {
   anemone: 0,
   tubeworm: 0,
   guppy: 0.2,
+  seahorse: 0.19,
+  eel: 0.72,
   shrimp: 0.16,
   angel: 0.3,
   jelly: 0.26,
@@ -35,6 +37,8 @@ export const TAIL_RATE: Record<SpeciesKey, number> = {
   anemone: 0,
   tubeworm: 0,
   guppy: 5.6,
+  seahorse: 2.4,
+  eel: 1.5,
   shrimp: 6.4,
   angel: 4.2,
   jelly: 1.9,
@@ -108,6 +112,8 @@ function tail(ctx: Ctx, len: number, spread: number, wag: number): void {
  */
 const BODY: Record<FaunaKey, [number, number, number, number]> = {
   guppy: [0, 0, 0.5, 0.22],
+  seahorse: [0, 0, 0.18, 0.4],
+  eel: [0, 0, 0.46, 0.1],
   angel: [0, 0, 0.3, 0.52],
   jelly: [0, -0.06, 0.44, 0.34],
   shrimp: [0, 0, 0.4, 0.18],
@@ -122,6 +128,8 @@ const BODY: Record<FaunaKey, [number, number, number, number]> = {
 /** Where the crest sits: the top of the head, and how big it should be. */
 const CREST: Record<FaunaKey, [number, number, number]> = {
   guppy: [0.06, -0.2, 0.44],
+  seahorse: [0.04, -0.5, 0.16],
+  eel: [0.24, -0.075, 0.1],
   angel: [0.0, -0.5, 0.42],
   jelly: [0, -0.34, 0.4],
   shrimp: [0.06, -0.16, 0.3],
@@ -580,8 +588,139 @@ function whale({ ctx, L, colour, time, rate, seed, tier }: Args): void {
 
 type Painter = (a: Args) => void;
 
+/**
+ * A seahorse. The one thing in the tank that is taller than it is long, which
+ * is the whole reason to draw it — every other silhouette here is horizontal.
+ */
+function seahorse({ ctx, L, colour, time, rate, seed, tier }: Args): void {
+  const H = L * 2.1;
+  const bob = Math.sin(time * rate * 0.5 + seed) * L * 0.06;
+
+  ctx.save();
+  ctx.translate(0, bob);
+  ctx.fillStyle = colour;
+
+  // Body: an S from the crown down to the curl of the tail.
+  ctx.beginPath();
+  ctx.moveTo(L * 0.16, -H * 0.42);
+  ctx.quadraticCurveTo(L * 0.42, -H * 0.2, L * 0.14, H * 0.02);
+  ctx.quadraticCurveTo(-L * 0.06, H * 0.2, L * 0.06, H * 0.34);
+  ctx.quadraticCurveTo(-L * 0.14, H * 0.2, -L * 0.04, H * 0.02);
+  ctx.quadraticCurveTo(-L * 0.24, -H * 0.2, -L * 0.14, -H * 0.42);
+  ctx.closePath();
+  ctx.fill();
+
+  // Snout and head, forward of the body.
+  ctx.beginPath();
+  ctx.ellipse(L * 0.02, -H * 0.44, L * 0.19, L * 0.15, -0.25, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(L * 0.14, -H * 0.47);
+  ctx.quadraticCurveTo(L * 0.4, -H * 0.44, L * 0.44, -H * 0.4);
+  ctx.quadraticCurveTo(L * 0.36, -H * 0.35, L * 0.14, -H * 0.38);
+  ctx.closePath();
+  ctx.fill();
+
+  /*
+   * The tail, as a chain of shrinking discs walked along a spiral that starts
+   * where the body ends. Drawn as arcs it came out a detached ring below the
+   * animal — a curl has to be visibly attached or it reads as a dropped hoop.
+   */
+  const STEPS = 14;
+  for (let i = 0; i <= STEPS; i++) {
+    const t = i / STEPS;
+    const angle = Math.PI * (-0.5 + t * 1.9);
+    const radius = L * 0.13 * (1 - t * 0.45);
+    ctx.beginPath();
+    ctx.arc(
+      L * 0.06 + Math.cos(angle) * radius + L * 0.02,
+      H * 0.34 + radius + Math.sin(angle) * radius,
+      L * (0.075 - t * 0.055),
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+
+  // Dorsal fin, fluttering fast — it is how a seahorse actually moves.
+  ctx.globalAlpha = 0.55;
+  ctx.beginPath();
+  ctx.moveTo(-L * 0.1, -H * 0.06);
+  ctx.quadraticCurveTo(
+    -L * (0.3 + Math.sin(time * rate * 3) * 0.06),
+    H * 0.02,
+    -L * 0.08,
+    H * 0.12,
+  );
+  ctx.closePath();
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  face(ctx, 'seahorse', L, L * 0.12, -H * 0.47, L * 0.05, time, seed, tier, [L * 0.3, -H * 0.4]);
+  ctx.restore();
+}
+
+/**
+ * A moray eel: a long body with only its head and a stretch of neck out of
+ * the rock. Drawn as a tapering ribbon along a sine, because a stroked line of
+ * constant width reads as a cable rather than an animal.
+ */
+function eel({ ctx, L, colour, time, rate, seed, tier }: Args): void {
+  const SEGMENTS = 22;
+  const spine = (t: number) => ({
+    x: L * (0.42 - t * 0.92),
+    y: Math.sin(t * 5.2 + time * rate + seed) * L * 0.1 * t,
+  });
+  const halfWidth = (t: number) => L * 0.085 * (1 - t * 0.86) + L * 0.012;
+
+  ctx.fillStyle = colour;
+  ctx.beginPath();
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const { x, y } = spine(t);
+    ctx.lineTo(x, y - halfWidth(t));
+  }
+  for (let i = SEGMENTS; i >= 0; i--) {
+    const t = i / SEGMENTS;
+    const { x, y } = spine(t);
+    ctx.lineTo(x, y + halfWidth(t));
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // A ridge along the back, which is what says eel rather than snake.
+  ctx.strokeStyle = colour;
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = Math.max(1, L * 0.02);
+  ctx.beginPath();
+  for (let i = 0; i <= SEGMENTS; i++) {
+    const t = i / SEGMENTS;
+    const { x, y } = spine(t);
+    ctx.lineTo(x, y - halfWidth(t) - L * 0.035 * (1 - t));
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Head: blunter than the body, with the jaw permanently ajar.
+  ctx.fillStyle = colour;
+  ctx.beginPath();
+  ctx.ellipse(L * 0.4, 0, L * 0.13, L * 0.095, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(11,26,34,.5)';
+  ctx.beginPath();
+  ctx.moveTo(L * 0.44, L * 0.03);
+  ctx.quadraticCurveTo(L * 0.52, L * 0.045, L * 0.5, L * 0.07);
+  ctx.quadraticCurveTo(L * 0.45, L * 0.075, L * 0.42, L * 0.05);
+  ctx.closePath();
+  ctx.fill();
+
+  face(ctx, 'eel', L, L * 0.42, -L * 0.03, L * 0.032, time, seed, tier);
+}
+
 const PAINTERS: Record<FaunaKey, Painter> = {
   guppy,
+  seahorse,
+  eel,
   shrimp,
   angel,
   jelly,

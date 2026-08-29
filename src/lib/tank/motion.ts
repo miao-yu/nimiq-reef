@@ -11,6 +11,9 @@ const STYLE: Record<SpeciesKey, Style> = {
   anemone: 'crawl',
   tubeworm: 'crawl',
   guppy: 'swim',
+  // Hovers among the plants rather than commuting.
+  seahorse: 'crawl',
+  eel: 'swim',
   angel: 'swim',
   lionfish: 'swim',
   shark: 'swim',
@@ -30,6 +33,8 @@ const SPEED: Record<SpeciesKey, number> = {
   anemone: 0,
   tubeworm: 0,
   guppy: 0.075,
+  seahorse: 0.014,
+  eel: 0.03,
   shrimp: 0.02,
   angel: 0.05,
   jelly: 0.012,

@@ -21,6 +21,8 @@ export type SpeciesKey =
   | 'anemone'
   | 'tubeworm'
   | 'guppy'
+  | 'seahorse'
+  | 'eel'
   | 'angel'
   | 'jelly'
   | 'shrimp'
