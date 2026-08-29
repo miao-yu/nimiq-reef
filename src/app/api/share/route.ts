@@ -27,7 +27,7 @@ export async function GET() {
       reef.plants.length === 0
         ? `Day ${reef.day} — nothing planted yet`
         : reef.daysStaked > 0
-          ? `Day ${reef.day} — ${reef.daysStaked} ${reef.daysStaked === 1 ? 'day' : 'days'} staked`
+          ? `Day ${reef.day} — ${reef.daysStaked}-day staking streak`
           : `Day ${reef.day} in my reef`;
     return png(
       renderShareImage({

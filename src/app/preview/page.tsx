@@ -71,7 +71,7 @@ export default function Preview() {
     <Stage
       inhabitants={inhabitants}
       waterLevel={depthForStake(nim * 1e5)}
-      label={`A simulated reef after ${days} days staked with ${nim} NIM.`}
+      label={`A simulated reef at a ${days}-day staking streak with ${nim} NIM.`}
     >
       <header className={stage.hud}>
         <div className={styles.head}>
@@ -102,7 +102,7 @@ export default function Preview() {
 
         <label className={styles.ctl}>
           <span className={styles.row}>
-            <span>Days staked</span>
+            <span>Staking streak</span>
             <b>{days}</b>
           </span>
           <input
@@ -112,7 +112,7 @@ export default function Preview() {
             max={MAX_DAY}
             value={days}
             onChange={(e) => setDays(Number(e.target.value))}
-            aria-label="Days staked"
+            aria-label="Staking streak"
           />
           <small>What lives in it, and how likely a rare one is.</small>
         </label>

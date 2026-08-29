@@ -43,7 +43,10 @@
   border: 1px solid var(--line); border-radius: 11px; padding: 9px 10px;
 }
 .stats dt { font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.stats dd { margin: 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+/* Pushed to the bottom of its cell so the four numbers share a baseline even
+   when one label wraps to two lines — "Staking streak" does, and without this
+   its value sits a line lower than the rest. */
+.stats dd { margin: auto 0 0; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .how { font-size: 0.82rem; color: var(--muted); }
 .how summary { cursor: pointer; }

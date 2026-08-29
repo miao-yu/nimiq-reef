@@ -87,11 +87,11 @@ export function ReefCard({
           <span className={styles.text}>
             <code>{truncateAddress(reef.address)}</code>
             <small>
-              {/* Days staked leads when there are any, because that is what
-                  the default sort ranks by and a ranking whose key is
-                  invisible reads as an arbitrary order. */}
+              {/* The streak leads when there is one: it is what the default
+                  sort ranks by, and a ranking whose key is invisible reads as
+                  an arbitrary order. */}
               {reef.daysStaked > 0
-                ? `${reef.daysStaked}d staked`
+                ? `${reef.daysStaked}d streak`
                 : `Day ${reef.day}`} · {reef.species} species
               {reef.stakedLuna > 0 ? ` · ${formatNimShort(reef.stakedLuna)} NIM` : ''}
             </small>

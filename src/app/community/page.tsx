@@ -17,15 +17,15 @@ import styles from './page.module.css';
  * app dark for anybody on a desktop. Every card here is a target.
  */
 /*
- * Days staked leads, and is the default.
+ * The staking streak leads, and is the default.
  *
  * Newest was the default and it opened the page on a wall of day-one reefs
  * with nothing in them — the worst possible first impression of a game about
- * things accumulating. Days staked is the loyalty axis the whole app is built
- * on, so it surfaces reefs that have something to look at.
+ * things accumulating. The staking streak is the loyalty axis the whole app is
+ * built on, so it surfaces reefs that have something to look at.
  */
 const SORTS = [
-  { key: 'staked', label: 'Days staked' },
+  { key: 'staked', label: 'Staking streak' },
   { key: 'species', label: 'Most species' },
   { key: 'new', label: 'Newest' },
   // Ordered by fewest feeds ever received: the reefs nobody has found yet.

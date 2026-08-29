@@ -41,7 +41,7 @@ export const STRINGS = {
     tankFull: 'Your tank is full, so it is waiting in the field guide.',
 
     // stats
-    daysStaked: 'Days staked',
+    daysStaked: 'Staking streak',
     staked: 'Staked',
     slots: 'Room',
     streak: 'Feed streak',
@@ -68,7 +68,7 @@ export const STRINGS = {
     // guide
     guide: 'Field guide',
     guideCount: '{found} of {total} discovered',
-    locked: 'Day {n}',
+    locked: '{n}d streak',
     inTank: 'In the tank',
     release: 'Return to the reef',
     display: 'Put on display',
@@ -130,7 +130,7 @@ export const STRINGS = {
     foundRare: 'Ein {label} ist aufgetaucht — {tier}.',
     tankFull: 'Dein Becken ist voll, es wartet im Feldführer.',
 
-    daysStaked: 'Tage gestakt',
+    daysStaked: 'Staking-Serie',
     staked: 'Gestakt',
     slots: 'Platz',
     streak: 'Fütter-Serie',
@@ -155,7 +155,7 @@ export const STRINGS = {
 
     guide: 'Feldführer',
     guideCount: '{found} von {total} entdeckt',
-    locked: 'Tag {n}',
+    locked: '{n}T Serie',
     inTank: 'Im Becken',
     release: 'Zurück ins Riff',
     display: 'Ins Becken setzen',
@@ -216,7 +216,7 @@ export const STRINGS = {
     foundRare: 'Ha aparecido un {label} — {tier}.',
     tankFull: 'Tu acuario está lleno, así que espera en la guía.',
 
-    daysStaked: 'Días en staking',
+    daysStaked: 'Racha de staking',
     staked: 'En staking',
     slots: 'Espacio',
     streak: 'Racha de comidas',
@@ -241,7 +241,7 @@ export const STRINGS = {
 
     guide: 'Guía de campo',
     guideCount: '{found} de {total} descubiertas',
-    locked: 'Día {n}',
+    locked: '{n}d racha',
     inTank: 'En el acuario',
     release: 'Devolver al arrecife',
     display: 'Poner en el acuario',
