@@ -48,7 +48,7 @@ No accounts, no passwords. The player proves wallet control with a signature.
 
 Step 5's second check is not optional. Verifying only the signature lets anyone
 sign a nonce with their own key, claim someone else's address, and inherit that
-reef. `nimiq-cafe` already does this correctly — worth reading for the shape.
+reef. `scripts/auth-smoke.mjs` case 7 is the regression test for it.
 
 ## The tick
 

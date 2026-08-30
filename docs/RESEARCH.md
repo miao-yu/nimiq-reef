@@ -9,10 +9,10 @@ All current as of this date — `npm outdated` is empty.
 
 | Package | Version | Note |
 | --- | --- | --- |
-| `next` | 16.3.2 | Appends its own block to `CLAUDE.md` on `next dev`; committed so the tree stays clean |
+| `next` | 16.3.2 | Appends its own block to `CLAUDE.md` on `next dev`; that file is gitignored |
 | `react` | 19.2.8 | |
 | `typescript` | 7.0.2 | The native compiler. Typechecks this project fine |
-| `@nimiq/core` | 2.20.0 | `nimiq-cafe` pinned ^2.0.5 — badly out of date |
+| `@nimiq/core` | 2.20.0 | older Nimiq projects pin ^2.0.5 — do not copy their pins |
 | `@nimiq/mini-app-sdk` | 0.1.0 | Only release; the whole SDK is ~200 lines of forwarding |
 | `@nimiq/utils` | 0.12.4 | `validation-utils`, `albatross-policy`, `rewards-calculator` |
 | `jose` | 6.2.10 | Session JWTs |

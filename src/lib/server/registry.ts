@@ -3,7 +3,7 @@ import 'server-only';
 /**
  * The public validator registry: real names, logos and websites.
  *
- * Same source nimiq-cafe uses. The chain carries none of this — only keys,
+ * The chain carries none of this — only keys,
  * balance and staker counts — so anything human-readable about a validator has
  * to come from here.
  *
