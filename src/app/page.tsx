@@ -213,7 +213,7 @@ export default function Home() {
           <SideRail
             items={[
               { href: '/collection', label: 'Collection', icon: COLLECTION_ICON },
-              { href: '/community', label: 'Reefs', icon: REEFS_ICON },
+              { href: '/community', label: 'Community', icon: REEFS_ICON },
             ]}
           />
 
