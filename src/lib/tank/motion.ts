@@ -141,7 +141,7 @@ export function placeAt(
     const reach = Math.max(tank.w, tank.h) * 0.55;
     if (distance > reach) return { x, y };
     // Nearer creatures react harder, and the whole thing fades with strength.
-    const pull = (1 - distance / reach) * touch.strength * (temperament === 'curious' ? 0.3 : -0.34);
+    const pull = (1 - distance / reach) * touch.strength * (temperament === 'curious' ? 0.16 : -0.19);
     return { x: x + dx * pull, y: y + dy * pull };
   };
 

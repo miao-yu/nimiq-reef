@@ -38,6 +38,15 @@ export function Tank({ inhabitants, waterLevel, feedings, floor, wall, className
    * Never sent to the server, so a share card is still an untouched tank.
    */
   const touch = useRef<{ x: number; y: number; at: number } | null>(null);
+  /**
+   * Whether a finger or button is actually down.
+   *
+   * Without this, pointermove fires on plain hover and every mouse movement
+   * resets the timestamp — so the interest never decays and the shoal is
+   * dragged around by the cursor instead of noticing it and settling. Hover is
+   * not an interaction; a press is.
+   */
+  const pressed = useRef(false);
 
   const paint = useCallback(
     (time: number, motion: boolean) => {
@@ -85,6 +94,25 @@ export function Tank({ inhabitants, waterLevel, feedings, floor, wall, className
   const noticed = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     const box = e.currentTarget.getBoundingClientRect();
     touch.current = { x: e.clientX - box.left, y: e.clientY - box.top, at: performance.now() };
+  }, []);
+
+  const press = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>) => {
+      pressed.current = true;
+      noticed(e);
+    },
+    [noticed],
+  );
+
+  const drag = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>) => {
+      if (pressed.current) noticed(e);
+    },
+    [noticed],
+  );
+
+  const release = useCallback(() => {
+    pressed.current = false;
   }, []);
 
   const fit = useCallback(() => {
@@ -156,8 +184,11 @@ export function Tank({ inhabitants, waterLevel, feedings, floor, wall, className
       // Pointer, not click: this should answer a finger dragging across the
       // glass, not only a tap. It changes nothing anybody has to act on, so
       // there is no control here to give a keyboard user.
-      onPointerDown={noticed}
-      onPointerMove={noticed}
+      onPointerDown={press}
+      onPointerMove={drag}
+      onPointerUp={release}
+      onPointerCancel={release}
+      onPointerLeave={release}
     />
   );
 }
