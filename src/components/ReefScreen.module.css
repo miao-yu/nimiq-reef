@@ -97,3 +97,11 @@
   background: rgba(255, 255, 255, 0.08);
 }
 .onWater :global(button:hover) { border-color: rgba(255, 255, 255, 0.8); }
+
+.version {
+  margin: 0;
+  align-self: center;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}

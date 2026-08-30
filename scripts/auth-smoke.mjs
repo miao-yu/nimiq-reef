@@ -23,10 +23,12 @@ console.log('5. session cookie resolves to:', JSON.stringify(sess.body));
 const replay = await post('/api/auth/verify', { code: ch.code, address: w.address, publicKey: sig.publicKey, signature: sig.signature });
 console.log('6. replay same code:', replay.status, JSON.stringify(replay.body));
 
-// The attack the address-derivation check exists to stop.
-const { body: ch2 } = await post('/api/auth/challenge', { address: 'NQ83 4MVH 53Q4 AL3B Q097 55GJ LUQ3 GSF0 85B7' });
+// The attack the address-derivation check exists to stop. The victim is a
+// documentation address on purpose: naming a real validator in an
+// impersonation test reads badly in a public repo.
+const { body: ch2 } = await post('/api/auth/challenge', { address: 'NQ45 0000 0000 0000 0000 0000 0000 0000 BEEF' });
 const { body: sig2 } = await post('/api/dev/wallet', { message: ch2.message });
-const attack = await post('/api/auth/verify', { code: ch2.code, address: 'NQ83 4MVH 53Q4 AL3B Q097 55GJ LUQ3 GSF0 85B7', publicKey: sig2.publicKey, signature: sig2.signature });
+const attack = await post('/api/auth/verify', { code: ch2.code, address: 'NQ45 0000 0000 0000 0000 0000 0000 0000 BEEF', publicKey: sig2.publicKey, signature: sig2.signature });
 console.log('7. IMPERSONATION (valid sig, someone else’s address):', attack.status, JSON.stringify(attack.body));
 
 const tamper = await post('/api/auth/verify', { code: 'deadbeef'.repeat(4), address: w.address, publicKey: sig.publicKey, signature: sig.signature });

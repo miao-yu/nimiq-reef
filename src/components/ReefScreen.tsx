@@ -288,6 +288,9 @@ export function ReefScreen({ signedIn }: { signedIn: boolean }) {
             <Link className={styles.previewLink} href="/preview">
               {t('seePreview')} →
             </Link>
+
+            {/* So a bug report can name what it was looking at. */}
+            <p className={styles.version}>Reef v{process.env.NEXT_PUBLIC_APP_VERSION}</p>
           </Sheet>
         </>
       ) : signedIn && !asked ? (

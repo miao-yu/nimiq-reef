@@ -95,7 +95,11 @@ check('feeding twice is idempotent, not an error', fedTwice.status === 200);
 // A device is no longer required to give; it is required to be *handed*
 // somebody to give to. What still must hold is that the address is real and
 // that a session is present.
-const VALID = 'NQ64 8DF3 301V 1BAJ GV0Q SU9D CLJG CKR5 7JJM';
+// A checksum-valid address belonging to nobody. This used to be a real reef
+// with real NIM staked on it, which is fine in a private repo and not fine in
+// a public one — an address is public on chain, but hardcoding a specific
+// person's into a test file ties them to this app for no reason.
+const VALID = 'NQ32 0000 0000 0000 0000 0000 0000 0000 DEAD';
 
 const junk = await post('/api/feed/give', { address: 'not-an-address' }, cookie);
 check('giving to a malformed address is refused', junk.status === 400, `HTTP ${junk.status}`);

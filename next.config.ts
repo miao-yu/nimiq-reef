@@ -1,6 +1,17 @@
+import { readFileSync } from 'node:fs';
 import type { NextConfig } from 'next';
 
+/*
+ * The version, read from package.json at build time.
+ *
+ * Shown in the drawer so a bug report can name what it was looking at. Read
+ * from the file rather than npm_package_version, which is only set when the
+ * build happens to be started by an npm script.
+ */
+const { version } = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+
 const config: NextConfig = {
+  env: { NEXT_PUBLIC_APP_VERSION: version },
   reactStrictMode: true,
   // Self-hosted on the VPS: build a self-contained server bundle so the box
   // only needs `node .next/standalone/server.js`, no npm install on deploy.

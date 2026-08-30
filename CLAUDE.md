@@ -56,18 +56,12 @@ Albatross source, with dates. Two rules that came out of it:
   public key derives to the claimed address. Dropping the second lets any
   wallet claim any reef. `scripts/auth-smoke.mjs` case 7 guards this.
 
-## Do not copy from `../nimiq-pos-pool` or `../nimiq-cafe`
+## Do not copy from the older sibling projects
 
-Both are out of date — `nimiq-cafe` pins `@nimiq/core` ^2.0.5 against a current
-2.20.0 — and `nimiq-pos-pool` has a database password in the git history of
-every tracked file, which travels with a copy. Read them for intent, write
-fresh code against `docs/RESEARCH.md`.
-
-## Related work in ~/Projects
-
-- `nimiq-pos-pool` — the validator pool: reward accounting, 15-min batched payouts
-- `nimiq-cafe` — Vite/React + Express + `@nimiq/core`, JWT wallet auth
-- `core-rs-albatross` — Nimiq node source, for running a testnet node
+Any Nimiq code sitting next to this one is out of date — `nimiq-cafe` pins
+`@nimiq/core` ^2.0.5 against a current 2.20.0, and the rest carry history that
+should not be dragged into a fresh tree. Read them for intent; write fresh code
+against `docs/RESEARCH.md`.
 
 <!-- BEGIN:nextjs-agent-rules -->
 

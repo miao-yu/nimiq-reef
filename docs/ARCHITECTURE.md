@@ -48,12 +48,13 @@ No accounts, no passwords. The player proves wallet control with a signature.
 
 Step 5's second check is not optional. Verifying only the signature lets anyone
 sign a nonce with their own key, claim someone else's address, and inherit that
-reef. `../nimiq-cafe` already does this correctly — reuse that code.
+reef. `nimiq-cafe` already does this correctly — worth reading for the shape.
 
 ## The tick
 
-`payout.ts` in `nimiq-pos-pool` already runs a batched job every 15 minutes on
-this same box. The reef tick uses the same cadence and the same source of truth:
+A batched job every 15 minutes is a proven cadence for this chain — long enough
+that a tick is cheap, short enough that nothing visibly lags an epoch. The reef
+tick uses it, reading the same source of truth:
 
 - `getStakerByAddress` → stake size → plot width
 - unbroken days staked → which species are unlocked
