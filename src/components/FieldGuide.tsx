@@ -22,6 +22,9 @@ interface GuideEntry {
   count: number;
   discovered: boolean;
   unlockDay: number;
+  shiny: number;
+  looks: number;
+  looksPossible: number;
 }
 
 /**
@@ -93,7 +96,18 @@ export function FieldGuide({ reef, onChange }: { reef: ReefState; onChange: (r: 
                   {e.discovered ? SPECIES[e.species].label : '???'}
                 </span>
                 <span className={styles.meta}>
-                  {e.discovered ? `${e.tier} · ${e.count}` : t('locked', { n: e.unlockDay })}
+                  {e.discovered ? (
+                    <>
+                      {e.tier} · {e.count}
+                      {/* The variety was always being drawn; only the counting
+                          is new. A tier can make hundreds of looks and the
+                          guide used to say only how many fish you had. */}
+                      {e.looks > 0 ? ` · ${e.looks}/${e.looksPossible} looks` : ''}
+                      {e.shiny > 0 ? <span className={styles.shiny}> ✦ {e.shiny}</span> : null}
+                    </>
+                  ) : (
+                    t('locked', { n: e.unlockDay })
+                  )}
                 </span>
               </li>
             ))}

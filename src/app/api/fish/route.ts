@@ -5,6 +5,7 @@ import { getReefState } from '@/lib/server/reef-state';
 import { claimForgivenMiss, recordMiss, recordRoll } from '@/lib/server/reef-repo';
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
+import { isShiny } from '@/lib/tank/traits';
 import { pondFor } from '@/lib/reef/ponds';
 import { flotsamFor } from '@/lib/reef/flotsam';
 import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
@@ -112,7 +113,8 @@ export async function POST(request: Request) {
   // On display if there is room; otherwise it waits in the guide and the owner
   // decides what to swap. Discovery is never blocked by a full tank.
   const slot = state.freePlots.length > 0 ? state.freePlots[0]! : null;
-  const id = await recordRoll(address, species, tier, randomInt(1, 2 ** 31), slot, state.epoch, 'charge', pond);
+  const seed = randomInt(1, 2 ** 31);
+  const id = await recordRoll(address, species, tier, seed, slot, state.epoch, 'charge', pond);
 
   return NextResponse.json({
     outcome: 'landed',
@@ -121,6 +123,7 @@ export async function POST(request: Request) {
       species,
       tier,
       slot,
+      shiny: isShiny(seed, tier),
       label: SPECIES[species].label,
       blurb: SPECIES[species].blurb,
     },

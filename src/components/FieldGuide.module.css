@@ -48,3 +48,7 @@
 }
 .move:hover:not(:disabled) { border-color: var(--leaf); color: var(--ink); }
 .move:disabled { opacity: 0.5; cursor: default; }
+
+/* One in 250. It should catch the eye in a list of grey metadata. */
+.shiny { color: #d99a1f; font-weight: 700; }
+@media (prefers-color-scheme: dark) { .shiny { color: #ffc93c; } }

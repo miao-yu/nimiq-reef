@@ -47,6 +47,23 @@ const discovered = guide.body.specimens.length;
 check('guide holds every discovery', discovered >= 3, `${discovered}`);
 check('locked species appear as silhouettes', guide.body.entries.some((e) => !e.discovered));
 
+/*
+ * The variant collection was always being drawn and never counted. These
+ * numbers are derived from the seed and tier already stored per specimen, so
+ * the assertion that matters is that they survive the trip out of the API —
+ * the same pipeline gap that once dropped tier on the way to the client.
+ */
+const found = guide.body.entries.filter((e) => e.discovered);
+check('the guide counts distinct looks, not just fish',
+  found.every((e) => e.looks >= 1 && e.looks <= e.count),
+  found.map((e) => `${e.species} ${e.looks}/${e.count}`).join(', '));
+check('and knows how many looks each tier can make',
+  found.every((e) => e.looksPossible >= 1344),
+  [...new Set(found.map((e) => e.looksPossible))].sort((a, b) => a - b).join(', '));
+check('shiny is reported rather than passing in silence',
+  typeof guide.body.shiny === 'number' && found.every((e) => typeof e.shiny === 'number'),
+  `lifetime ${guide.body.shiny}`);
+
 const displayed = guide.body.specimens.find((s) => s.slot !== null);
 const released = await post(`/api/specimen/${displayed.id}`, { action: 'release' }, cookie);
 check('releasing succeeds', released.status === 200);

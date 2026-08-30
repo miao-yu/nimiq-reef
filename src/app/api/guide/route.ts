@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
 import { listSpecimens } from '@/lib/server/reef-repo';
 import { SPECIES, SPECIES_ORDER } from '@/lib/reef/species';
+import { isShiny, traitKey, LOOKS_PER_TIER } from '@/lib/tank/traits';
 import type { GuideEntry } from '@/lib/reef/state';
 
 export const runtime = 'nodejs';
@@ -21,7 +22,18 @@ export async function GET() {
 
   const specimens = await listSpecimens(address);
   const counts = new Map<string, number>();
-  specimens.forEach((s) => counts.set(s.species, (counts.get(s.species) ?? 0) + 1));
+  const shinies = new Map<string, number>();
+  // Distinct looks, derived from the seed and tier already stored on every
+  // specimen — so the whole variant collection needed no new storage at all.
+  const looks = new Map<string, Set<string>>();
+
+  for (const s of specimens) {
+    counts.set(s.species, (counts.get(s.species) ?? 0) + 1);
+    if (isShiny(s.seed, s.tier)) shinies.set(s.species, (shinies.get(s.species) ?? 0) + 1);
+    const set = looks.get(s.species) ?? new Set<string>();
+    set.add(traitKey(s.seed, s.tier));
+    looks.set(s.species, set);
+  }
 
   const entries: GuideEntry[] = SPECIES_ORDER.map((species) => ({
     species,
@@ -29,12 +41,16 @@ export async function GET() {
     unlockDay: SPECIES[species].unlockDay,
     count: counts.get(species) ?? 0,
     discovered: (counts.get(species) ?? 0) > 0,
+    shiny: shinies.get(species) ?? 0,
+    looks: looks.get(species)?.size ?? 0,
+    looksPossible: LOOKS_PER_TIER[SPECIES[species].tier],
   }));
 
   return NextResponse.json({
     entries,
     discovered: entries.filter((e) => e.discovered).length,
     total: entries.length,
+    shiny: entries.reduce((n, e) => n + e.shiny, 0),
     specimens,
   });
 }

@@ -23,6 +23,7 @@ interface Pond {
 }
 
 interface Caught {
+  shiny?: boolean;
   id: number;
   species: string;
   tier: string;
@@ -297,6 +298,9 @@ export default function Fish() {
       {phase === 'landed' && caught ? (
         <div className={styles.result}>
           <span className={`${styles.tier} ${styles[caught.tier] ?? ''}`}>{caught.tier}</span>
+          {/* Announced after the species, never before it: a tell that lands
+              early kills the anticipation it was meant to build. */}
+          {caught.shiny ? <p className={styles.shinyFlag}>✦ Shiny — one in 250</p> : null}
           <h2>{caught.label}</h2>
           <p>{caught.blurb}</p>
           <p className={styles.where}>

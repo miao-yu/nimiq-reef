@@ -7,6 +7,15 @@ export interface GuideEntry {
   /** True once discovered; locked species are shown as silhouettes. */
   discovered: boolean;
   unlockDay: number;
+  /** How many came up shiny. One in 250, and until now it was never said. */
+  shiny: number;
+  /**
+   * Distinct looks owned, and how many the tier can produce. Both derived from
+   * the seed and tier already stored per specimen — the variant collection
+   * needed no new storage.
+   */
+  looks: number;
+  looksPossible: number;
 }
 
 /** What the client knows about a reef. Shared shape, no server imports. */

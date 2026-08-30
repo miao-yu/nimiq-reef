@@ -361,3 +361,35 @@ export function drawPattern(
   }
   ctx.restore();
 }
+
+/**
+ * A stable identity for one *look*, so distinct variants can be counted.
+ *
+ * Shiny is deliberately excluded. It is a colour applied over the same body —
+ * see the palette branch in fauna.ts — not a different set of parts, and at
+ * 1 in 250 it would otherwise double a denominator that nobody could ever fill.
+ * Shinies are counted on their own instead, which is also how players think
+ * about them.
+ */
+export function traitKey(seed: number, tier: Tier): string {
+  const t = traitsFor(seed, tier);
+  return `${t.crest}.${t.eyes}.${t.mouth}.${t.pattern}.${t.blush ? 1 : 0}`;
+}
+
+export function isShiny(seed: number, tier: Tier): boolean {
+  return traitsFor(seed, tier).shiny;
+}
+
+/**
+ * How many distinct looks each tier can produce — the denominator in "47 of N".
+ *
+ * Computed from the part counts rather than sampled. An earlier measurement
+ * over 100k seeds reported lower numbers (1,696 for common); that was how many
+ * the sample happened to reach, not how many exist.
+ */
+export const LOOKS_PER_TIER: Record<Tier, number> = {
+  common: CREST_CEILING.common * EYE_COUNT * MOUTH_COUNT * PATTERN_COUNT * 2,
+  uncommon: CREST_CEILING.uncommon * EYE_COUNT * MOUTH_COUNT * PATTERN_COUNT * 2,
+  rare: CREST_CEILING.rare * EYE_COUNT * MOUTH_COUNT * PATTERN_COUNT * 2,
+  legendary: CREST_CEILING.legendary * EYE_COUNT * MOUTH_COUNT * PATTERN_COUNT * 2,
+};

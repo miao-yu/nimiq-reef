@@ -5,6 +5,7 @@ import { getReefState } from '@/lib/server/reef-state';
 import { recordRoll } from '@/lib/server/reef-repo';
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
+import { isShiny } from '@/lib/tank/traits';
 
 export const runtime = 'nodejs';
 
@@ -40,10 +41,12 @@ export async function POST() {
   // and the owner decides what to swap out. Discovery is never blocked by a
   // full tank.
   const slot = state.freePlots.length > 0 ? state.freePlots[0]! : null;
-  const id = await recordRoll(address, species, tier, randomInt(1, 2 ** 31), slot, state.epoch);
+  const seed = randomInt(1, 2 ** 31);
+  const id = await recordRoll(address, species, tier, seed, slot, state.epoch);
 
   return NextResponse.json({
-    discovered: { id, species, tier, label: SPECIES[species].label, slot },
+    // One in 250, and until now it happened in total silence.
+    discovered: { id, species, tier, label: SPECIES[species].label, slot, shiny: isShiny(seed, tier) },
     reef: await getReefState(address),
   });
 }

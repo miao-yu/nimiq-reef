@@ -101,3 +101,10 @@
 
 .pondText strong { font-size: 0.92rem; }
 .pondName small { font-size: 0.8rem; color: var(--muted); }
+
+.shinyFlag {
+  margin: 0 0 .2rem;
+  font-size: .82rem; font-weight: 700; letter-spacing: .04em;
+  color: #d99a1f;
+}
+@media (prefers-color-scheme: dark) { .shinyFlag { color: #ffc93c; } }
