@@ -64,6 +64,7 @@ export default function Fish() {
   const [phase, setPhase] = useState<Phase>('ready');
   const [caught, setCaught] = useState<Caught | null>(null);
   const [forgiven, setForgiven] = useState(false);
+  const [flotsam, setFlotsam] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -113,6 +114,7 @@ export default function Fish() {
         const data = (await res.json()) as {
           caught?: Caught;
           forgiven?: boolean;
+          flotsam?: string | null;
           reef?: { charges: number };
           error?: string;
         };
@@ -123,6 +125,7 @@ export default function Fish() {
           enter('landing');
         } else {
           setForgiven(Boolean(data.forgiven));
+          setFlotsam(data.flotsam ?? null);
           enter('missed');
         }
       } catch (cause) {
@@ -313,7 +316,14 @@ export default function Fish() {
       {phase === 'missed' ? (
         <div className={styles.result}>
           <h2>It got away</h2>
-          <p>{forgiven ? 'First one of the day is free. Try again.' : 'That cost you a charge.'}</p>
+          {/* Stated plainly, in this order: the charge is gone, and here is
+              what came up anyway. Never the other way round — leading with the
+              consolation would dress a loss as a win. */}
+          <p>
+            {forgiven
+              ? 'First one of the day is free. Try again.'
+              : `That cost you a charge. You pulled up ${flotsam ?? 'nothing but water'}.`}
+          </p>
           <div className={styles.actions}>
             <button className={styles.cta} onClick={cast} disabled={charges < 1} type="button">
               {charges < 1 ? 'No charges left' : 'Cast again'}

@@ -6,6 +6,7 @@ import { claimForgivenMiss, recordMiss, recordRoll } from '@/lib/server/reef-rep
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
 import { pondFor } from '@/lib/reef/ponds';
+import { flotsamFor } from '@/lib/reef/flotsam';
 import { formatAddress, normalizeAddress } from '@/lib/nimiq/address';
 
 export const runtime = 'nodejs';
@@ -95,6 +96,8 @@ export async function POST(request: Request) {
     return NextResponse.json({
       outcome: 'missed',
       forgiven,
+      // A spent charge never comes back empty. Worth nothing on purpose.
+      flotsam: forgiven ? null : flotsamFor(() => randomInt(0, 2 ** 30) / 2 ** 30),
       reef: await getReefState(address),
     });
   }
