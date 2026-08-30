@@ -6,6 +6,7 @@ import { Stage } from '@/components/Stage';
 import { GivePanel } from '@/components/GivePanel';
 import { Dock } from '@/components/Dock';
 import { Sheet } from '@/components/Sheet';
+import { LookPicker } from '@/components/LookPicker';
 import { COLLECTION_ICON, REEFS_ICON, SideRail } from '@/components/SideRail';
 import { FieldGuide } from '@/components/FieldGuide';
 import { StakePanel } from '@/components/StakePanel';
@@ -187,6 +188,8 @@ export default function Home() {
       inhabitants={inhabitants}
       waterLevel={reef ? depthForStake(reef.stakedLuna) : 0.8}
       feedings={reef ? foodInWater(reef) : 0}
+      floor={reef?.floor}
+      wall={reef?.wall}
     >
       <header className={stage.hud}>
         {reef ? (
@@ -258,6 +261,8 @@ export default function Home() {
               <summary>{t('chargeSource')}</summary>
               <p>{t('chargeIncoming')}</p>
             </details>
+
+            <LookPicker reef={reef} onChange={setReef} />
 
             <FieldGuide reef={reef} onChange={setReef} />
             <GivePanel reef={reef} onChange={setReef} />

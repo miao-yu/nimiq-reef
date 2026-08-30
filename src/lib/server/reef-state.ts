@@ -10,6 +10,7 @@ import {
   rememberBestStreak,
   rememberPeakStreak,
   chargeEvents,
+  collectionTotals,
   lastKnownEpoch,
 } from './reef-repo';
 import { reefDay, utcDayClock } from '@/lib/reef/day';
@@ -45,13 +46,14 @@ export async function getReefState(address: string): Promise<ReefState> {
     clock = { epoch: await lastKnownEpoch(address), msToNext: 0, epochMs: 0 };
   }
 
-  const [plants, streak, fedToday, feeding, counts, spent] = await Promise.all([
+  const [plants, streak, fedToday, feeding, counts, spent, totals] = await Promise.all([
     listPlants(address),
     daysStaked(address),
     fedTodayQuery(address),
     feedStreak(address),
     feedingCounts(address),
     chargeEvents(address, clock.epoch - MAX_CHARGES),
+    collectionTotals(address),
   ]);
   const charges = chargesFrom(spent, clock.epoch, clock.msToNext, clock.epochMs);
   const dayClock = utcDayClock();
@@ -76,6 +78,9 @@ export async function getReefState(address: string): Promise<ReefState> {
     plants,
     daysStaked: streak,
     peakStreak: peak,
+    floor: reef.floor,
+    wall: reef.wall,
+    earned: { species: totals.species, peak, shiny: totals.shiny },
     stakedLuna,
     delegation,
     plotsUnlocked: capacity,

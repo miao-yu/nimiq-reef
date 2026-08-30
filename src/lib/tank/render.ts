@@ -11,6 +11,7 @@ import {
   drawGlass,
   drawRoom,
   drawShafts,
+  drawWall,
   drawSubstrate,
   drawSurface,
   drawWater,
@@ -54,7 +55,9 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
   drawAir(ctx, tank, p);
   drawWater(ctx, tank, p);
   drawShafts(ctx, tank, p, time);
-  drawSubstrate(ctx, tank, p);
+  // Behind everything that swims, so a silhouette never crosses a creature.
+  drawWall(ctx, tank, p, options.wall ?? 'open');
+  drawSubstrate(ctx, tank, p, options.floor ?? 'sand');
   drawCaustics(ctx, tank, p, time);
 
   // Feeding excites the tank for as long as the flakes are falling. Saturates

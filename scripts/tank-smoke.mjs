@@ -119,6 +119,22 @@ check(
   `HTTP ${candidates.status}`,
 );
 
+/*
+ * The look. Checked on the server because the client is the one place a lock
+ * is only a suggestion — a chip that appears to work and does nothing is worse
+ * than one that says no.
+ */
+const sand = await post('/api/reef/look', { floor: 'sand', wall: 'open' }, cookie);
+check('a look you have earned is accepted', sand.status === 200 && sand.body.reef?.floor === 'sand',
+  `HTTP ${sand.status}`);
+const gated = await post('/api/reef/look', { wall: 'reef' }, cookie);
+check('a look you have not earned is refused, not ignored', gated.status === 403, `HTTP ${gated.status}`);
+const nonsense = await post('/api/reef/look', { floor: 'lava' }, cookie);
+check('a look that does not exist is refused', nonsense.status === 400, `HTTP ${nonsense.status}`);
+check('the reef reports what it has earned',
+  typeof sand.body.reef?.earned?.species === 'number',
+  JSON.stringify(sand.body.reef?.earned));
+
 // --- nothing is reachable without a session ---
 for (const [p, m] of [['/api/reef', 'GET'], ['/api/guide', 'GET'], ['/api/roll', 'POST']]) {
   const r = m === 'GET' ? await call(p) : await post(p, {});

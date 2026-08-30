@@ -89,6 +89,12 @@ export interface RenderOptions {
    */
   touch?: { x: number; y: number; strength: number };
   /**
+   * The look the owner chose. Scene only — no creature reads these, which is
+   * why a decorated tank is still deterministic.
+   */
+  floor?: string;
+  wall?: string;
+  /**
    * Feedings received today. Draws sinking flakes — the one thing in the tank
    * that another person put there, and the only reason to open the app and
    * find it different from how you left it.

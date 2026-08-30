@@ -1,0 +1,32 @@
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--surface, transparent);
+}
+.title { margin: 0 0 2px; font-size: 0.98rem; }
+.sub { margin: 0 0 10px; font-size: 0.82rem; color: var(--muted); }
+.label {
+  display: block;
+  font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--muted); margin: 10px 0 5px;
+}
+.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  border: 1px solid var(--line);
+  background: none;
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.chip:hover { border-color: var(--ink-soft); }
+.on { background: #17414f; border-color: #17414f; color: #fff; }
+/* Locked, not hidden: a lock that names its condition is a reason to return. */
+.locked { color: var(--muted); border-style: dashed; cursor: help; }
+.locked.on { background: none; color: var(--muted); }
+.lockMark { opacity: 0.7; }
+.note { margin: 9px 0 0; font-size: 0.8rem; color: var(--muted); }

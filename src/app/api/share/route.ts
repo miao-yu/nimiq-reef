@@ -29,6 +29,8 @@ export async function GET() {
         : `Day ${reef.day} in my reef`;
     return png(
       renderShareImage({
+        floor: reef.floor,
+        wall: reef.wall,
         inhabitants: adaptPlants(reef.plants),
         waterLevel: depthForStake(reef.stakedLuna),
         feedings: foodInWater(reef),

@@ -11,6 +11,9 @@ export interface PublicReef {
   day: number;
   plants: Plant[];
   stakedLuna: number;
+  /** The owner's chosen look, so a visited reef looks like theirs. */
+  floor: string;
+  wall: string;
   fedToday: boolean;
   receivedToday: number;
   receivedLifetime: number;

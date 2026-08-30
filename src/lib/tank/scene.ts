@@ -56,7 +56,60 @@ export function drawShafts(ctx: Ctx, t: TankRect, p: TankPalette, time: number):
   }
 }
 
-export function drawSubstrate(ctx: Ctx, t: TankRect, p: TankPalette): void {
+/**
+ * The back wall, drawn behind everything that swims.
+ *
+ * Silhouettes only — flat shapes in a darker tone of the water, never lit or
+ * detailed. Anything with contrast back here competes with the creatures,
+ * which are the point, and a busy wall makes a small tank feel smaller.
+ */
+export function drawWall(ctx: Ctx, t: TankRect, p: TankPalette, wall: string): void {
+  if (wall === 'open') return;
+  const r = rng(9137);
+  ctx.save();
+  ctx.fillStyle = hexAlpha(p.waterDeep, 0.55);
+
+  if (wall === 'kelp') {
+    for (let i = 0; i < 14; i++) {
+      const x = t.x + r() * t.w;
+      const w = 5 + r() * 9;
+      const top = t.surfaceY + (0.1 + r() * 0.3) * (t.groundY - t.surfaceY);
+      ctx.beginPath();
+      ctx.moveTo(x, t.groundY + 4);
+      ctx.quadraticCurveTo(x + (r() - 0.5) * 26, (top + t.groundY) / 2, x + (r() - 0.5) * 18, top);
+      ctx.lineTo(x + w, top + 6);
+      ctx.quadraticCurveTo(x + w + (r() - 0.5) * 22, (top + t.groundY) / 2, x + w, t.groundY + 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+  } else if (wall === 'trench') {
+    // One long shelf with the floor falling away past it.
+    ctx.beginPath();
+    ctx.moveTo(t.x, t.groundY + 4);
+    const steps = 7;
+    for (let i = 0; i <= steps; i++) {
+      const gx = t.x + (t.w / steps) * i;
+      ctx.lineTo(gx, t.surfaceY + (0.42 + Math.sin(i * 2.1) * 0.09) * (t.groundY - t.surfaceY));
+    }
+    ctx.lineTo(t.x + t.w, t.groundY + 4);
+    ctx.closePath();
+    ctx.fill();
+  } else if (wall === 'reef') {
+    for (let i = 0; i < 9; i++) {
+      const x = t.x + (i / 8) * t.w;
+      const h = (0.16 + r() * 0.22) * (t.groundY - t.surfaceY);
+      ctx.beginPath();
+      ctx.moveTo(x - 26, t.groundY + 4);
+      ctx.quadraticCurveTo(x - 10, t.groundY - h, x, t.groundY - h * (0.7 + r() * 0.5));
+      ctx.quadraticCurveTo(x + 12, t.groundY - h, x + 28, t.groundY + 4);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+export function drawSubstrate(ctx: Ctx, t: TankRect, p: TankPalette, floor = 'sand'): void {
   ctx.fillStyle = p.sand;
   ctx.beginPath();
   ctx.moveTo(t.x, t.groundY + 5);
@@ -83,6 +136,52 @@ export function drawSubstrate(ctx: Ctx, t: TankRect, p: TankPalette): void {
     ctx.beginPath();
     ctx.arc(t.x + r() * t.w, t.groundY + 6 + r() * (t.h * 0.085), r() * 1.7 + 0.5, 0, Math.PI * 2);
     ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+  // The floor's own character, over the same sand. Every one of these draws
+  // from a fixed seed for the same reason the grit does: a floor that
+  // reshuffles between repaints reads as noise, not ground.
+  const d = rng(777);
+  if (floor === 'rubble') {
+    for (let i = 0; i < 34; i++) {
+      const x = t.x + d() * t.w;
+      const y = t.groundY + 3 + d() * (t.h * 0.07);
+      const w = 4 + d() * 11;
+      ctx.globalAlpha = 0.5 + d() * 0.35;
+      ctx.fillStyle = d() > 0.5 ? p.sandDark : p.sand;
+      ctx.beginPath();
+      ctx.ellipse(x, y, w, w * (0.4 + d() * 0.3), d() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (floor === 'seagrass') {
+    ctx.strokeStyle = hexAlpha(p.caustic, 0.5);
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 46; i++) {
+      const x = t.x + d() * t.w;
+      const h = 7 + d() * 17;
+      ctx.globalAlpha = 0.28 + d() * 0.4;
+      ctx.lineWidth = 1 + d() * 1.4;
+      ctx.beginPath();
+      ctx.moveTo(x, t.groundY + 4);
+      ctx.quadraticCurveTo(x + (d() - 0.5) * 9, t.groundY + 4 - h * 0.6, x + (d() - 0.5) * 14, t.groundY + 4 - h);
+      ctx.stroke();
+    }
+  } else if (floor === 'volcanic') {
+    for (let i = 0; i < 26; i++) {
+      const x = t.x + d() * t.w;
+      const y = t.groundY + 2 + d() * (t.h * 0.06);
+      const w = 6 + d() * 15;
+      ctx.globalAlpha = 0.45 + d() * 0.4;
+      ctx.fillStyle = '#12191d';
+      ctx.beginPath();
+      ctx.moveTo(x - w, y + 4);
+      ctx.lineTo(x - w * 0.3, y - 3 - d() * 4);
+      ctx.lineTo(x + w * 0.4, y - 1 - d() * 5);
+      ctx.lineTo(x + w, y + 4);
+      ctx.closePath();
+      ctx.fill();
+    }
   }
   ctx.globalAlpha = 1;
 }

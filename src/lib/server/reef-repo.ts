@@ -4,8 +4,9 @@ import { db } from './db';
 import { addDays, reefDay, utcDay } from '@/lib/reef/day';
 import { stakingStreak, STAKE_LOOKBACK_DAYS } from '@/lib/reef/streak';
 import { hotPondFrom } from '@/lib/reef/ponds';
+import { isShiny } from '@/lib/tank/traits';
 import type { ChargeEvent } from '@/lib/reef/charges';
-import type { Plant, SpeciesKey } from '@/lib/reef';
+import type { Plant, SpeciesKey, Tier } from '@/lib/reef';
 
 interface ReefRow extends RowDataPacket {
   address: string;
@@ -49,6 +50,8 @@ export interface ReefRecord {
   bestStreak: number;
   /** Highest staking streak ever reached. What a reef reaches, it keeps. */
   peakStreak: number;
+  floor: string;
+  wall: string;
   chargesUpdatedAt: Date | null;
 }
 
@@ -61,7 +64,8 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     [address, today],
   );
   const [rows] = await db().query<ReefRow[]>(
-    `SELECT address, first_day, hidden, best_streak, peak_streak, charges_updated_at
+    `SELECT address, first_day, hidden, best_streak, peak_streak, floor, wall,
+            charges_updated_at
      FROM reefs WHERE address = ?`,
     [address],
   );
@@ -74,6 +78,8 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     hidden: Number(row.hidden) === 1,
     bestStreak: Number(row.best_streak ?? 0),
     peakStreak: Number(row.peak_streak ?? 0),
+    floor: (row.floor as string) ?? 'sand',
+    wall: (row.wall as string) ?? 'open',
     chargesUpdatedAt: row.charges_updated_at ? new Date(row.charges_updated_at) : null,
   };
 }
@@ -484,6 +490,36 @@ export async function feedStreak(address: string, lookback = 400): Promise<numbe
  * GREATEST rather than a read-then-write, so two concurrent requests cannot
  * race one another into lowering it.
  */
+/**
+ * What a reef has earned the right to show off.
+ *
+ * Shiny cannot be counted in SQL — it is a function of the seed and tier — so
+ * the rows come back and are folded here. Cheap: one indexed scan of a table
+ * that holds one row per creature a player has ever caught.
+ */
+export async function collectionTotals(address: string): Promise<{ species: number; shiny: number }> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT species, tier, seed FROM specimens WHERE address = ?',
+    [address],
+  );
+  const species = new Set<string>();
+  let shiny = 0;
+  for (const r of rows) {
+    species.add(r.species as string);
+    if (isShiny(Number(r.seed), r.tier as Tier)) shiny++;
+  }
+  return { species: species.size, shiny };
+}
+
+/** Set the look. Validated by the caller against what the reef has unlocked. */
+export async function setLook(address: string, floor: string, wall: string): Promise<void> {
+  await db().execute('UPDATE reefs SET floor = ?, wall = ? WHERE address = ?', [
+    floor,
+    wall,
+    address,
+  ]);
+}
+
 export async function rememberPeakStreak(address: string, streak: number): Promise<void> {
   await db().execute(
     'UPDATE reefs SET peak_streak = GREATEST(peak_streak, ?) WHERE address = ?',
@@ -503,6 +539,8 @@ export interface PublicReef {
   day: number;
   plants: Plant[];
   stakedLuna: number;
+  floor: string;
+  wall: string;
   fedToday: boolean;
   receivedToday: number;
   receivedLifetime: number;
@@ -520,7 +558,7 @@ export interface PublicReef {
  */
 export async function publicReef(address: string): Promise<PublicReef | null> {
   const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT address, first_day, hidden FROM reefs WHERE address = ?',
+    'SELECT address, first_day, hidden, floor, wall FROM reefs WHERE address = ?',
     [address],
   );
   const row = rows[0];
@@ -541,6 +579,8 @@ export async function publicReef(address: string): Promise<PublicReef | null> {
     day: reefDay(asDay(row.first_day)),
     plants,
     stakedLuna: Number(stakeRows[0]?.staked_luna ?? 0),
+    floor: (row.floor as string) ?? 'sand',
+    wall: (row.wall as string) ?? 'open',
     fedToday: fed,
     receivedToday: counts.receivedToday,
     receivedLifetime: counts.receivedLifetime,

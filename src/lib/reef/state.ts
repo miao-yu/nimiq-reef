@@ -34,6 +34,10 @@ export interface ReefState {
    * never access.
    */
   peakStreak: number;
+  /** The look the owner chose, and what they have earned the right to pick. */
+  floor: string;
+  wall: string;
+  earned: { species: number; peak: number; shiny: number };
   stakedLuna: number;
   delegation: string | null;
 

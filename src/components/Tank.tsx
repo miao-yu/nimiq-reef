@@ -9,11 +9,14 @@ interface TankProps {
   waterLevel: number;
   /** Feedings received today — draws the flakes somebody else dropped in. */
   feedings?: number;
+  /** The owner's chosen look. Scene only; no creature reads these. */
+  floor?: string;
+  wall?: string;
   className?: string;
   label?: string;
 }
 
-export function Tank({ inhabitants, waterLevel, feedings, className, label }: TankProps) {
+export function Tank({ inhabitants, waterLevel, feedings, floor, wall, className, label }: TankProps) {
   const ref = useRef<HTMLCanvasElement>(null);
   const size = useRef({ w: 0, h: 0 });
   const frame = useRef<number | null>(null);
@@ -67,6 +70,8 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
         palette: paletteFromCss(),
         waterLevel: shown.current,
         feedings,
+        floor,
+        wall,
         motion,
         touch:
           motion && touch.current
@@ -74,7 +79,7 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
             : undefined,
       });
     },
-    [inhabitants, waterLevel, feedings],
+    [inhabitants, waterLevel, feedings, floor, wall],
   );
 
   const noticed = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {

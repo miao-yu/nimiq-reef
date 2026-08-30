@@ -31,11 +31,13 @@ export async function GET(_: Request, ctx: { params: Promise<{ address: string }
   const reef = await publicReef(formatAddress(parsed));
   if (!reef) return NextResponse.json({ error: 'No reef there.' }, { status: 404 });
 
-  const png = renderReefCard(
-    adaptPlants(reef.plants),
-    depthForStake(reef.stakedLuna),
-    foodInWater(reef),
-  );
+  const png = renderReefCard({
+    inhabitants: adaptPlants(reef.plants),
+    waterLevel: depthForStake(reef.stakedLuna),
+    feedings: foodInWater(reef),
+    floor: reef.floor,
+    wall: reef.wall,
+  });
 
   // Cache-Control is not set here: next.config's page rule applies to
   // everything outside /api and would override it anyway. Verified against the

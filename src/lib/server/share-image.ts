@@ -18,6 +18,9 @@ export interface ShareOptions {
   /** 0..1, from stake amount. */
   waterLevel: number;
   feedings?: number;
+  /** The owner's look, so a shared card shows the reef they decorated. */
+  floor?: string;
+  wall?: string;
   caption: string;
   width?: number;
   height?: number;
@@ -27,6 +30,8 @@ export function renderShareImage({
   inhabitants,
   waterLevel,
   feedings,
+  floor,
+  wall,
   caption,
   width = 1200,
   height = 630,
@@ -44,6 +49,8 @@ export function renderShareImage({
     palette: TANK_PALETTE,
     waterLevel,
     feedings,
+    floor,
+    wall,
     motion: false,
   });
 
@@ -57,13 +64,23 @@ export function renderShareImage({
  * Deliberately not the share card: no caption band, no wordmark, and small
  * enough to sit in a list. Same renderer, so it is the same reef.
  */
-export function renderReefCard(
-  inhabitants: readonly Inhabitant[],
-  waterLevel: number,
+export function renderReefCard({
+  inhabitants,
+  waterLevel,
+  floor,
+  wall,
   feedings = 0,
   width = 480,
   height = 300,
-): Buffer {
+}: {
+  inhabitants: readonly Inhabitant[];
+  waterLevel: number;
+  floor?: string;
+  wall?: string;
+  feedings?: number;
+  width?: number;
+  height?: number;
+}): Buffer {
   const canvas = createCanvas(width, height);
   renderTank(canvas.getContext('2d') as unknown as CanvasRenderingContext2D, {
     width,
@@ -73,6 +90,8 @@ export function renderReefCard(
     palette: TANK_PALETTE,
     waterLevel,
     feedings,
+    floor,
+    wall,
     motion: false,
   });
   return canvas.toBuffer('image/png');

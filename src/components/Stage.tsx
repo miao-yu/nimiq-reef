@@ -19,12 +19,16 @@ export function Stage({
   inhabitants,
   waterLevel,
   feedings,
+  floor,
+  wall,
   label,
   children,
 }: {
   inhabitants: readonly Inhabitant[];
   waterLevel: number;
   feedings?: number;
+  floor?: string;
+  wall?: string;
   label?: string;
   children: React.ReactNode;
 }) {
@@ -47,6 +51,8 @@ export function Stage({
         inhabitants={inhabitants}
         waterLevel={waterLevel}
         feedings={feedings}
+        floor={floor}
+        wall={wall}
         label={label}
         className={styles.canvas}
       />

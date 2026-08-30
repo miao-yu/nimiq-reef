@@ -91,6 +91,8 @@ export function PublicReefView({ reef }: { reef: PublicReef }) {
       inhabitants={adaptPlants(reef.plants)}
       waterLevel={depthForStake(reef.stakedLuna)}
       feedings={foodInWater({ fedToday: reef.fedToday, receivedToday: reef.receivedToday })}
+      floor={reef.floor}
+      wall={reef.wall}
       label={`A reef on day ${reef.day} with ${reef.plants.length} on display.`}
     >
       {/* The same header as your own reef: where you came from on the left,
