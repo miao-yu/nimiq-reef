@@ -42,9 +42,36 @@ const config: NextConfig = {
         ],
       },
       {
-        source: '/((?!_next/|api/).*)',
+        // `.+` not `.*`: this must not match the root, which is per-user and
+        // gets its own private rule below. Relying on later-rule-wins for that
+        // is a trap — the root is the one page where losing the race would
+        // hand one visitor's session state to the next.
+        source: '/((?!_next/|api/).+)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=0, s-maxage=60, must-revalidate' },
+        ],
+      },
+      {
+        /**
+         * The reef screen is now server-rendered and therefore varies by cookie.
+         *
+         * It renders the sign-in gate only for visitors who do not have a
+         * session, which is what stopped every trip back from the collection
+         * flashing it. That makes the page per-user, and the rule above would
+         * happily let Cloudflare cache one visitor's copy for sixty seconds and
+         * hand it to the next — an anonymous arrival would land on a page with
+         * no gate and no way in.
+         *
+         * `Vary: Cookie` is not enough on its own here: Cloudflare does not
+         * vary its cache on arbitrary request headers. `private` is what
+         * actually keeps a shared cache out. No address or reef data is in this
+         * HTML — only which of two faces to draw — but this is the same shape
+         * of mistake that once served one signed-in user's tank to everyone.
+         */
+        source: '/',
+        headers: [
+          { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },
+          { key: 'Vary', value: 'Cookie' },
         ],
       },
       {
