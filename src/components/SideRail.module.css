@@ -40,7 +40,10 @@
   font-weight: 700;
   letter-spacing: 0.02em;
   text-align: center;
-  max-width: 58px;
+  /* Wide enough for "Collection", which is one unbreakable word — at 58px it
+     overflowed the pill rather than wrapping, since there is no space to
+     break on. */
+  max-width: 76px;
   line-height: 1.15;
   background: rgba(4, 13, 19, 0.9);
   border-radius: 999px;
