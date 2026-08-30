@@ -21,7 +21,7 @@
     "check:peak": "npx tsx --env-file=.env.local scripts/peak-check.mjs"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "dependencies": {
     "@napi-rs/canvas": "^1.0.8",
