@@ -112,7 +112,7 @@ export default function Community() {
     <main className={styles.wrap}>
       <header className={styles.head}>
         <Link className={styles.back} href="/">← My reef</Link>
-        <h1 className={styles.title}>Community Reefs</h1>
+        <h1 className={styles.title}>Community reefs</h1>
         <p className={styles.sub}>
           Every reef here fills from somebody&rsquo;s real Nimiq staking. Feed one — it costs you
           nothing and they will see it.

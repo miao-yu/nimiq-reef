@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Community Reefs',
+  title: 'Community reefs',
   description:
     'Every Reef filling from real Nimiq staking. Browse them, see what people have found, and feed one.',
   alternates: { canonical: '/community' },
