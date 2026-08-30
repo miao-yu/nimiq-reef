@@ -34,6 +34,16 @@ export function SideRail({ items }: { items: { href: string; label: string; icon
   );
 }
 
+/** A jar of specimens: the collection, not the tank. */
+export const COLLECTION_ICON = (
+  <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+    <path d="M6.4 2.2h7.2M7.6 2.2v3.1L4.3 12a3.4 3.4 0 0 0 3 5.1h5.4a3.4 3.4 0 0 0 3-5.1l-3.3-6.7V2.2"
+          fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <circle cx="8.6" cy="12.7" r="1.15" fill="currentColor" />
+    <circle cx="11.7" cy="14.4" r="0.85" fill="currentColor" opacity="0.75" />
+  </svg>
+);
+
 /** Many reefs at once: the shape reads as "browse" at twenty pixels. */
 export const REEFS_ICON = (
   <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">

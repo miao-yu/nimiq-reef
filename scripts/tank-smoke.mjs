@@ -54,12 +54,19 @@ check('locked species appear as silhouettes', guide.body.entries.some((e) => !e.
  * the same pipeline gap that once dropped tier on the way to the client.
  */
 const found = guide.body.entries.filter((e) => e.discovered);
+const fauna = found.filter((e) => e.looksPossible > 0);
 check('the guide counts distinct looks, not just fish',
-  found.every((e) => e.looks >= 1 && e.looks <= e.count),
+  fauna.length > 0 && fauna.every((e) => e.looks >= 1 && e.looks <= e.count),
   found.map((e) => `${e.species} ${e.looks}/${e.count}`).join(', '));
 check('and knows how many looks each tier can make',
-  found.every((e) => e.looksPossible >= 1344),
+  found.every((e) => e.looksPossible >= 1344 || e.looksPossible === 0),
   [...new Set(found.map((e) => e.looksPossible))].sort((a, b) => a - b).join(', '));
+// Flora are drawn without crest, eyes or mouth, so a "looks" count for kelp
+// would be counting parts that never appear.
+check('flora claim no trait variety, because they have none',
+  found.filter((e) => ['grass', 'kelp', 'fan', 'anemone', 'tubeworm'].includes(e.species))
+       .every((e) => e.looksPossible === 0),
+  found.filter((e) => e.looksPossible === 0).map((e) => e.species).join(', ') || 'none present');
 check('shiny is reported rather than passing in silence',
   typeof guide.body.shiny === 'number' && found.every((e) => typeof e.shiny === 'number'),
   `lifetime ${guide.body.shiny}`);

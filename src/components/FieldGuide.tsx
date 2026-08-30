@@ -102,7 +102,7 @@ export function FieldGuide({ reef, onChange }: { reef: ReefState; onChange: (r: 
                       {/* The variety was always being drawn; only the counting
                           is new. A tier can make hundreds of looks and the
                           guide used to say only how many fish you had. */}
-                      {e.looks > 0 ? ` · ${e.looks}/${e.looksPossible} looks` : ''}
+                      {e.looksPossible > 0 ? ` · ${e.looks}/${e.looksPossible} looks` : ''}
                       {e.shiny > 0 ? <span className={styles.shiny}> ✦ {e.shiny}</span> : null}
                     </>
                   ) : (

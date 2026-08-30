@@ -3,6 +3,7 @@ import { currentAddress } from '@/lib/server/session';
 import { listSpecimens } from '@/lib/server/reef-repo';
 import { SPECIES, SPECIES_ORDER } from '@/lib/reef/species';
 import { isShiny, traitKey, LOOKS_PER_TIER } from '@/lib/tank/traits';
+import { isFlora } from '@/lib/tank/types';
 import type { GuideEntry } from '@/lib/reef/state';
 
 export const runtime = 'nodejs';
@@ -30,6 +31,10 @@ export async function GET() {
   for (const s of specimens) {
     counts.set(s.species, (counts.get(s.species) ?? 0) + 1);
     if (isShiny(s.seed, s.tier)) shinies.set(s.species, (shinies.get(s.species) ?? 0) + 1);
+    // Flora have no crest, eyes or mouth — the trait system only reaches
+    // fauna, so counting "looks" for kelp would be counting parts that are
+    // never drawn. They vary by seed, but not along axes anybody can name.
+    if (isFlora(s.species)) continue;
     const set = looks.get(s.species) ?? new Set<string>();
     set.add(traitKey(s.seed, s.tier));
     looks.set(s.species, set);
@@ -43,7 +48,7 @@ export async function GET() {
     discovered: (counts.get(species) ?? 0) > 0,
     shiny: shinies.get(species) ?? 0,
     looks: looks.get(species)?.size ?? 0,
-    looksPossible: LOOKS_PER_TIER[SPECIES[species].tier],
+    looksPossible: isFlora(species) ? 0 : LOOKS_PER_TIER[SPECIES[species].tier],
   }));
 
   return NextResponse.json({

@@ -1,0 +1,10 @@
+.tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #17414f 0%, #0d2c38 100%);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+}
+/* One in 250 should be findable at a glance in a grid of dozens. */
+.shiny { border-color: #ffc93c; box-shadow: 0 0 0 1px rgba(255, 201, 60, 0.45); }
