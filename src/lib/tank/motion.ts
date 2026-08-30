@@ -75,48 +75,99 @@ export const STILL_TIME = 11.4;
  * does not move crawlers or drifters — a shrimp does not race a guppy to the
  * top, and a jelly does not care.
  */
+/**
+ * How a creature answers a finger on the glass.
+ *
+ * Fixed at spawn from the seed, never rerolled, because a creature that is shy
+ * one day and curious the next has no character at all. Three is enough:
+ * players name the personalities themselves once the behaviour is consistent.
+ */
+export type Temperament = 'curious' | 'shy' | 'aloof';
+
+export function temperamentOf(seed: number): Temperament {
+  const n = Math.abs(Math.imul(seed ^ 0x5bf03635, 0x27d4eb2d)) % 100;
+  if (n < 40) return 'curious';
+  if (n < 75) return 'shy';
+  return 'aloof';
+}
+
 export function placeAt(
   inhabitant: Inhabitant,
   tank: TankRect,
   time: number,
   index: number,
   interest = 0,
+  touch?: { x: number; y: number; strength: number },
 ): Placement {
   const r = rng(inhabitant.seed + index * 7919);
   const style = STYLE[inhabitant.species];
   const depth = 0.55 + r() * 0.45;
 
   const phase = r() * Math.PI * 2;
+  /*
+   * A slow wander on the phase, so the path is not a perfect sine.
+   *
+   * Tremoulet & Feldman (2000) found a single shape reads as *alive* when its
+   * speed and heading change together — which a sinusoid already does at each
+   * turn, since cos is the derivative of sin and both reverse there. What it
+   * does not do is vary: every lap is identical, and identical laps read as
+   * machinery. This makes the creature dawdle and hurry on a period unrelated
+   * to its own, so the cycle never quite repeats.
+   *
+   * Still closed-form. Position stays a pure function of time and seed, which
+   * is what keeps the server's share card the same picture the player sees.
+   */
+  const wander = (t: number) => Math.sin(t * 0.13 + phase * 2.7) * 0.42;
   // Nearer things read as faster even at the same real speed.
   const eager = Math.min(1, Math.max(0, interest));
   const speed =
     SPEED[inhabitant.species] * (0.8 + r() * 0.4) * (0.7 + depth * 0.45) * (1 + eager * 0.45);
   const swimmable = tank.groundY - tank.surfaceY;
 
+  /*
+   * The finger, applied on top of whatever the closed form decided.
+   *
+   * Deliberately a nudge and not a destination: creatures lean toward or away
+   * and drift back, rather than snapping to the touch. Snapping reads as a
+   * cursor dragging objects; leaning reads as something noticing you.
+   */
+  const nudge = (x: number, y: number): { x: number; y: number } => {
+    if (!touch || touch.strength <= 0) return { x, y };
+    const temperament = temperamentOf(inhabitant.seed);
+    if (temperament === 'aloof') return { x, y };
+    const dx = touch.x - x;
+    const dy = touch.y - y;
+    const distance = Math.hypot(dx, dy) || 1;
+    const reach = Math.max(tank.w, tank.h) * 0.55;
+    if (distance > reach) return { x, y };
+    // Nearer creatures react harder, and the whole thing fades with strength.
+    const pull = (1 - distance / reach) * touch.strength * (temperament === 'curious' ? 0.3 : -0.34);
+    return { x: x + dx * pull, y: y + dy * pull };
+  };
+
   if (style === 'crawl') {
     // Along the floor, slow, barely leaving the substrate.
-    const u = 0.5 + 0.5 * Math.sin(time * speed * Math.PI * 2 + phase);
+    const crawlAngle = time * speed * Math.PI * 2 + phase + wander(time);
+    const u = 0.5 + 0.5 * Math.sin(crawlAngle);
     const crawlInset = Math.min(0.3, 0.05 + BODY_LENGTH[inhabitant.species] * 0.19);
-    return {
-      x: tank.x + tank.w * (crawlInset + u * (1 - crawlInset * 2)),
-      y: tank.groundY - swimmable * (0.03 + r() * 0.05),
-      dir: Math.cos(time * speed * Math.PI * 2 + phase) >= 0 ? 1 : -1,
-      depth,
-    };
+    const at = nudge(
+      tank.x + tank.w * (crawlInset + u * (1 - crawlInset * 2)),
+      tank.groundY - swimmable * (0.03 + r() * 0.05),
+    );
+    return { x: at.x, y: at.y, dir: Math.cos(crawlAngle) >= 0 ? 1 : -1, depth };
   }
 
   if (style === 'drift') {
     // Mostly vertical, wandering sideways. A jelly does not commute.
     const rise = 0.5 + 0.5 * Math.sin(time * speed * Math.PI * 2 + phase);
-    return {
-      x: tank.x + tank.w * (0.12 + r() * 0.76 + Math.sin(time * 0.11 + phase) * 0.05),
-      y: tank.surfaceY + swimmable * (0.1 + rise * 0.62),
-      dir: 1,
-      depth,
-    };
+    const at = nudge(
+      tank.x + tank.w * (0.12 + r() * 0.76 + Math.sin(time * 0.11 + phase) * 0.05),
+      tank.surfaceY + swimmable * (0.1 + rise * 0.62),
+    );
+    return { x: at.x, y: at.y, dir: 1, depth };
   }
 
-  const angle = time * speed * Math.PI * 2 + phase;
+  const angle = time * speed * Math.PI * 2 + phase + wander(time);
   const u = 0.5 + 0.5 * Math.sin(angle);
   // Keep a body's whole length inside the glass. Without this a whale swims
   // half out of frame, which is most obvious on the share card — and a whale
@@ -130,10 +181,9 @@ export function placeAt(
   const rise = eager * 0.55;
   const level = band * (1 - rise) + 0.1 * rise;
 
-  return {
-    x: tank.x + tank.w * (inset + u * (1 - inset * 2)),
-    y: tank.surfaceY + swimmable * Math.min(0.92, Math.max(0.06, level + bob)),
-    dir: Math.cos(angle) >= 0 ? 1 : -1,
-    depth,
-  };
+  const at = nudge(
+    tank.x + tank.w * (inset + u * (1 - inset * 2)),
+    tank.surfaceY + swimmable * Math.min(0.92, Math.max(0.06, level + bob)),
+  );
+  return { x: at.x, y: at.y, dir: Math.cos(angle) >= 0 ? 1 : -1, depth };
 }

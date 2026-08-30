@@ -80,6 +80,15 @@ export interface RenderOptions {
   waterLevel?: number;
   scale?: number;
   /**
+   * Where the player last touched the glass, and how recently, 0..1.
+   *
+   * The one thing here that is *not* a function of time and seed — and so the
+   * one thing the server never passes. A share card is drawn with no touch at
+   * all, which is exactly why adding this costs nothing: the picture the
+   * server renders is still the picture an untouched tank shows.
+   */
+  touch?: { x: number; y: number; strength: number };
+  /**
    * Feedings received today. Draws sinking flakes — the one thing in the tank
    * that another person put there, and the only reason to open the app and
    * find it different from how you left it.

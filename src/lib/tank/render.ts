@@ -80,7 +80,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
     .map((inhabitant, index) => ({
       inhabitant,
       index,
-      at: placeAt(inhabitant, tank, time, index, interest),
+      at: placeAt(inhabitant, tank, time, index, interest, options.touch),
     }))
     .sort((a, b) => a.at.depth - b.at.depth);
 

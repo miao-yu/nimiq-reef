@@ -27,6 +27,14 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
    * it turns a change too small to see into a moment you notice.
    */
   const shown = useRef<number>(waterLevel);
+  /**
+   * Where the glass was last touched, and how long ago.
+   *
+   * A ref rather than state: this changes every frame and re-rendering React
+   * sixty times a second to move a fish is the wrong machine for the job.
+   * Never sent to the server, so a share card is still an untouched tank.
+   */
+  const touch = useRef<{ x: number; y: number; at: number } | null>(null);
 
   const paint = useCallback(
     (time: number, motion: boolean) => {
@@ -46,6 +54,11 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
         shown.current = waterLevel;
       }
 
+      // Interest decays over about two seconds, so creatures lean in and
+      // drift back rather than staying pinned to wherever you last tapped.
+      const since = touch.current ? (performance.now() - touch.current.at) / 2000 : 1;
+      if (since >= 1) touch.current = null;
+
       renderTank(ctx, {
         width: w,
         height: h,
@@ -55,10 +68,19 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
         waterLevel: shown.current,
         feedings,
         motion,
+        touch:
+          motion && touch.current
+            ? { x: touch.current.x, y: touch.current.y, strength: 1 - since }
+            : undefined,
       });
     },
-    [inhabitants, waterLevel],
+    [inhabitants, waterLevel, feedings],
   );
+
+  const noticed = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    const box = e.currentTarget.getBoundingClientRect();
+    touch.current = { x: e.clientX - box.left, y: e.clientY - box.top, at: performance.now() };
+  }, []);
 
   const fit = useCallback(() => {
     const canvas = ref.current;
@@ -126,6 +148,11 @@ export function Tank({ inhabitants, waterLevel, feedings, className, label }: Ta
       className={className}
       role="img"
       aria-label={label ?? `An aquarium with ${inhabitants.length} inhabitants.`}
+      // Pointer, not click: this should answer a finger dragging across the
+      // glass, not only a tap. It changes nothing anybody has to act on, so
+      // there is no control here to give a keyboard user.
+      onPointerDown={noticed}
+      onPointerMove={noticed}
     />
   );
 }
