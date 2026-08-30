@@ -95,6 +95,29 @@ const honest = sample(10, 10);
 check('a reef that never got there cannot roll what it has not earned',
   !honest.has('legendary'), [...honest].sort().join(','));
 
+/*
+ * Duplicate weighting. The chore players actually name is the same fish
+ * several times in a row, so the bias is on recent catches and is gentle:
+ * a species seen four times lately still appears, about a fifth as often.
+ */
+const spread = (recent) => {
+  let seed = 11;
+  const rng = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 2 ** 32);
+  const counts = new Map();
+  for (let i = 0; i < 40000; i++) {
+    const sp = rollSpecies({ peak: 365, current: 7 }, rng, undefined, recent).species;
+    counts.set(sp, (counts.get(sp) ?? 0) + 1);
+  }
+  return counts;
+};
+const flat = spread(undefined);
+const biased = spread(new Map([['guppy', 4]]));
+check('a species caught four times lately comes up far less often',
+  biased.get('guppy') < flat.get('guppy') * 0.45,
+  `${flat.get('guppy')} -> ${biased.get('guppy')}`);
+check('but it is never taken off the table',
+  biased.get('guppy') > 0, `${biased.get('guppy')}`);
+
 await db.execute('DELETE FROM reef_days WHERE address = ?', [me.address]);
 await db.end();
 console.log(fail === 0 ? '\nPASS — a break costs odds, not access' : `\nFAIL (${fail})`);

@@ -215,6 +215,22 @@ export interface Specimen {
   discoveredAt: Date;
 }
 
+/**
+ * The species this reef has caught most recently.
+ *
+ * Feeds the duplicate weighting. Deliberately a short window rather than a
+ * lifetime tally: lifetime counts would permanently suppress whatever somebody
+ * caught first, while the thing players actually name as the moment fishing
+ * becomes a chore is the same fish several times in a row.
+ */
+export async function recentSpecies(address: string, limit = 8): Promise<SpeciesKey[]> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT species FROM specimens WHERE address = ? ORDER BY discovered_at DESC, id DESC LIMIT ?',
+    [address, limit],
+  );
+  return rows.map((r) => r.species as SpeciesKey);
+}
+
 /** Everything ever discovered, displayed or not. The field guide reads this. */
 export async function listSpecimens(address: string): Promise<Specimen[]> {
   const [rows] = await db().query<SpecimenRow[]>(

@@ -70,11 +70,17 @@ function pickSpecies(
   species: readonly SpeciesKey[],
   random: () => number,
   favours?: Partial<Record<SpeciesKey, number>>,
+  recent?: ReadonlyMap<SpeciesKey, number>,
 ): SpeciesKey {
-  if (!favours || species.length < 2) {
+  if ((!favours && !recent) || species.length < 2) {
     return species[Math.floor(random() * species.length)]!;
   }
-  const weights = species.map((key) => Math.max(0.0001, favours[key] ?? 1));
+  // Bias away from what was just caught. 1/(1+n) is gentle on purpose:
+  // a species seen three times lately still comes up a quarter as often
+  // rather than never, so nothing is ever taken off the table.
+  const weights = species.map(
+    (key) => Math.max(0.0001, favours?.[key] ?? 1) / (1 + (recent?.get(key) ?? 0)),
+  );
   const total = weights.reduce((sum, w) => sum + w, 0);
   let cursor = random() * total;
   for (let i = 0; i < species.length; i++) {
@@ -104,6 +110,7 @@ export function rollSpecies(
   streak: { peak: number; current: number },
   random: () => number,
   favours?: Partial<Record<SpeciesKey, number>>,
+  recent?: ReadonlyMap<SpeciesKey, number>,
 ): Roll {
   const weights = tierWeights(streak.current);
   const available = TIER_ORDER.map((tier) => ({
@@ -124,11 +131,11 @@ export function rollSpecies(
   for (const entry of available) {
     cursor -= entry.weight;
     if (cursor <= 0) {
-      return { species: pickSpecies(entry.species, random, favours), tier: entry.tier };
+      return { species: pickSpecies(entry.species, random, favours, recent), tier: entry.tier };
     }
   }
   const last = available[available.length - 1]!;
-  return { species: pickSpecies(last.species, random, favours), tier: last.tier };
+  return { species: pickSpecies(last.species, random, favours, recent), tier: last.tier };
 }
 
 

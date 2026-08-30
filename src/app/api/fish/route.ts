@@ -2,9 +2,10 @@ import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
 import { getReefState } from '@/lib/server/reef-state';
-import { claimForgivenMiss, recordMiss, recordRoll } from '@/lib/server/reef-repo';
+import { claimForgivenMiss, recentSpecies, recordMiss, recordRoll } from '@/lib/server/reef-repo';
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
+import type { SpeciesKey } from '@/lib/reef/types';
 import { isShiny } from '@/lib/tank/traits';
 import { pondFor } from '@/lib/reef/ponds';
 import { flotsamFor } from '@/lib/reef/flotsam';
@@ -103,11 +104,16 @@ export async function POST(request: Request) {
     });
   }
 
+  // What was caught lately, so the roll can lean away from it.
+  const recent = new Map<SpeciesKey, number>();
+  for (const key of await recentSpecies(address)) recent.set(key, (recent.get(key) ?? 0) + 1);
+
   const random = () => randomInt(0, 2 ** 30) / 2 ** 30;
   const { species, tier } = rollSpecies(
     { peak: state.peakStreak, current: state.daysStaked },
     random,
     pondFor(pond).water.favours,
+    recent,
   );
 
   // On display if there is room; otherwise it waits in the guide and the owner

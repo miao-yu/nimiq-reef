@@ -2,9 +2,10 @@ import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
 import { getReefState } from '@/lib/server/reef-state';
-import { recordRoll } from '@/lib/server/reef-repo';
+import { recentSpecies, recordRoll } from '@/lib/server/reef-repo';
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
+import type { SpeciesKey } from '@/lib/reef/types';
 import { isShiny } from '@/lib/tank/traits';
 
 export const runtime = 'nodejs';
@@ -34,8 +35,17 @@ export async function POST() {
     );
   }
 
+  // What was caught lately, so the roll can lean away from it.
+  const recent = new Map<SpeciesKey, number>();
+  for (const key of await recentSpecies(address)) recent.set(key, (recent.get(key) ?? 0) + 1);
+
   const random = () => randomInt(0, 2 ** 30) / 2 ** 30;
-  const { species, tier } = rollSpecies({ peak: state.peakStreak, current: state.daysStaked }, random);
+  const { species, tier } = rollSpecies(
+    { peak: state.peakStreak, current: state.daysStaked },
+    random,
+    undefined,
+    recent,
+  );
 
   // Goes straight on display if there is room; otherwise it waits in the guide
   // and the owner decides what to swap out. Discovery is never blocked by a
