@@ -2,7 +2,7 @@ import { randomInt } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { currentAddress } from '@/lib/server/session';
 import { getReefState } from '@/lib/server/reef-state';
-import { claimForgivenMiss, recentSpecies, recordMiss, recordRoll } from '@/lib/server/reef-repo';
+import { claimForgivenMiss, claimHotCast, hotPondOf, recentSpecies, recordMiss, recordRoll } from '@/lib/server/reef-repo';
 import { rollSpecies } from '@/lib/reef/progression';
 import { SPECIES } from '@/lib/reef/species';
 import type { SpeciesKey } from '@/lib/reef/types';
@@ -78,7 +78,21 @@ export async function POST(request: Request) {
 
   const pond = formatAddress(parsed);
   const state = await getReefState(address);
-  if (state.charges < 1) {
+
+  /*
+   * The epoch's free cast, in the hot pond only.
+   *
+   * Read-only here: the pond list pins the choice, and a player has to load
+   * that list to reach this route at all. If it somehow is not pinned the cast
+   * simply is not free, which is the safe way for this to fail.
+   *
+   * claimHotCast is what consumes it, and it is a unique-key insert rather
+   * than a read-then-write — a double tap would win that race otherwise. It is
+   * claimed before the outcome is known, so missing the strike still spends it.
+   */
+  const free = pond === (await hotPondOf(state.epoch)) && (await claimHotCast(address, state.epoch));
+
+  if (!free && state.charges < 1) {
     return NextResponse.json(
       { error: 'No charges left.', nextChargeInMs: state.nextChargeInMs },
       { status: 409 },
@@ -93,7 +107,9 @@ export async function POST(request: Request) {
     // Claiming is what marks it used. The first version only *recorded* misses
     // that were not forgiven, so the counter never moved and every miss was
     // free — the tension was gone and nothing said so.
-    const forgiven = await claimForgivenMiss(address);
+    // A missed free cast costs no charge either — the claim above is what was
+    // spent — so it needs no forgiveness and must not take one.
+    const forgiven = free ? true : await claimForgivenMiss(address);
     if (!forgiven) await recordMiss(address, state.epoch, pond);
     return NextResponse.json({
       outcome: 'missed',
@@ -120,7 +136,7 @@ export async function POST(request: Request) {
   // decides what to swap. Discovery is never blocked by a full tank.
   const slot = state.freePlots.length > 0 ? state.freePlots[0]! : null;
   const seed = randomInt(1, 2 ** 31);
-  const id = await recordRoll(address, species, tier, seed, slot, state.epoch, 'charge', pond);
+  const id = await recordRoll(address, species, tier, seed, slot, state.epoch, free ? 'hot' : 'charge', pond);
 
   return NextResponse.json({
     outcome: 'landed',
@@ -129,6 +145,7 @@ export async function POST(request: Request) {
       species,
       tier,
       slot,
+      free,
       shiny: isShiny(seed, tier),
       label: SPECIES[species].label,
       blurb: SPECIES[species].blurb,

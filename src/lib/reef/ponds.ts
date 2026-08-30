@@ -227,3 +227,26 @@ export function pondFor(address: string): Pond {
   const adjective = ADJECTIVES[mix32(h + 0x5bf03635) % ADJECTIVES.length]!;
   return { address, water, name: `${adjective} ${NOUNS[water.key]}` };
 }
+
+/**
+ * Which pond runs this epoch, given the ponds available.
+ *
+ * A pure function of the epoch number, so every client and the server agree
+ * without talking to each other. Sorted first because the elected set arrives
+ * in whatever order the node gives it, and an unsorted input would make the
+ * answer depend on that order.
+ *
+ * The result is still pinned in the database on first use: this decides *what*
+ * the hot pond is, and the row decides that it stays that way even if a
+ * validator joins or leaves before the epoch turns.
+ */
+export function hotPondFrom(epoch: number, candidates: readonly string[]): string | null {
+  if (candidates.length === 0) return null;
+  const sorted = [...candidates].sort();
+  // Avalanche the epoch so consecutive epochs land far apart in the list.
+  let h = (epoch ^ 0x9e3779b9) >>> 0;
+  h = Math.imul(h ^ (h >>> 16), 0x85ebca6b) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 0xc2b2ae35) >>> 0;
+  h = (h ^ (h >>> 16)) >>> 0;
+  return sorted[h % sorted.length]!;
+}

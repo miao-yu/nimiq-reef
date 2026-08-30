@@ -108,3 +108,33 @@
   color: #d99a1f;
 }
 @media (prefers-color-scheme: dark) { .shinyFlag { color: #ffc93c; } }
+
+/* This epoch's pond. Gold rather than the accent green, so it reads as the
+   ready state the dock already uses for an action that is waiting for you. */
+.hot, .running {
+  align-self: center;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.hot { background: #ffc93c; color: #2a1f05; }
+.running { background: rgba(255, 201, 60, 0.16); color: #d99a1f; }
+@media (prefers-color-scheme: dark) { .running { color: #ffc93c; } }
+
+.banner {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  margin: 0 0 22px; padding: 12px 14px;
+  border: 1px solid #ffc93c; border-radius: 12px;
+  background: rgba(255, 201, 60, 0.14);
+  cursor: pointer; text-align: left; font: inherit; color: inherit;
+}
+.banner:hover { background: rgba(255, 201, 60, 0.22); }
+.bannerSpent { border-color: var(--line); background: none; }
+.bannerText { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.bannerText strong { font-size: 0.95rem; }
+.bannerText small { font-size: 0.78rem; color: var(--muted); }
+.bannerGo { color: var(--muted); font-size: 1.1rem; }

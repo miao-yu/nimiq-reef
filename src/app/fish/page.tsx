@@ -20,6 +20,8 @@ interface Pond {
   blurb: string;
   stakers: number;
   yours: boolean;
+  /** Running this epoch. One free cast here, for everybody, at the same time. */
+  hot: boolean;
 }
 
 interface Caught {
@@ -61,6 +63,7 @@ function groupPonds(ponds: Pond[]): [WaterKey, Pond[]][] {
 export default function Fish() {
   const [ponds, setPonds] = useState<Pond[] | null>(null);
   const [charges, setCharges] = useState(0);
+  const [hotSpent, setHotSpent] = useState(true);
   const [pond, setPond] = useState<Pond | null>(null);
   const [phase, setPhase] = useState<Phase>('ready');
   const [caught, setCaught] = useState<Caught | null>(null);
@@ -87,9 +90,10 @@ export default function Fish() {
   useEffect(() => {
     void fetch('/api/ponds', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Could not load ponds.'))))
-      .then((d: { ponds: Pond[]; charges: number }) => {
+      .then((d: { ponds: Pond[]; charges: number; hotSpent?: boolean }) => {
         setPonds(d.ponds);
         setCharges(d.charges);
+        setHotSpent(Boolean(d.hotSpent));
       })
       .catch((cause) => {
         report('ponds', cause);
@@ -229,6 +233,32 @@ export default function Fish() {
           how much you have staked.
         </p>
         {error ? <p className={styles.error}>{error}</p> : null}
+        {/* Announced, not merely marked.
+            The list groups by water, which buries the running pond several
+            screens down — and a hotspot nobody finds is not a hotspot. This is
+            the one thing on the page with a deadline, so it goes first. */}
+        {(() => {
+          const running = (ponds ?? []).find((p) => p.hot);
+          if (!running) return null;
+          return (
+            <button
+              className={`${styles.banner} ${hotSpent ? styles.bannerSpent : ''}`}
+              onClick={() => setPond(running)}
+              type="button"
+            >
+              <ValidatorMark address={running.address} hasLogo={running.logo} size={34} />
+              <span className={styles.bannerText}>
+                <strong>{hotSpent ? 'Running this epoch' : 'One free cast, this epoch'}</strong>
+                <small>
+                  {running.validator ?? running.name} · {WATERS[running.water].label}
+                  {hotSpent ? ' · already taken' : ''}
+                </small>
+              </span>
+              <span className={styles.bannerGo}>→</span>
+            </button>
+          );
+        })()}
+
         {/* Grouped by water. Six waters across ~37 validators means the same
             name appears half a dozen times; listed flat, distinct ponds read as
             duplicates of each other. Under a heading, the repetition is the
@@ -256,6 +286,11 @@ export default function Fish() {
                       </small>
                       <code>{truncateAddress(p.address)}</code>
                     </span>
+                    {p.hot && !hotSpent ? (
+                      <span className={styles.hot}>free cast</span>
+                    ) : p.hot ? (
+                      <span className={styles.running}>running</span>
+                    ) : null}
                     {p.yours ? <span className={styles.yours}>yours</span> : null}
                   </button>
                 </li>

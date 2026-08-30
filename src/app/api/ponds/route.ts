@@ -4,6 +4,7 @@ import { currentAddress } from '@/lib/server/session';
 import { getReefState } from '@/lib/server/reef-state';
 import { pondFor } from '@/lib/reef/ponds';
 import { registry } from '@/lib/server/registry';
+import { hotCastSpent, pinHotPond } from '@/lib/server/reef-repo';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -38,6 +39,21 @@ export async function GET() {
       registry(),
     ]);
 
+    const eligible = validators
+      .filter((v) => {
+        const meta = known.get(v.address.replace(/\s+/g, '').toUpperCase());
+        return meta?.isPool || state.delegation === v.address;
+      })
+      .map((v) => v.address);
+
+    // Chosen from the pools alone, so the hot pond is the same for everybody.
+    // A player's own solo validator is in their list but never in this draw.
+    const poolsOnly = validators
+      .filter((v) => known.get(v.address.replace(/\s+/g, '').toUpperCase())?.isPool)
+      .map((v) => v.address);
+    const hot = await pinHotPond(state.epoch, poolsOnly.length > 0 ? poolsOnly : eligible);
+    const hotSpent = hot ? await hotCastSpent(address, state.epoch) : true;
+
     const ponds = validators
       .filter((v) => {
         const meta = known.get(v.address.replace(/\s+/g, '').toUpperCase());
@@ -61,11 +77,18 @@ export async function GET() {
           slots: Number(v.numSlots),
           // The one place the app can reward *which* validator you chose.
           yours: state.delegation === v.address,
+          hot: v.address === hot,
         };
       })
-      .sort((a, b) => (a.yours === b.yours ? a.address.localeCompare(b.address) : a.yours ? -1 : 1));
+      // Hot first, then yours, then stable by address: the free cast is the
+      // most useful thing on the screen and should not need scrolling for.
+      .sort((a, b) => {
+        if (a.hot !== b.hot) return a.hot ? -1 : 1;
+        if (a.yours !== b.yours) return a.yours ? -1 : 1;
+        return a.address.localeCompare(b.address);
+      });
 
-    return NextResponse.json({ ponds, charges: state.charges });
+    return NextResponse.json({ ponds, charges: state.charges, hot, hotSpent, epoch: state.epoch });
   } catch (cause) {
     if (cause instanceof RpcUnavailableError) {
       return NextResponse.json({ error: 'The Nimiq node is unreachable.' }, { status: 503 });

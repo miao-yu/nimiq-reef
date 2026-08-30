@@ -24,11 +24,19 @@ const beat = () => new Promise((r) => setTimeout(r, 1700));
 let fail = 0;
 const check = (n, ok, d = '') => { console.log(`  ${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ' — ' + d : ''}`); if (!ok) fail++; };
 
-const { body: w } = await call('/api/dev/wallet?fresh=1');
-const { body: ch } = await post('/api/auth/challenge', { address: w.address });
-const { body: sig } = await post('/api/dev/wallet', { message: ch.message });
-const v = await post('/api/auth/verify', { code: ch.code, address: w.address, publicKey: sig.publicKey, signature: sig.signature });
-const cookie = (v.setCookie ?? '').split(';')[0];
+/** A fresh wallet, signed in. The hot-pond case needs a second one. */
+async function signIn() {
+  const { body: w } = await call('/api/dev/wallet?fresh=1');
+  const { body: ch } = await post('/api/auth/challenge', { address: w.address });
+  const { body: sig } = await post('/api/dev/wallet', { message: ch.message });
+  const v = await post('/api/auth/verify', {
+    code: ch.code, address: w.address, publicKey: sig.publicKey, signature: sig.signature,
+  });
+  return { address: w.address, cookie: (v.setCookie ?? '').split(';')[0] };
+}
+
+const w = await signIn();
+const cookie = w.cookie;
 console.log(`\n  signed in as ${w.address}\n`);
 
 const anon = await post('/api/fish', { pond: w.address, outcome: 'landed' });
@@ -36,7 +44,13 @@ check('fishing needs a session', anon.status === 401, `HTTP ${anon.status}`);
 
 const { status: pStatus, body: pondsBody } = await call('/api/ponds', { headers: { cookie } });
 check('ponds list loads', pStatus === 200 && Array.isArray(pondsBody.ponds), `HTTP ${pStatus}`);
-const pond = pondsBody.ponds?.[0];
+/*
+ * Deliberately NOT ponds[0]. The hot pond sorts first and its cast is free, so
+ * every charge assertion below would pass for the wrong reason — which is
+ * exactly how this suite failed when the mechanic landed.
+ */
+const pond = (pondsBody.ponds ?? []).find((p) => !p.hot) ?? pondsBody.ponds?.[0];
+const hotPond = (pondsBody.ponds ?? []).find((p) => p.hot);
 if (!pond) { console.log('\n  SKIP — no ponds from the node'); process.exit(fail ? 1 : 0); }
 check('every pond has water and a face', pondsBody.ponds.every((p) => p.water && p.label && p.address));
 
@@ -109,6 +123,39 @@ const burst = await Promise.all(
 );
 const accepted = burst.filter((r) => r.status === 200).length;
 check('a burst of settles is throttled', accepted <= 1, `${accepted} of 6 accepted`);
+
+/*
+ * The hot pond: one free cast an epoch, and only there.
+ *
+ * A fresh wallet, because the one above has spent its charges — and the point
+ * of the free cast is precisely that it works when charges do not.
+ */
+if (hotPond) {
+  const guest = await signIn();
+  await call('/api/reef', { headers: { cookie: guest.cookie } });   // creates the reef row
+  const before = (await call('/api/ponds', { headers: { cookie: guest.cookie } })).body;
+  check('the hot pond is announced to everyone the same way',
+    before.hot === hotPond.address, `${String(before.hot).slice(0, 12)}`);
+  check('and the free cast is unspent to begin with', before.hotSpent === false);
+
+  const charges = before.charges;
+  await beat();
+  const freeCast = await post('/api/fish', { pond: hotPond.address, outcome: 'landed' }, guest.cookie);
+  check('casting in the hot pond lands', freeCast.status === 200, `HTTP ${freeCast.status}`);
+  check('and it is free — the charge balance did not move',
+    freeCast.body.reef?.charges === charges, `${charges} -> ${freeCast.body.reef?.charges}`);
+  check('the catch says so', freeCast.body.caught?.free === true);
+
+  await beat();
+  const second = await post('/api/fish', { pond: hotPond.address, outcome: 'landed' }, guest.cookie);
+  check('a second cast there costs a charge — the gift is one an epoch',
+    second.status === 200 && second.body.reef?.charges === charges - 1,
+    `${charges} -> ${second.body.reef?.charges}`);
+  check('and is no longer marked free', second.body.caught?.free === false);
+
+  const after = (await call('/api/ponds', { headers: { cookie: guest.cookie } })).body;
+  check('the pond list reports the gift as spent', after.hotSpent === true);
+}
 
 console.log(fail === 0 ? '\nPASS — fishing holds' : `\nFAIL (${fail})`);
 process.exit(fail ? 1 : 0);

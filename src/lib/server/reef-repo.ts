@@ -3,6 +3,7 @@ import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { db } from './db';
 import { addDays, reefDay, utcDay } from '@/lib/reef/day';
 import { stakingStreak, STAKE_LOOKBACK_DAYS } from '@/lib/reef/streak';
+import { hotPondFrom } from '@/lib/reef/ponds';
 import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey } from '@/lib/reef';
 
@@ -256,8 +257,10 @@ export async function listSpecimens(address: string): Promise<Specimen[]> {
  * older has certainly regenerated.
  */
 export async function chargeEvents(address: string, sinceEpoch: number): Promise<ChargeEvent[]> {
+  // Every roll is a charge spent except the epoch's free cast in the hot pond,
+  // which produces a specimen without touching the balance.
   const [spends] = await db().query<RowDataPacket[]>(
-    'SELECT epoch FROM rolls WHERE address = ? AND epoch > ?',
+    "SELECT epoch FROM rolls WHERE address = ? AND epoch > ? AND source <> 'hot'",
     [address, sinceEpoch],
   );
   const [grants] = await db().query<RowDataPacket[]>(
@@ -381,7 +384,7 @@ export async function recordRoll(
   seed: number,
   slot: number | null,
   epoch: number,
-  source: 'charge' | 'payment' = 'charge',
+  source: 'charge' | 'payment' | 'hot' = 'charge',
   pond: string | null = null,
 ): Promise<number> {
   const conn = await db().getConnection();
@@ -829,6 +832,65 @@ export async function fedOtherToday(address: string): Promise<boolean> {
     [address, utcDay()],
   );
   return rows.length > 0;
+}
+
+/**
+ * The pond running this epoch, pinned on first use.
+ *
+ * INSERT IGNORE then re-read, so two requests arriving in the same millisecond
+ * of a fresh epoch cannot pick different ponds — the loser of the race reads
+ * the winner's row rather than its own answer.
+ */
+export async function pinHotPond(epoch: number, candidates: readonly string[]): Promise<string | null> {
+  const [existing] = await db().query<RowDataPacket[]>(
+    'SELECT pond FROM hot_ponds WHERE epoch = ?',
+    [epoch],
+  );
+  if (existing[0]) return existing[0].pond as string;
+
+  const choice = hotPondFrom(epoch, candidates);
+  if (!choice) return null;
+  await db().execute('INSERT IGNORE INTO hot_ponds (epoch, pond) VALUES (?, ?)', [epoch, choice]);
+
+  const [settled] = await db().query<RowDataPacket[]>(
+    'SELECT pond FROM hot_ponds WHERE epoch = ?',
+    [epoch],
+  );
+  return (settled[0]?.pond as string) ?? choice;
+}
+
+/** The pinned hot pond, or null if this epoch has not been pinned yet. */
+export async function hotPondOf(epoch: number): Promise<string | null> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT pond FROM hot_ponds WHERE epoch = ?',
+    [epoch],
+  );
+  return (rows[0]?.pond as string) ?? null;
+}
+
+/** Has this reef already taken its free cast this epoch? */
+export async function hotCastSpent(address: string, epoch: number): Promise<boolean> {
+  const [rows] = await db().query<RowDataPacket[]>(
+    'SELECT 1 FROM hot_casts WHERE address = ? AND epoch = ? LIMIT 1',
+    [address, epoch],
+  );
+  return rows.length > 0;
+}
+
+/**
+ * Claim the free cast. False if it was already taken.
+ *
+ * The unique key decides, not a read-then-write — a double tap would win that
+ * race and spend the epoch's bonus twice.
+ */
+export async function claimHotCast(address: string, epoch: number): Promise<boolean> {
+  try {
+    await db().execute('INSERT INTO hot_casts (address, epoch) VALUES (?, ?)', [address, epoch]);
+    return true;
+  } catch (error) {
+    if ((error as { code?: string }).code === 'ER_DUP_ENTRY') return false;
+    throw error;
+  }
 }
 
 export interface FeedingCounts {
