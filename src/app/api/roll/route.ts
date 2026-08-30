@@ -34,7 +34,7 @@ export async function POST() {
   }
 
   const random = () => randomInt(0, 2 ** 30) / 2 ** 30;
-  const { species, tier } = rollSpecies(state.daysStaked, random);
+  const { species, tier } = rollSpecies({ peak: state.peakStreak, current: state.daysStaked }, random);
 
   // Goes straight on display if there is room; otherwise it waits in the guide
   // and the owner decides what to swap out. Discovery is never blocked by a

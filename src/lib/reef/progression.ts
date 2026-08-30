@@ -57,15 +57,6 @@ export interface Roll {
 }
 
 /**
- * Roll one specimen.
- *
- * Weights are zeroed for any tier with nothing unlocked yet and the rest
- * renormalised, rather than rolling a tier and then failing to fill it. That
- * is what guarantees **every roll produces a specimen** — there is never an
- * empty outcome, which is both the kinder design and what keeps this clear of
- * "games of chance where outcomes are primarily determined by randomness".
- */
-/**
  * Which species, given a tier — biased by the pond, if there is one.
  *
  * **The bias lives here and only here.** Tier is chosen above by days staked
@@ -93,15 +84,31 @@ function pickSpecies(
   return species[species.length - 1]!;
 }
 
+/**
+ * Roll one specimen.
+ *
+ * Two different numbers, and keeping them apart is the point. **What can
+ * appear** comes from the peak streak — the high-water mark a reef has ever
+ * reached, which it never loses. **How likely each tier is** comes from the
+ * live streak. So breaking a streak costs odds and never access: a reef that
+ * once reached day 300 can still catch a whale, it just has day-zero chances
+ * of rolling the legendary tier until it stakes again.
+ *
+ * Weights are zeroed for any tier with nothing unlocked yet and the rest
+ * renormalised, rather than rolling a tier and then failing to fill it. That
+ * is what guarantees **every roll produces a specimen** — there is never an
+ * empty outcome, which is both the kinder design and what keeps this clear of
+ * "games of chance where outcomes are primarily determined by randomness".
+ */
 export function rollSpecies(
-  daysStaked: number,
+  streak: { peak: number; current: number },
   random: () => number,
   favours?: Partial<Record<SpeciesKey, number>>,
 ): Roll {
-  const weights = tierWeights(daysStaked);
+  const weights = tierWeights(streak.current);
   const available = TIER_ORDER.map((tier) => ({
     tier,
-    species: speciesInTier(tier, daysStaked),
+    species: speciesInTier(tier, streak.peak),
     weight: weights[tier],
   })).filter((t) => t.species.length > 0 && t.weight > 0);
 
@@ -109,7 +116,7 @@ export function rollSpecies(
 
   // Day zero with nothing but commons unlocked still has to yield something.
   if (available.length === 0 || total <= 0) {
-    const fallback = speciesUnlocked(daysStaked)[0] ?? 'guppy';
+    const fallback = speciesUnlocked(streak.peak)[0] ?? 'guppy';
     return { species: fallback, tier: SPECIES[fallback].tier };
   }
 

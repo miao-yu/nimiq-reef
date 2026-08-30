@@ -100,7 +100,11 @@ export async function POST(request: Request) {
   }
 
   const random = () => randomInt(0, 2 ** 30) / 2 ** 30;
-  const { species, tier } = rollSpecies(state.daysStaked, random, pondFor(pond).water.favours);
+  const { species, tier } = rollSpecies(
+    { peak: state.peakStreak, current: state.daysStaked },
+    random,
+    pondFor(pond).water.favours,
+  );
 
   // On display if there is room; otherwise it waits in the guide and the owner
   // decides what to swap. Discovery is never blocked by a full tank.
