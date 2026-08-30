@@ -46,6 +46,8 @@ export interface ReefRecord {
   /** Opted out of a public reef page. */
   hidden: boolean;
   bestStreak: number;
+  /** Highest staking streak ever reached. What a reef reaches, it keeps. */
+  peakStreak: number;
   chargesUpdatedAt: Date | null;
 }
 
@@ -58,7 +60,8 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     [address, today],
   );
   const [rows] = await db().query<ReefRow[]>(
-    'SELECT address, first_day, hidden, best_streak, charges_updated_at FROM reefs WHERE address = ?',
+    `SELECT address, first_day, hidden, best_streak, peak_streak, charges_updated_at
+     FROM reefs WHERE address = ?`,
     [address],
   );
   const row = rows[0];
@@ -69,6 +72,7 @@ export async function ensureReef(address: string): Promise<ReefRecord> {
     firstDay: asDay(row.first_day),
     hidden: Number(row.hidden) === 1,
     bestStreak: Number(row.best_streak ?? 0),
+    peakStreak: Number(row.peak_streak ?? 0),
     chargesUpdatedAt: row.charges_updated_at ? new Date(row.charges_updated_at) : null,
   };
 }
@@ -453,6 +457,19 @@ export async function feedStreak(address: string, lookback = 400): Promise<numbe
     cursor = addDays(cursor, -1);
   }
   return streak;
+}
+
+/**
+ * Raise the high-water mark of the staking streak.
+ *
+ * GREATEST rather than a read-then-write, so two concurrent requests cannot
+ * race one another into lowering it.
+ */
+export async function rememberPeakStreak(address: string, streak: number): Promise<void> {
+  await db().execute(
+    'UPDATE reefs SET peak_streak = GREATEST(peak_streak, ?) WHERE address = ?',
+    [streak, address],
+  );
 }
 
 export async function rememberBestStreak(address: string, streak: number): Promise<void> {

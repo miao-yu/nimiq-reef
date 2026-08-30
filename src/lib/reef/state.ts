@@ -19,6 +19,12 @@ export interface ReefState {
 
   /** Loyalty. Everything about rarity keys off this, never off amount. */
   daysStaked: number;
+  /**
+   * The highest streak ever reached. Gates which species can appear, where
+   * daysStaked gates how likely each tier is — so a broken streak costs odds,
+   * never access.
+   */
+  peakStreak: number;
   stakedLuna: number;
   delegation: string | null;
 

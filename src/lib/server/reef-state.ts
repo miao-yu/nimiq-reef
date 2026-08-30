@@ -8,6 +8,7 @@ import {
   feedStreak,
   feedingCounts,
   rememberBestStreak,
+  rememberPeakStreak,
   chargeEvents,
   lastKnownEpoch,
 } from './reef-repo';
@@ -56,6 +57,11 @@ export async function getReefState(address: string): Promise<ReefState> {
   const dayClock = utcDayClock();
   if (feeding > reef.bestStreak) await rememberBestStreak(address, feeding);
 
+  // What a reef reaches, it keeps. Computed rather than backfilled, so reefs
+  // that predate the column heal themselves the first time they are read.
+  const peak = Math.max(reef.peakStreak, streak);
+  if (peak > reef.peakStreak) await rememberPeakStreak(address, peak);
+
   // Money creates room. If a withdrawal shrinks the tank below what is already
   // in it, nothing is evicted — the floor is what you hold. Withdrawals lower
   // the water, never harm a specimen.
@@ -69,13 +75,16 @@ export async function getReefState(address: string): Promise<ReefState> {
     hidden: reef.hidden,
     plants,
     daysStaked: streak,
+    peakStreak: peak,
     stakedLuna,
     delegation,
     plotsUnlocked: capacity,
     plotsTotal: capacity,
     freePlots,
-    speciesUnlocked: speciesUnlocked(streak),
-    next: nextMilestone(streak),
+    // Both read the peak: what you can catch, and what you are working toward,
+    // are things you have earned rather than things you currently hold.
+    speciesUnlocked: speciesUnlocked(peak),
+    next: nextMilestone(peak),
 
     charges: charges.available,
     maxCharges: MAX_CHARGES,

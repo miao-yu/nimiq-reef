@@ -1,0 +1,16 @@
+-- The high-water mark of the staking streak.
+--
+-- Until now a single observed day at zero stake reset the streak to zero and
+-- collapsed the unlock set with it: a reef at day 300 lost the ability to roll
+-- the whale, the turtle and the octopus because its owner moved stake between
+-- validators across a day boundary. That is confiscation for being absent, and
+-- it is the pattern the games literature calls Playing by Appointment — whose
+-- one exemption is that the appointment must not be required for progression.
+--
+-- So progression moves here. What a reef has reached, it keeps. The live streak
+-- still decides the odds, which is what keeps staking worth doing.
+--
+-- No backfill: getReefState takes GREATEST(stored, current) on every read, so
+-- every reef self-heals the first time its owner opens the app. With the
+-- longest streak in production at four days there is nothing to reconstruct.
+ALTER TABLE reefs ADD COLUMN peak_streak INT UNSIGNED NOT NULL DEFAULT 0;
