@@ -70,16 +70,31 @@ export function chargesFrom(
   let level = MAX_CHARGES;
   let last = windowStart;
 
+  /*
+   * The running level is never floored, only capped.
+   *
+   * Flooring each step at zero forgave overdraft, and a bonus charge then
+   * resurrected it: eight spends in one epoch each clamped to 0, the single
+   * grant that followed added 1 back, and the balance sat at 1 for ever. Any
+   * reef holding a bonus charge in the current epoch could cast without limit
+   * — which is exactly what happened in production.
+   *
+   * Letting it go negative also makes the replay order-independent within an
+   * epoch, since addition commutes and the old floor did not.
+   */
   for (const event of relevant) {
     level = Math.min(MAX_CHARGES, level + (event.epoch - last));
-    level = Math.max(0, Math.min(MAX_CHARGES, level + event.delta));
+    level = Math.min(MAX_CHARGES, level + event.delta);
     last = event.epoch;
   }
-  level = Math.max(0, Math.min(MAX_CHARGES, level + (epoch - last)));
+  level = Math.min(MAX_CHARGES, level + (epoch - last));
+
+  // Only what is reported is floored. A debt stays a debt until epochs repay it.
+  const available = Math.max(0, level);
 
   const progress = epochMs > 0 ? 1 - Math.min(1, Math.max(0, msToNextEpoch / epochMs)) : 0;
   return {
-    available: level,
+    available,
     nextInMs: level >= MAX_CHARGES ? null : msToNextEpoch,
     epochProgress: progress,
     epoch,
