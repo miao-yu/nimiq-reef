@@ -19,7 +19,11 @@ export const MATURE_DAYS = 21;
  * is the same as no growth at all.
  */
 export function maturity(ageDays: number, fullDays = MATURE_DAYS): number {
-  const t = Math.min(1, Math.max(0, ageDays / fullDays));
+  // A missing or nonsense age reads as newborn, never as NaN. NaN propagates
+  // into ctx.scale(), which silently draws nothing — that is how every app
+  // icon shipped as an empty tank for days without anyone seeing an error.
+  const days = Number.isFinite(ageDays) ? ageDays : 0;
+  const t = Math.min(1, Math.max(0, days / fullDays));
   return 1 - (1 - t) * (1 - t);
 }
 
