@@ -109,8 +109,23 @@ export function drawWall(ctx: Ctx, t: TankRect, p: TankPalette, wall: string): v
   ctx.restore();
 }
 
+/**
+ * The ground each floor is made of, not merely decorated with.
+ *
+ * The first version drew stones in `p.sand` on a floor of `p.sand`, which
+ * changed 1.6% of the pixels by an average of 32 out of 765 — real, measurable
+ * and invisible. A floor has to change the ground's own colour to read as a
+ * different floor.
+ */
+const FLOOR_BODY: Record<string, string> = {
+  sand: '',              // the palette's own
+  rubble: '#3A4E5C',     // paler, coarser
+  seagrass: '#2B4A44',   // green-shifted
+  volcanic: '#1A2026',   // near-black
+};
+
 export function drawSubstrate(ctx: Ctx, t: TankRect, p: TankPalette, floor = 'sand'): void {
-  ctx.fillStyle = p.sand;
+  ctx.fillStyle = FLOOR_BODY[floor] || p.sand;
   ctx.beginPath();
   ctx.moveTo(t.x, t.groundY + 5);
   const steps = 8;
@@ -143,44 +158,65 @@ export function drawSubstrate(ctx: Ctx, t: TankRect, p: TankPalette, floor = 'sa
   // from a fixed seed for the same reason the grit does: a floor that
   // reshuffles between repaints reads as noise, not ground.
   const d = rng(777);
+  const floorY = t.groundY + 2;
+  const band = Math.max(18, t.h * 0.1);
+
   if (floor === 'rubble') {
-    for (let i = 0; i < 34; i++) {
+    // Stones that break the skyline of the floor, lit on top and shadowed
+    // below, so they read as objects rather than a texture.
+    for (let i = 0; i < 60; i++) {
       const x = t.x + d() * t.w;
-      const y = t.groundY + 3 + d() * (t.h * 0.07);
-      const w = 4 + d() * 11;
-      ctx.globalAlpha = 0.5 + d() * 0.35;
-      ctx.fillStyle = d() > 0.5 ? p.sandDark : p.sand;
+      const y = floorY + d() * band;
+      const w = 6 + d() * 16;
+      const h = w * (0.45 + d() * 0.3);
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#5A7182';
       ctx.beginPath();
-      ctx.ellipse(x, y, w, w * (0.4 + d() * 0.3), d() * Math.PI, 0, Math.PI * 2);
+      ctx.ellipse(x, y, w, h, d() * Math.PI, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#22323E';
+      ctx.beginPath();
+      ctx.ellipse(x, y + h * 0.45, w * 0.9, h * 0.5, 0, 0, Math.PI * 2);
       ctx.fill();
     }
   } else if (floor === 'seagrass') {
-    ctx.strokeStyle = hexAlpha(p.caustic, 0.5);
+    // A meadow: dense, tall enough to stand off the floor, and lit.
     ctx.lineCap = 'round';
-    for (let i = 0; i < 46; i++) {
+    for (let i = 0; i < 150; i++) {
       const x = t.x + d() * t.w;
-      const h = 7 + d() * 17;
-      ctx.globalAlpha = 0.28 + d() * 0.4;
-      ctx.lineWidth = 1 + d() * 1.4;
+      const h = 14 + d() * 34;
+      ctx.globalAlpha = 0.45 + d() * 0.45;
+      ctx.strokeStyle = d() > 0.45 ? '#5FBF8E' : '#2E7F63';
+      ctx.lineWidth = 1.4 + d() * 1.8;
       ctx.beginPath();
-      ctx.moveTo(x, t.groundY + 4);
-      ctx.quadraticCurveTo(x + (d() - 0.5) * 9, t.groundY + 4 - h * 0.6, x + (d() - 0.5) * 14, t.groundY + 4 - h);
+      ctx.moveTo(x, floorY + 3);
+      ctx.quadraticCurveTo(x + (d() - 0.5) * 12, floorY + 3 - h * 0.6, x + (d() - 0.5) * 20, floorY + 3 - h);
       ctx.stroke();
     }
   } else if (floor === 'volcanic') {
-    for (let i = 0; i < 26; i++) {
+    // Angular glass, with a hot edge so the black does not read as a hole.
+    for (let i = 0; i < 44; i++) {
       const x = t.x + d() * t.w;
-      const y = t.groundY + 2 + d() * (t.h * 0.06);
-      const w = 6 + d() * 15;
-      ctx.globalAlpha = 0.45 + d() * 0.4;
-      ctx.fillStyle = '#12191d';
+      const y = floorY + d() * band;
+      const w = 8 + d() * 20;
+      const top = y - 4 - d() * 10;
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#0C1014';
       ctx.beginPath();
-      ctx.moveTo(x - w, y + 4);
-      ctx.lineTo(x - w * 0.3, y - 3 - d() * 4);
-      ctx.lineTo(x + w * 0.4, y - 1 - d() * 5);
-      ctx.lineTo(x + w, y + 4);
+      ctx.moveTo(x - w, y + 5);
+      ctx.lineTo(x - w * 0.3, top);
+      ctx.lineTo(x + w * 0.4, top + 2);
+      ctx.lineTo(x + w, y + 5);
       ctx.closePath();
       ctx.fill();
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = '#8A4B2A';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(x - w * 0.3, top);
+      ctx.lineTo(x + w * 0.4, top + 2);
+      ctx.stroke();
     }
   }
   ctx.globalAlpha = 1;
