@@ -1,7 +1,7 @@
 import { clamp, lerp, tankRect } from './geometry';
 import { drawFauna, BODY_LENGTH, TAIL_RATE, colourFor } from './fauna';
 import { FLORA_HEIGHT, drawFlora, grassPositions } from './flora';
-import { placeAt, STILL_TIME } from './motion';
+import { placeAt, paceFor, STILL_TIME } from './motion';
 import { faunaScale, grassScale } from './growth';
 import { isFlora, type FaunaKey, type FloraKey } from './types';
 import {
@@ -83,7 +83,7 @@ export function renderTank(ctx: CanvasRenderingContext2D, options: RenderOptions
     .map((inhabitant, index) => ({
       inhabitant,
       index,
-      at: placeAt(inhabitant, tank, time, index, interest, options.touch),
+      at: placeAt(inhabitant, tank, time, index, interest, options.touch, paceFor(tank.w, moving)),
     }))
     .sort((a, b) => a.at.depth - b.at.depth);
 

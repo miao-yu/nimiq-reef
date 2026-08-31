@@ -25,7 +25,15 @@ const STYLE: Record<SpeciesKey, Style> = {
   whale: 'glide',
 };
 
-/** Tank widths per second. Small fish dart; a whale crosses in about a minute. */
+/**
+ * Laps per second, not speed.
+ *
+ * The old comment here said "tank widths per second", which is what the number
+ * looks like and not what it does: it sets how often a creature completes a
+ * lap, so the lap takes the same time however wide the glass is. On a phone a
+ * guppy peaks near 100 px/s; on a 3440px wallpaper the same figure came out at
+ * 858 px/s, which reads as fleeing rather than swimming. See PACE_WIDTH.
+ */
 const SPEED: Record<SpeciesKey, number> = {
   grass: 0,
   kelp: 0,
@@ -45,6 +53,29 @@ const SPEED: Record<SpeciesKey, number> = {
   turtle: 0.026,
   whale: 0.017,
 };
+
+/**
+ * The width these speeds were tuned against — a phone, held in one hand.
+ *
+ * Wider glass slows the laps in proportion, so a creature covers roughly the
+ * same pixels per second whatever it is drawn on. Narrower glass is left
+ * alone: nothing should ever swim faster than it does on the screen the
+ * numbers were chosen for.
+ */
+export const PACE_WIDTH = 390;
+
+/**
+ * How much to slow a lap down for the width being drawn.
+ *
+ * Only ever applied to a moving frame. A still has no motion to calm, and
+ * pacing one would break the thing the whole renderer is built around: a share
+ * card is composed at 1200px and has to show the same moment the player saw at
+ * 390px. Pace a still and the two diverge — the card had the fish at 0.16
+ * across where the phone had it at 0.90.
+ */
+export function paceFor(width: number, moving: boolean): number {
+  return moving ? Math.min(1, PACE_WIDTH / Math.max(1, width)) : 1;
+}
 
 export interface Placement {
   x: number;
@@ -98,6 +129,7 @@ export function placeAt(
   index: number,
   interest = 0,
   touch?: { x: number; y: number; strength: number },
+  pace = 1,
 ): Placement {
   const r = rng(inhabitant.seed + index * 7919);
   const style = STYLE[inhabitant.species];
@@ -121,7 +153,11 @@ export function placeAt(
   // Nearer things read as faster even at the same real speed.
   const eager = Math.min(1, Math.max(0, interest));
   const speed =
-    SPEED[inhabitant.species] * (0.8 + r() * 0.4) * (0.7 + depth * 0.45) * (1 + eager * 0.45);
+    SPEED[inhabitant.species] *
+    (0.8 + r() * 0.4) *
+    (0.7 + depth * 0.45) *
+    (1 + eager * 0.45) *
+    pace;
   const swimmable = tank.groundY - tank.surfaceY;
 
   /*
