@@ -37,6 +37,17 @@ export function parseLook(species: string, tier: string, seed: string): Look | n
  */
 export const ODDS_AT_DAY = 30;
 
+/**
+ * The parts have names, and the names are what a person sees.
+ *
+ * "Pattern 6 of 6" read as a score — six out of six — when it meant the sixth
+ * of six kinds. Naming them removes the reading entirely.
+ */
+export const CREST_NAMES = ['None', 'Low', 'Tall', 'Crown', 'Spined', 'Plumed', 'Split', 'Horned'];
+export const EYE_NAMES = ['Round', 'Narrow', 'Wide', 'Ringed', 'Half-lidded', 'Bright', 'Dark', 'Flecked'];
+export const MOUTH_NAMES = ['Straight', 'Downturned', 'Open', 'Beaked', 'Wide', 'Pursed', 'Hooked'];
+export const PATTERN_NAMES = ['Unmarked', 'Banded', 'Spotted', 'Mottled', 'Striped', 'Edged'];
+
 export interface Odds {
   /** Chance the roll lands on this tier at all. */
   tier: number;
@@ -48,6 +59,8 @@ export interface Odds {
   /** The same, if it had also come up shiny. */
   shinyOneIn: number;
   looksInTier: number;
+  /** How many species of this tier are in play at the quoted streak. */
+  speciesInTier: number;
 }
 
 export function oddsFor(look: Look, atDay = ODDS_AT_DAY): Odds {
@@ -69,17 +82,18 @@ export function oddsFor(look: Look, atDay = ODDS_AT_DAY): Odds {
     oneIn: chance > 0 ? Math.round(1 / chance) : 0,
     shinyOneIn: chance > 0 ? Math.round(SHINY_ODDS / chance) : 0,
     looksInTier,
+    speciesInTier: inTier,
   };
 }
 
-/** The parts this look is made of, each as "n of many". */
-export function partsOf(look: Look): { label: string; index: number; of: number }[] {
+/** The parts this look is made of, named, with how many kinds exist of each. */
+export function partsOf(look: Look): { label: string; name: string; of: number }[] {
   const t = traitsFor(look.seed, look.tier);
   return [
-    { label: 'Crest', index: t.crest + 1, of: CREST_CEILING[look.tier] },
-    { label: 'Eyes', index: t.eyes + 1, of: EYE_COUNT },
-    { label: 'Mouth', index: t.mouth + 1, of: MOUTH_COUNT },
-    { label: 'Pattern', index: t.pattern + 1, of: PATTERN_COUNT },
+    { label: 'Crest', name: CREST_NAMES[t.crest] ?? '—', of: CREST_CEILING[look.tier] },
+    { label: 'Eyes', name: EYE_NAMES[t.eyes] ?? '—', of: EYE_COUNT },
+    { label: 'Mouth', name: MOUTH_NAMES[t.mouth] ?? '—', of: MOUTH_COUNT },
+    { label: 'Pattern', name: PATTERN_NAMES[t.pattern] ?? '—', of: PATTERN_COUNT },
   ];
 }
 
@@ -95,11 +109,9 @@ export function isShinyLook(look: Look): boolean {
  */
 export function describeLook(look: Look): string {
   const t = traitsFor(look.seed, look.tier);
-  const crest = ['no crest', 'a low crest', 'a tall crest', 'a crown', 'a spined crest',
-                 'a plumed crest', 'a split crest', 'a horned crest'][t.crest] ?? 'a crest';
-  const eyes = ['round', 'narrow', 'wide', 'ringed', 'half-lidded',
-                'bright', 'dark', 'flecked'][t.eyes] ?? 'plain';
-  const pattern = ['unmarked', 'banded', 'spotted', 'mottled', 'striped', 'edged'][t.pattern] ?? 'marked';
+  const crest = t.crest === 0 ? 'no crest' : `a ${(CREST_NAMES[t.crest] ?? 'plain').toLowerCase()} crest`;
+  const eyes = (EYE_NAMES[t.eyes] ?? 'plain').toLowerCase();
+  const pattern = (PATTERN_NAMES[t.pattern] ?? 'marked').toLowerCase();
   const blush = t.blush ? ', flushed at the cheek' : '';
   const body = `${pattern}, with ${crest} and ${eyes} eyes${blush}.`;
   // A sentence, so it reads as one wherever it lands — including an OG preview.

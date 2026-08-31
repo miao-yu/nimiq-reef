@@ -36,7 +36,7 @@ export function LookDetail({
   unlockDay: number;
   shiny: boolean;
   description: string;
-  parts: { label: string; index: number; of: number }[];
+  parts: { label: string; name: string; of: number }[];
   odds: Odds;
   oddsAtDay: number;
 }) {
@@ -99,7 +99,14 @@ export function LookDetail({
     }
   }
 
-  const pct = (n: number) => (n >= 0.01 ? `${(n * 100).toFixed(1)}%` : `${(n * 100).toFixed(3)}%`);
+  // Two decimals below ten percent: 1.0% and 1.0% on consecutive rows read as
+  // a rounding artefact even when both are exactly right.
+  const pct = (n: number) => {
+    const v = n * 100;
+    if (v >= 10) return `${v.toFixed(1)}%`;
+    if (v >= 0.01) return `${v.toFixed(2)}%`;
+    return `${v.toFixed(4)}%`;
+  };
 
   return (
     <main className={styles.wrap}>
@@ -120,41 +127,48 @@ export function LookDetail({
       <p className={styles.description}>{description}</p>
       <p className={styles.blurb}>{blurb}</p>
 
+      {/* Named, not numbered. "Pattern 6 of 6" read as a score. */}
       <div className={styles.parts}>
         {parts.map((p) => (
           <span key={p.label} className={styles.part}>
-            {p.label} <strong>{p.index}</strong>
-            <small>of {p.of}</small>
+            <small>{p.label}</small>
+            <strong>{p.name}</strong>
+            <em>{p.of} kinds</em>
           </span>
         ))}
       </div>
 
       <h2 className={styles.h2}>How rare</h2>
-      <p className={styles.oneIn}>
-        1 in <strong>{odds.oneIn.toLocaleString()}</strong>
-      </p>
-      <p className={styles.note}>
-        …and 1 in {odds.shinyOneIn.toLocaleString()} for this same look come up shiny.
-      </p>
 
+      {/* Three steps that multiply into the total, shown in that order so the
+          5,376 and the 537,600 stop looking like the same number twice. */}
       <dl className={styles.breakdown}>
         <div>
-          <dt>Lands on {look.tier}</dt>
+          <dt>A cast lands on {look.tier}</dt>
           <dd>{pct(odds.tier)}</dd>
         </div>
         <div>
-          <dt>…and on a {name.toLowerCase()}</dt>
-          <dd>{pct(odds.species)}</dd>
+          <dt>…then on a {name.toLowerCase()}</dt>
+          <dd>
+            {odds.speciesInTier === 1
+              ? `the only ${look.tier} in play`
+              : `1 of ${odds.speciesInTier} ${look.tier}s`}
+          </dd>
         </div>
         <div>
-          <dt>…and on this exact look</dt>
+          <dt>…then on this arrangement of parts</dt>
           <dd>1 of {odds.looksInTier.toLocaleString()}</dd>
         </div>
-        <div>
-          <dt>Needs a streak of</dt>
-          <dd>{unlockDay === 0 ? 'day one' : `${unlockDay} days`}</dd>
+        <div className={styles.total}>
+          <dt>Altogether</dt>
+          <dd>1 in {odds.oneIn.toLocaleString()}</dd>
         </div>
       </dl>
+
+      <p className={styles.note}>
+        Shiny as well would be 1 in {odds.shinyOneIn.toLocaleString()}.
+        {' '}This species opens at a {unlockDay === 0 ? 'day-one' : `${unlockDay}-day`} streak.
+      </p>
 
       {/* Rarity moves with the streak — both which species are in play and how
           often each tier comes up — so a number with no streak attached would

@@ -22,9 +22,13 @@
 .blurb { margin: 0 0 18px; font-size: .92rem; color: var(--muted); }
 
 .parts { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 26px; }
-.part { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; font-size: .82rem; }
-.part strong { font-variant-numeric: tabular-nums; }
-.part small { color: var(--muted); margin-left: 4px; }
+.part {
+  border: 1px solid var(--line); border-radius: 10px; padding: 7px 11px;
+  display: flex; flex-direction: column; gap: 1px; line-height: 1.25;
+}
+.part small { font-size: .64rem; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+.part strong { font-size: .92rem; font-weight: 650; }
+.part em { font-style: normal; font-size: .68rem; color: var(--muted); font-variant-numeric: tabular-nums; }
 
 .h2 { font-size: 1rem; margin: 0 0 6px; }
 .oneIn { margin: 0 0 4px; font-size: 1.5rem; font-variant-numeric: tabular-nums; }
@@ -45,3 +49,12 @@
 .primary { background: #17414f; color: #fff; }
 .secondary { background: none; color: var(--ink); border-color: var(--line); }
 .secondary:hover { border-color: var(--ink-soft); }
+
+.total { font-weight: 700; }
+.total dt { color: var(--ink) !important; }
+.total dd { font-size: 1.02rem; }
+
+.locked { margin-top: 40px; text-align: center; }
+.lockedTitle { font-size: 1.3rem; margin: 0 0 8px; }
+.lockedNote { margin: 0 0 22px; font-size: .92rem; color: var(--muted); }
+.locked .actions { justify-content: center; }

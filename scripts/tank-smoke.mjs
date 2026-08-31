@@ -5,7 +5,14 @@
  */
 const B = process.env.REEF_URL ?? 'http://127.0.0.1:3000';
 
-const j = async (r) => ({ status: r.status, body: await r.json().catch(() => ({})), setCookie: r.headers.get('set-cookie') });
+// Read the body once and offer it both ways: some of these checks are about
+// JSON, and the look-page ones are about what the HTML does and does not say.
+const j = async (r) => {
+  const text = await r.text().catch(() => '');
+  let body = {};
+  try { body = JSON.parse(text); } catch { /* not JSON, and that is fine */ }
+  return { status: r.status, body, text, setCookie: r.headers.get('set-cookie') };
+};
 const call = (p, opts = {}) => fetch(B + p, opts).then(j);
 const post = (p, b, cookie) =>
   call(p, { method: 'POST', headers: { 'Content-Type': 'application/json', ...(cookie ? { cookie } : {}) }, body: JSON.stringify(b ?? {}) });
@@ -140,14 +147,18 @@ check('the reef reports what it has earned',
   JSON.stringify(sand.body.reef?.earned));
 
 /*
- * A look is public on purpose. The page redraws from the three values in its
- * URL, so it works for somebody who has never played — which is the whole
- * point of being able to send them one.
+ * A look belongs to whoever caught one. This wallet has rolled commons, so it
+ * owns no legendary look — and must be told nothing about one, in the page or
+ * in its title.
  */
-const look = await call('/look/guppy/common/1234567');
-check('a look page opens with no session', look.status === 200, `HTTP ${look.status}`);
-const lookCard = await call('/look/guppy/common/1234567/card');
-check('and so does its share card', lookCard.status === 200, `HTTP ${lookCard.status}`);
+const stranger = await call('/look/shark/legendary/98764', { headers: { cookie } });
+check('a look you do not own stays shut', /have not found this one/.test(stranger.text ?? ''), `HTTP ${stranger.status}`);
+check('and its title gives nothing away',
+  !/shark/i.test(stranger.text ?? '') || /have not found/.test(stranger.text ?? ''));
+const strangerCard = await call('/look/shark/legendary/98764/card', { headers: { cookie } });
+check('nor does its picture', strangerCard.status === 404, `HTTP ${strangerCard.status}`);
+const anonLook = await call('/look/shark/legendary/98764');
+check('signed out sees the same door', /Sign in to see/.test(anonLook.text ?? ''), `HTTP ${anonLook.status}`);
 const badTier = await call('/look/guppy/mythic/1234567');
 check('an invented tier is not a page', badTier.status === 404, `HTTP ${badTier.status}`);
 const badSpecies = await call('/look/dragon/common/1234567');
