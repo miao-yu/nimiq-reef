@@ -29,7 +29,7 @@ export const PATTERN_COUNT = 6;
  * legendary is not forbidden a bare head, it is only the tier that *can*
  * wear a crown.
  */
-const CREST_CEILING: Record<Tier, number> = {
+export const CREST_CEILING: Record<Tier, number> = {
   common: 2,
   uncommon: 4,
   rare: 7,

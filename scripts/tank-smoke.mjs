@@ -139,6 +139,20 @@ check('the reef reports what it has earned',
   typeof sand.body.reef?.earned?.species === 'number',
   JSON.stringify(sand.body.reef?.earned));
 
+/*
+ * A look is public on purpose. The page redraws from the three values in its
+ * URL, so it works for somebody who has never played — which is the whole
+ * point of being able to send them one.
+ */
+const look = await call('/look/guppy/common/1234567');
+check('a look page opens with no session', look.status === 200, `HTTP ${look.status}`);
+const lookCard = await call('/look/guppy/common/1234567/card');
+check('and so does its share card', lookCard.status === 200, `HTTP ${lookCard.status}`);
+const badTier = await call('/look/guppy/mythic/1234567');
+check('an invented tier is not a page', badTier.status === 404, `HTTP ${badTier.status}`);
+const badSpecies = await call('/look/dragon/common/1234567');
+check('nor is an invented species', badSpecies.status === 404, `HTTP ${badSpecies.status}`);
+
 // --- nothing is reachable without a session ---
 for (const [p, m] of [['/api/reef', 'GET'], ['/api/guide', 'GET'], ['/api/roll', 'POST']]) {
   const r = m === 'GET' ? await call(p) : await post(p, {});

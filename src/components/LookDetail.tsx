@@ -1,0 +1,177 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { drawFauna, colourFor } from '@/lib/tank/fauna';
+import { drawFlora, FLORA_HEIGHT } from '@/lib/tank/flora';
+import { TANK_PALETTE } from '@/lib/tank/palette';
+import { STILL_TIME } from '@/lib/tank/motion';
+import { isFlora } from '@/lib/tank/types';
+import { report } from '@/lib/client-log';
+import type { FaunaKey, FloraKey } from '@/lib/tank/types';
+import type { Look, Odds } from '@/lib/reef/look';
+import styles from './LookDetail.module.css';
+
+/**
+ * One look, up close.
+ *
+ * Everything here is derived from the three values in the URL, so the page
+ * works for somebody who has never played and owns nothing — which is the
+ * point of being able to send it to them.
+ */
+export function LookDetail({
+  look,
+  name,
+  blurb,
+  unlockDay,
+  shiny,
+  description,
+  parts,
+  odds,
+  oddsAtDay,
+}: {
+  look: Look;
+  name: string;
+  blurb: string;
+  unlockDay: number;
+  shiny: boolean;
+  description: string;
+  parts: { label: string; index: number; of: number }[];
+  odds: Odds;
+  oddsAtDay: number;
+}) {
+  const canvas = useRef<HTMLCanvasElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    const el = canvas.current;
+    const ctx = el?.getContext('2d');
+    if (!el || !ctx) return;
+    const size = el.clientWidth;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    el.width = Math.round(size * dpr);
+    el.height = Math.round(size * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, size, size);
+
+    if (isFlora(look.species)) {
+      drawFlora(
+        look.species as FloraKey,
+        ctx,
+        size / 2,
+        size * 0.94,
+        size * 0.7 * (FLORA_HEIGHT[look.species as FloraKey] / FLORA_HEIGHT.kelp),
+        TANK_PALETTE,
+        STILL_TIME,
+        look.seed,
+        0.35,
+      );
+      return;
+    }
+    ctx.save();
+    ctx.translate(size / 2, size / 2);
+    drawFauna(look.species as FaunaKey, {
+      ctx,
+      L: size * 0.5,
+      colour: colourFor(look.species as FaunaKey, look.tier, look.seed),
+      tier: look.tier,
+      time: STILL_TIME,
+      seed: look.seed % 100,
+      rate: 0,
+    });
+    ctx.restore();
+  }, [look]);
+
+  async function share() {
+    const url = window.location.href;
+    const text = `${shiny ? 'Shiny ' : ''}${name} — 1 in ${odds.oneIn.toLocaleString()}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: text, text, url });
+        return;
+      }
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch (cause) {
+      if (cause instanceof Error && cause.name === 'AbortError') return;
+      report('look:share', cause);
+    }
+  }
+
+  const pct = (n: number) => (n >= 0.01 ? `${(n * 100).toFixed(1)}%` : `${(n * 100).toFixed(3)}%`);
+
+  return (
+    <main className={styles.wrap}>
+      <Link className={styles.back} href="/collection">
+        ← Collection
+      </Link>
+
+      <div className={`${styles.frame} ${shiny ? styles.shinyFrame : ''}`}>
+        <canvas ref={canvas} className={styles.canvas} />
+      </div>
+
+      <h1 className={styles.title}>
+        {shiny ? <span className={styles.shinyTag}>✦ Shiny</span> : null}
+        {name}
+      </h1>
+      <p className={styles.tier}>{look.tier}</p>
+
+      <p className={styles.description}>{description}</p>
+      <p className={styles.blurb}>{blurb}</p>
+
+      <div className={styles.parts}>
+        {parts.map((p) => (
+          <span key={p.label} className={styles.part}>
+            {p.label} <strong>{p.index}</strong>
+            <small>of {p.of}</small>
+          </span>
+        ))}
+      </div>
+
+      <h2 className={styles.h2}>How rare</h2>
+      <p className={styles.oneIn}>
+        1 in <strong>{odds.oneIn.toLocaleString()}</strong>
+      </p>
+      <p className={styles.note}>
+        …and 1 in {odds.shinyOneIn.toLocaleString()} for this same look come up shiny.
+      </p>
+
+      <dl className={styles.breakdown}>
+        <div>
+          <dt>Lands on {look.tier}</dt>
+          <dd>{pct(odds.tier)}</dd>
+        </div>
+        <div>
+          <dt>…and on a {name.toLowerCase()}</dt>
+          <dd>{pct(odds.species)}</dd>
+        </div>
+        <div>
+          <dt>…and on this exact look</dt>
+          <dd>1 of {odds.looksInTier.toLocaleString()}</dd>
+        </div>
+        <div>
+          <dt>Needs a streak of</dt>
+          <dd>{unlockDay === 0 ? 'day one' : `${unlockDay} days`}</dd>
+        </div>
+      </dl>
+
+      {/* Rarity moves with the streak — both which species are in play and how
+          often each tier comes up — so a number with no streak attached would
+          mean nothing. */}
+      <p className={styles.note}>
+        Quoted at a {oddsAtDay}-day staking streak. Longer streaks make the rare
+        tiers likelier; shorter ones make them impossible.
+      </p>
+
+      <div className={styles.actions}>
+        <Link className={styles.primary} href="/fish">
+          Go fishing
+        </Link>
+        <button className={styles.secondary} onClick={() => void share()} type="button">
+          {copied ? 'Link copied' : 'Share this one'}
+        </button>
+      </div>
+    </main>
+  );
+}

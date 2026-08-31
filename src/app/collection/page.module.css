@@ -16,3 +16,7 @@
 @media (prefers-color-scheme: dark) { .shinyCount { color: #ffc93c; } }
 
 .grid { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.tileLink { display: inline-flex; border-radius: 10px; text-decoration: none; }
+.tileLink:hover { outline: 2px solid var(--accent, #17414f); outline-offset: 2px; }
+.tileLink:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }

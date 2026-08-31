@@ -3,7 +3,10 @@ import { createCanvas, type SKRSContext2D } from '@napi-rs/canvas';
 import { renderTank } from '@/lib/tank/render';
 import { TANK_PALETTE } from '@/lib/tank/palette';
 import { STILL_TIME } from '@/lib/tank/motion';
-import type { Inhabitant } from '@/lib/tank/types';
+import { drawFauna, colourFor } from '@/lib/tank/fauna';
+import { drawFlora } from '@/lib/tank/flora';
+import { isFlora } from '@/lib/tank/types';
+import type { Inhabitant, SpeciesKey, Tier, FaunaKey, FloraKey } from '@/lib/tank/types';
 
 /**
  * Draw a reef to a PNG, server-side.
@@ -114,4 +117,59 @@ function drawCaption(ctx: SKRSContext2D, caption: string, width: number, height:
   ctx.fillStyle = 'rgba(255,255,255,0.82)';
   ctx.font = '400 26px sans-serif';
   ctx.fillText('reef.nimiq.cafe', pad, height - pad);
+}
+
+/**
+ * One look, drawn large and centred, for a share preview.
+ *
+ * Not a tank. A look page is about a single creature, so the card is that
+ * creature filling the frame rather than a speck somewhere in the glass —
+ * `placeAt` spreads inhabitants across a tank, which is right there and wrong
+ * here. Same drawing code either way, so it is still the creature the owner has.
+ */
+export function renderLookCard(
+  species: SpeciesKey,
+  tier: Tier,
+  seed: number,
+  width = 1200,
+  height = 630,
+): Buffer {
+  const canvas = createCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+  const p = TANK_PALETTE;
+
+  const g = ctx.createLinearGradient(0, 0, 0, height);
+  g.addColorStop(0, p.waterTop);
+  g.addColorStop(1, p.waterDeep);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, width, height);
+
+  const c = ctx as unknown as CanvasRenderingContext2D;
+  if (isFlora(species)) {
+    drawFlora(
+      species as FloraKey,
+      c,
+      width / 2,
+      height * 0.9,
+      height * 0.62,
+      p,
+      STILL_TIME,
+      seed,
+      0.35,
+    );
+  } else {
+    c.save();
+    c.translate(width / 2, height / 2);
+    drawFauna(species as FaunaKey, {
+      ctx: c,
+      L: Math.min(width, height) * 0.55,
+      colour: colourFor(species as FaunaKey, tier, seed),
+      tier,
+      time: STILL_TIME,
+      seed: seed % 100,
+      rate: 0,
+    });
+    c.restore();
+  }
+  return canvas.toBuffer('image/png');
 }

@@ -127,13 +127,22 @@ export default function Collection() {
             </h2>
             <div className={styles.grid}>
               {looks.map((s) => (
-                <LookTile
+                // Addressed by what it looks like, not by which specimen it
+                // was: the page redraws from these three values alone, so it
+                // works for somebody who owns nothing.
+                <Link
                   key={s.id}
-                  species={s.species}
-                  tier={s.tier}
-                  seed={s.seed}
-                  shiny={isShiny(s.seed, s.tier)}
-                />
+                  className={styles.tileLink}
+                  href={`/look/${s.species}/${s.tier}/${s.seed}`}
+                  aria-label={`${SPECIES[s.species].label}, ${s.tier}`}
+                >
+                  <LookTile
+                    species={s.species}
+                    tier={s.tier}
+                    seed={s.seed}
+                    shiny={isShiny(s.seed, s.tier)}
+                  />
+                </Link>
               ))}
             </div>
           </section>
