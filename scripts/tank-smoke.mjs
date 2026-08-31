@@ -157,6 +157,22 @@ check('and shows the creature rather than a door', /How rare/.test(look.text ?? 
 const lookCard = await call('/look/shark/legendary/98764/card');
 check('its share card opens too, for crawlers with no session',
   lookCard.status === 200, `HTTP ${lookCard.status}`);
+/*
+ * The wall: a reef for a wallpaper tool to point at. Addressed, not signed in,
+ * because a wallpaper is set once and left running for weeks — a session
+ * cookie in a background web view is the wrong thing to depend on.
+ */
+const mine = (await call('/api/reef', { headers: { cookie } })).body.address.replace(/ /g, '');
+const wall = await call(`/wall/${mine}`);
+check('a wall renders with no session', wall.status === 200, `HTTP ${wall.status}`);
+check('and carries none of the furniture',
+  !/Go fishing|Feed this reef|Collection<|Community</.test(wall.text ?? ''));
+const wallData = await call(`/api/wall/${mine}`);
+check('and can re-read itself as it runs', wallData.status === 200 && Array.isArray(wallData.body.plants),
+  `HTTP ${wallData.status}`);
+const wallBad = await call('/wall/NQ00NOTANADDRESS');
+check('a wall for a non-address is not a page', wallBad.status === 404, `HTTP ${wallBad.status}`);
+
 const badTier = await call('/look/guppy/mythic/1234567');
 check('an invented tier is not a page', badTier.status === 404, `HTTP ${badTier.status}`);
 const badSpecies = await call('/look/dragon/common/1234567');

@@ -1,0 +1,15 @@
+/*
+ * Edge to edge, and immovable.
+ *
+ * A wallpaper sits behind desktop icons, so anything that scrolls, bounces or
+ * shows a scrollbar is a defect here rather than a nuisance. Fixed rather than
+ * 100vh: a web view that reports a stale viewport once must not leave a strip
+ * of ground colour along the bottom for the next week.
+ */
+.wall {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--tank-water-deep, #06131c);
+}
+.canvas { display: block; width: 100%; height: 100%; }
