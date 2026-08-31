@@ -14,10 +14,22 @@ import { drawFauna, colourFor } from '../.icons/tank/fauna.js';
 // every icon came out an empty tank.
 const AGE = 60;
 
+/**
+ * The one creature the favicon draws.
+ *
+ * Named rather than indexed into LIFE. It used to be LIFE[3]; adding species
+ * to the tank moved a sea fan into that slot, and drawFauna went looking for a
+ * crest on a plant. A cast list is not a stable address.
+ */
+const FAVICON = ['guppy', 'common', 31];
+
 const LIFE = [
-  ['grass', 'common', 52], ['grass', 'common', 88],
-  ['guppy', 'common', 26], ['guppy', 'common', 31],
-  ['angel', 'uncommon', 8], ['jelly', 'rare', 63],
+  ['grass', 'common', 52], ['grass', 'common', 88], ['kelp', 'common', 14],
+  ['fan', 'uncommon', 41], ['anemone', 'rare', 7],
+  ['guppy', 'common', 26], ['guppy', 'common', 31], ['guppy', 'common', 77],
+  ['angel', 'uncommon', 8], ['angel', 'uncommon', 55],
+  ['jelly', 'rare', 63], ['lionfish', 'rare', 19],
+  ['shark', 'legendary', 98], ['ray', 'rare', 33],
 ];
 
 // 192/512 for the manifest, 180 for iOS home screens, 32 for the browser tab.
@@ -45,7 +57,7 @@ for (const [size, out] of TARGETS) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, size, size);
 
-    const [species, tier, seed] = LIFE[3];
+    const [species, tier, seed] = FAVICON;
     ctx.save();
     ctx.translate(size / 2, size / 2);
     drawFauna(species, {
@@ -69,9 +81,14 @@ for (const [size, out] of TARGETS) {
     time: 11.4,
     inhabitants: LIFE.map(([species, tier, seed]) => ({ species, tier, seed, ageDays: AGE })),
     palette: TANK_PALETTE,
-    waterLevel: 1,
+    // A full tank, not a tidy one: the icon is the pitch, and the pitch is that
+    // a reef accumulates. Checked at 512, 192 and 180 — every creature still
+    // reads at the smallest of those.
+    waterLevel: 0.92,
     motion: false,
-    scale: size * 0.42,
+    floor: 'seagrass',
+    wall: 'kelp',
+    scale: size * 0.4,
   });
   writeFileSync(out, c.toBuffer('image/png'));
   console.log(`  ${out} (${size}px)`);
