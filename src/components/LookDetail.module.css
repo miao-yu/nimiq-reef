@@ -54,7 +54,3 @@
 .total dt { color: var(--ink) !important; }
 .total dd { font-size: 1.02rem; }
 
-.locked { margin-top: 40px; text-align: center; }
-.lockedTitle { font-size: 1.3rem; margin: 0 0 8px; }
-.lockedNote { margin: 0 0 22px; font-size: .92rem; color: var(--muted); }
-.locked .actions { justify-content: center; }

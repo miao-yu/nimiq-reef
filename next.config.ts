@@ -64,8 +64,7 @@ const config: NextConfig = {
       },
       {
         /**
-         * Two per-viewer pages: the reef screen, and a look — which shows a
-         * creature only to somebody who has caught one.
+         * The reef screen is server-rendered and therefore varies by cookie.
          *
          * It renders the sign-in gate only for visitors who do not have a
          * session, which is what stopped every trip back from the collection
@@ -80,13 +79,6 @@ const config: NextConfig = {
          * HTML — only which of two faces to draw — but this is the same shape
          * of mistake that once served one signed-in user's tank to everyone.
          */
-        source: '/look/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },
-          { key: 'Vary', value: 'Cookie' },
-        ],
-      },
-      {
         source: '/',
         headers: [
           { key: 'Cache-Control', value: 'private, no-store, max-age=0, must-revalidate' },

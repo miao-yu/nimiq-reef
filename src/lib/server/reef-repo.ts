@@ -4,7 +4,7 @@ import { db } from './db';
 import { addDays, reefDay, utcDay } from '@/lib/reef/day';
 import { stakingStreak, STAKE_LOOKBACK_DAYS } from '@/lib/reef/streak';
 import { hotPondFrom } from '@/lib/reef/ponds';
-import { isShiny, traitKey } from '@/lib/tank/traits';
+import { isShiny } from '@/lib/tank/traits';
 import type { ChargeEvent } from '@/lib/reef/charges';
 import type { Plant, SpeciesKey, Tier } from '@/lib/reef';
 
@@ -509,32 +509,6 @@ export async function collectionTotals(address: string): Promise<{ species: numb
     if (isShiny(Number(r.seed), r.tier as Tier)) shiny++;
   }
   return { species: species.size, shiny };
-}
-
-/**
- * Has this reef ever held a creature that looks like this one?
- *
- * Compared by trait fingerprint rather than by seed: two different seeds can
- * land on the same combination of parts, and it is the *look* somebody owns,
- * not the particular specimen. Released creatures still count — letting one go
- * is not un-seeing it.
- */
-export async function ownsLook(
-  address: string,
-  species: SpeciesKey,
-  tier: Tier,
-  seed: number,
-): Promise<boolean> {
-  const [rows] = await db().query<RowDataPacket[]>(
-    'SELECT seed FROM specimens WHERE address = ? AND species = ? AND tier = ?',
-    [address, species, tier],
-  );
-  const wanted = traitKey(seed, tier);
-  const wantedShiny = isShiny(seed, tier);
-  return rows.some(
-    (r) =>
-      traitKey(Number(r.seed), tier) === wanted && isShiny(Number(r.seed), tier) === wantedShiny,
-  );
 }
 
 /** Set the look. Validated by the caller against what the reef has unlocked. */

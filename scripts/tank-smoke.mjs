@@ -147,18 +147,16 @@ check('the reef reports what it has earned',
   JSON.stringify(sand.body.reef?.earned));
 
 /*
- * A look belongs to whoever caught one. This wallet has rolled commons, so it
- * owns no legendary look — and must be told nothing about one, in the page or
- * in its title.
+ * A look is public: the page redraws from the three values in its URL, so it
+ * works for somebody who has never played and owns nothing. An ownership gate
+ * was tried here and removed — it and sharing pull in opposite directions.
  */
-const stranger = await call('/look/shark/legendary/98764', { headers: { cookie } });
-check('a look you do not own stays shut', /have not found this one/.test(stranger.text ?? ''), `HTTP ${stranger.status}`);
-check('and its title gives nothing away',
-  !/shark/i.test(stranger.text ?? '') || /have not found/.test(stranger.text ?? ''));
-const strangerCard = await call('/look/shark/legendary/98764/card', { headers: { cookie } });
-check('nor does its picture', strangerCard.status === 404, `HTTP ${strangerCard.status}`);
-const anonLook = await call('/look/shark/legendary/98764');
-check('signed out sees the same door', /Sign in to see/.test(anonLook.text ?? ''), `HTTP ${anonLook.status}`);
+const look = await call('/look/shark/legendary/98764');
+check('a look page opens with no session', look.status === 200, `HTTP ${look.status}`);
+check('and shows the creature rather than a door', /How rare/.test(look.text ?? ''));
+const lookCard = await call('/look/shark/legendary/98764/card');
+check('its share card opens too, for crawlers with no session',
+  lookCard.status === 200, `HTTP ${lookCard.status}`);
 const badTier = await call('/look/guppy/mythic/1234567');
 check('an invented tier is not a page', badTier.status === 404, `HTTP ${badTier.status}`);
 const badSpecies = await call('/look/dragon/common/1234567');
